@@ -1,0 +1,88 @@
+Source: fuse3
+Section: utils
+Priority: optional
+Maintainer: Laszlo Boszormenyi (GCS) <gcs@debian.org>
+Build-Depends:
+ debhelper-compat (= 13),
+ pkg-config,
+ meson,
+ udev [linux-any],
+ python3 <!nocheck>,
+ python3-pytest <!nocheck>
+Standards-Version: 4.5.1
+Homepage: https://github.com/libfuse/libfuse/wiki
+Rules-Requires-Root: binary-targets
+
+Package: fuse3
+Section: utils
+Architecture: linux-any
+Depends:
+ ${misc:Depends},
+ ${shlibs:Depends},
+ libfuse3-3 (= ${binary:Version}),
+ adduser,
+ mount (>= 2.19.1),
+ sed (>= 4),
+ lsb-base (>= 3.2-14)
+Provides: fuse (= ${source:Version})
+Breaks: fuse
+Replaces: fuse
+Description: Filesystem in Userspace (3.x version)
+ Filesystem in Userspace (FUSE) is a simple interface for userspace programs to
+ export a virtual filesystem to the Linux kernel. It also aims to provide a
+ secure method for non privileged users to create and mount their own filesystem
+ implementations.
+
+Package: libfuse3-3
+Section: libs
+Architecture: linux-any kfreebsd-any
+Multi-Arch: same
+Pre-Depends: ${misc:Pre-Depends}
+Depends:
+ ${misc:Depends},
+ ${shlibs:Depends},
+Suggests: fuse3
+Description: Filesystem in Userspace (library) (3.x version)
+ Filesystem in Userspace (FUSE) is a simple interface for userspace programs to
+ export a virtual filesystem to the Linux kernel. It also aims to provide a
+ secure method for non privileged users to create and mount their own filesystem
+ implementations.
+ .
+ This package contains the shared library.
+
+Package: libfuse3-dev
+Section: libdevel
+Architecture: linux-any kfreebsd-any
+Multi-Arch: same
+Depends:
+ ${misc:Depends},
+ libfuse3-3 (= ${binary:Version}),
+ libselinux-dev [linux-any],
+Suggests: fuse
+Description: Filesystem in Userspace (development) (3.x version)
+ Filesystem in Userspace (FUSE) is a simple interface for userspace programs to
+ export a virtual filesystem to the Linux kernel. It also aims to provide a
+ secure method for non privileged users to create and mount their own filesystem
+ implementations.
+ .
+ This package contains the development files.
+
+Package: fuse3-udeb
+Package-Type: udeb
+Architecture: linux-any
+Section: debian-installer
+Depends:
+ ${misc:Depends},
+ ${shlibs:Depends},
+ libfuse3-3-udeb (= ${binary:Version}),
+Description: Filesystem in Userspace (3.x version)
+
+Package: libfuse3-3-udeb
+Package-Type: udeb
+Build-Profiles: <!noudeb>
+Architecture: linux-any kfreebsd-any
+Section: debian-installer
+Depends:
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: Filesystem in Userspace (library) (3.x version)

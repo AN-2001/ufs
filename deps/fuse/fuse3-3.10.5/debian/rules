@@ -1,0 +1,76 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+SHELL := sh -e
+
+DEB_BUILD_ARCH ?= $(shell dpkg-architecture -qDEB_BUILD_ARCH)
+DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+
+ifeq ($(DEB_HOST_ARCH_OS), kfreebsd)
+	DEB_CONFIGURE_EXTRA_FLAGS = -Dudevrulesdir=/lib/udev/rules.d
+endif
+
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+ifeq (,$(filter noudeb, $(DEB_BUILD_PROFILES)))
+  with_udeb = yes
+endif
+
+override_dh_auto_configure:
+	dh_auto_configure -- -Ddefault_library=both $(DEB_CONFIGURE_EXTRA_FLAGS)
+
+override_dh_compress:
+	dh_compress -Xusr/share/doc/libfuse3-dev/examples -XREADME.md
+
+override_dh_fixperms:
+	dh_fixperms
+	chmod a-x debian/libfuse3-dev/usr/share/doc/libfuse3-dev/examples/cuse_client.c
+
+ifeq ($(DEB_BUILD_ARCH),linux)
+	chmod 0755 debian/fuse3/bin/fusermount3
+endif
+
+override_dh_install:
+	# remove unused files
+	rm -f debian/tmp/etc/init.d/fuse3
+	rm -f debian/tmp/lib/udev/rules.d/99-fuse3.rules
+
+	dh_install
+
+	# adjusting /lib for multiarch
+	mkdir -p debian/libfuse3-3/lib/$(DEB_HOST_MULTIARCH)
+	mv debian/libfuse3-3/lib/*.so* debian/libfuse3-3/lib/$(DEB_HOST_MULTIARCH)
+ifeq ($(with_udeb),yes)
+	mkdir -p debian/libfuse3-3-udeb/lib/$(DEB_HOST_MULTIARCH)
+	mv debian/libfuse3-3-udeb/lib/*.so* debian/libfuse3-3-udeb/lib/$(DEB_HOST_MULTIARCH)
+endif
+
+	# adding initramfs-tools integration
+	install -D -m 0755 debian/local/fuse.hook debian/fuse3/usr/share/initramfs-tools/hooks/fuse
+
+override_dh_auto_test:
+ifeq (,$(findstring nocheck,$(DEB_BUILD_OPTIONS)))
+	(cd obj-${DEB_HOST_GNU_TYPE}; python3 -m pytest test/) || true
+endif
+
+override_dh_link:
+	# correcting symlink targets
+	for LIB in debian/tmp/usr/lib/*/*.so; \
+	do \
+		dh_link -plibfuse3-dev lib/$(DEB_HOST_MULTIARCH)/$$(basename $$(readlink $${LIB})) usr/lib/$(DEB_HOST_MULTIARCH)/$$(basename $${LIB}); \
+	done
+
+	dh_link --remaining-packages
+
+override_dh_missing:
+	dh_missing --fail-missing
+
+%:
+	dh ${@}
+
+.PHONY: override_dh_auto_configure override_dh_compress \
+	override_dh_fixperms override_dh_install \
+	override_dh_link override_dh_missing
