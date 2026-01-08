@@ -2,3 +2,6 @@ compile_commands.json
 *.o
 .cache/*
 .cache/
+bin/
+bin/*
+unionfs
