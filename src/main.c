@@ -1,7 +1,7 @@
-#include <stdio.h>
+#include "ufs_image.h"
+#include "ufs_index.h"
 
 int main()
 {
-    printf( "hello there!\n" );
     return 0;
 }

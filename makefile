@@ -1,26 +1,55 @@
-CC = gcc
+CC := gcc
+MAKE := make
+AR := ar
 
-DEPS_DIR = deps
+# Useful directories.
+PROJECT_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
+
+DEPS_DIR = $(PROJECT_DIR)deps
 FUSE_DIR = $(DEPS_DIR)/fuse
 SRC_DIR := src
-INCLUDE_DIR := include
+INCLUDE_DIR := $(PROJECT_DIR)include
+BUILD_DIR := $(PROJECT_DIR)build
+TESTS_DIR := $(PROJECT_DIR)tests
 
-flags := -I$(FUSE_DIR)/include -I$(INCLUDE_DIR)
-libs := -L$(FUSE_DIR)/lib -l:libfuse3.a -lpthread -ldl
+CFLAGS := -I$(FUSE_DIR)/include -I$(INCLUDE_DIR) -Wall -Werror -g \
+		   -fdiagnostics-color=always 
+LDFLAGS := -L$(FUSE_DIR)/lib -L$(BUILD_DIR) \
+		   -fuse-ld=gold \
+		   -Wl,-rpath=$(abspath $(FUSE_DIR)/lib)
+
+LDLIBS := -lfuse3 -lufs -lpthread -ldl
+
+# project names.
 PROJ := ufs
-BUILD_DIR := bin
+
+ARCHIVE := $(BUILD_DIR)/libufs.a
 
 # Place compilation targets here.
-RAW_OBJECTS := $(SRC_DIR)/main.o
-OBJECTS := $(addprefix $(BUILD_DIR)/, $(RAW_OBJECTS))
+OBJECTS := $(BUILD_DIR)/src/ufs_image.o # $(BUILD_DIR)/src/ufs_index.o
+GLOBAL_HEADERS := $(INCLUDE_DIR)/ufs_defs.h
 
-$(PROJ): $(OBJECTS)
+# Entry point to each executable target.
+MAIN_ENTRY := $(BUILD_DIR)/$(SRC_DIR)/main.o
+
+all: $(PROJ) test
+
+$(PROJ): $(ARCHIVE) $(MAIN_ENTRY)
 	@mkdir -p $(BUILD_DIR)
-	$(CC) $(flags) $^ $(libs) -o $(BUILD_DIR)/$(PROJ)
+	$(CC) $(MAIN_ENTRY) $(LDFLAGS) $(LDLIBS) -o $(BUILD_DIR)/$@
 
-$(BUILD_DIR)/%.o: %.c $(wildcard %.h)
+test: $(ARCHIVE)
+	$(MAKE) -C $(TESTS_DIR) PROJECT_DIR=$(PROJECT_DIR)
+
+$(ARCHIVE): $(OBJECTS)
+	@mkdir -p $(BUILD_DIR)
+	$(AR) rcs $@ $^
+
+$(BUILD_DIR)/%.o: %.c $(wildcard %.h) $(GLOBAL_HEADERS)
 	@mkdir -p $(dir $@)
-	$(CC) -c $(flags) $< -o $@
+	$(CC) -c $(CFLAGS) $< -o $@
+
+.PHONY: all clean test
 
 clean:
 	rm -rf $(BUILD_DIR)
