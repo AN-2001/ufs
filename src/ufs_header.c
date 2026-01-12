@@ -153,6 +153,8 @@ static inline ufsImagePtr mountHeader( ufsImagePtr img,
     offset = roundToBoundary( offset, _Alignof( char ) );
     header -> offsets[ UFS_TYPES_STRING ] = offset;
 
+    ufsImageSync( img );
+
     return img;
 }
 
