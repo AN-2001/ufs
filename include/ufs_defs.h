@@ -14,8 +14,8 @@
 #include <stdint.h>
 #include <sys/types.h>
 
-/* Increment on every index update, used to validate compatibility.           */
-#define UFS_INDEX_VERSION (1) 
+/* Increment on every ufs update, used to validate compatibility.             */
+#define UFS_VERSION (1) 
 
 /* contains the word ufs followed by 0, sanity check for corruption.          */
 #define UFS_MAGIC_NUMBER (0x00736675)
@@ -37,6 +37,7 @@
 #define UFS_UNKNOWN_ERROR (-12)
 #define UFS_IMAGE_TOO_SMALL (-12)
 #define UFS_IMAGE_COULD_NOT_SYNC (-13)
+#define UFS_IMAGE_BAD_SIZE (-14)
 
 enum ufsTyepesEnum {
     UFS_TYPES_FILE = 0,

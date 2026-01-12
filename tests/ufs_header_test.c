@@ -10,6 +10,8 @@
 #include <stdint.h>
 #define UFS_TESTING
 
+#include <fcntl.h>
+#include <sys/types.h>
 #include <memory.h>
 #include <setjmp.h>
 #include <stdarg.h>
@@ -52,6 +54,7 @@ static void test_ufs_header_init( void **state ) {
 
     ufsImagePtr img = ufsHeaderInit( fn -> name, ufsDefaultSizeRequest );
     assert_non_null( img );
+    assert_int_equal( ufsErrno, UFS_NO_ERROR );
 
     header = ufsHeaderGet( img );
 
@@ -74,9 +77,13 @@ static void test_ufs_header_init_exists( void **state ) {
 
     ufsImagePtr img = ufsHeaderInit( fn -> name, ufsDefaultSizeRequest );
     assert_non_null( img );
+    assert_int_equal( ufsErrno, UFS_NO_ERROR );
+
     ufsImageFree( img );
 
     img = ufsImageOpen( fn -> name );
+    assert_non_null( img );
+    assert_int_equal( ufsErrno, UFS_NO_ERROR );
 
     header = ufsHeaderGet( img );
     assert_true( header -> magicNumber == UFS_MAGIC_NUMBER );
@@ -90,6 +97,11 @@ static void test_ufs_header_init_exists( void **state ) {
     ufsImageFree( img );
 }
 
+static void test_ufs_header_validate_bad_arg( void **state ) {
+    assert_null( ufsHeaderValidate( NULL ) );
+    assert_int_equal( ufsErrno, UFS_BAD_CALL );
+}
+
 static void test_ufs_header_validate( void **state ) {
     struct ufsTestUtilsFileNameStruct *fn;
 
@@ -97,8 +109,10 @@ static void test_ufs_header_validate( void **state ) {
 
     ufsImagePtr img = ufsHeaderInit( fn -> name, ufsDefaultSizeRequest );
     assert_non_null( img );
+    assert_int_equal( ufsErrno, UFS_NO_ERROR );
 
-    assert_true( ufsHeaderValidate( img ) );
+    assert_non_null( ufsHeaderValidate( img ) );
+    assert_int_equal( ufsErrno, UFS_NO_ERROR );
     ufsImageFree( img );
 }
 
@@ -111,6 +125,7 @@ static void test_ufs_header_validate_corrupted_magic_number( void **state ) {
 
     ufsImagePtr img = ufsHeaderInit( fn -> name, ufsDefaultSizeRequest );
     assert_non_null( img );
+    assert_int_equal( ufsErrno, UFS_NO_ERROR );
 
     header = ufsHeaderGet( img );
     header -> magicNumber = 123;
@@ -126,6 +141,7 @@ static void test_ufs_header_validate_bad_version( void **state ) {
 
     ufsImagePtr img = ufsHeaderInit( fn -> name, ufsDefaultSizeRequest );
     assert_non_null( img );
+    assert_int_equal( ufsErrno, UFS_NO_ERROR );
 
     header = ufsHeaderGet( img );
     header -> version = 0;
@@ -138,25 +154,81 @@ static void test_ufs_header_validate_random_file( void **state ) {
 
     fn = *state;
 
-    if ( ftruncate( fn -> fd, 256 ) < 0 ) {
+    if ( ftruncate( fn -> fd, 1024 ) < 0 ) {
         perror( "ftruncate" );
         fail_msg( "Could not truncate temp file" );
     }
 
     ufsImagePtr img = ufsImageOpen( fn -> name );
     assert_non_null( img );
+    assert_int_equal( ufsErrno, UFS_NO_ERROR );
 
     assert_null( ufsHeaderValidate( img ) );
+    assert_int_equal( ufsErrno, UFS_IMAGE_IS_CORRUPTED );
+}
+
+static void test_ufs_header_validate_too_small( void **state ) {
+    struct ufsTestUtilsFileNameStruct *fn;
+    uint64_t
+        badSize = sizeof( struct ufsHeaderStruct );
+
+    fn = *state;
+
+    if ( ftruncate( fn -> fd, badSize ) < 0 ) {
+        perror( "ftruncate" );
+        fail_msg( "Could not truncate temp file" );
+    }
+
+    ufsImagePtr img = ufsImageOpen( fn -> name );
+    assert_non_null( img );
+    assert_int_equal( ufsErrno, UFS_NO_ERROR );
+
+    assert_null( ufsHeaderValidate( img ) );
+    assert_int_equal( ufsErrno, UFS_IMAGE_TOO_SMALL );
+}
+
+static void test_ufs_header_validate_bad_size( void **state ) {
+    struct ufsTestUtilsFileNameStruct *fn;
+    uint64_t
+        badSize = sizeof( struct ufsHeaderStruct ) * 4;
+
+    fn = *state;
+
+    ufsImagePtr img = ufsHeaderInit( fn -> name, ufsDefaultSizeRequest );
+    assert_non_null( img );
+
+    ufsImageFree( img );
+
+    fn -> fd = open( fn -> name, O_RDWR );
+
+    if (ftruncate( fn -> fd, badSize ) < 0) {
+        perror( "ftruncate" );
+        fail_msg( "Could not truncate temp file." );
+    }
+
+    img = ufsImageOpen( fn -> name );
+    assert_non_null( img );
+    assert_null( ufsHeaderValidate( img ) );
+    assert_int_equal( ufsErrno, UFS_IMAGE_BAD_SIZE );
+}
+
+static void test_ufs_header_get_bad_arg( void **state ) {
+    assert_null( ufsHeaderGet( NULL ) );
+    assert_int_equal( ufsErrno, UFS_BAD_CALL );
 }
 
 static const struct CMUnitTest header_tests[] = {
     cmocka_unit_test_setup_teardown(test_ufs_header_init_bad_arg, getFileNameSetup, cleanUpTeardown ),
     cmocka_unit_test_setup_teardown(test_ufs_header_init, getFileNameSetup, cleanUpTeardown),
     cmocka_unit_test_setup_teardown(test_ufs_header_init_exists, getFileNameSetup, cleanUpTeardown),
+    cmocka_unit_test(test_ufs_header_validate_bad_arg),
     cmocka_unit_test_setup_teardown(test_ufs_header_validate, getFileNameSetup, cleanUpTeardown),
     cmocka_unit_test_setup_teardown(test_ufs_header_validate_bad_version, getFileNameSetup, cleanUpTeardown),
     cmocka_unit_test_setup_teardown(test_ufs_header_validate_corrupted_magic_number, getFileNameSetup, cleanUpTeardown),
     cmocka_unit_test_setup_teardown(test_ufs_header_validate_random_file, getFileSetup, cleanUpTeardown),
+    cmocka_unit_test_setup_teardown(test_ufs_header_validate_too_small, getFileSetup, cleanUpTeardown),
+    cmocka_unit_test_setup_teardown(test_ufs_header_validate_bad_size, getFileNameSetup, cleanUpTeardown),
+    cmocka_unit_test(test_ufs_header_get_bad_arg),
 };
 
 int main(void) {

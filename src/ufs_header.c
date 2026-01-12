@@ -54,24 +54,62 @@ ufsImagePtr ufsHeaderInit( const char *path,
 
 ufsImagePtr ufsHeaderValidate( ufsImagePtr img )
 {
+    if (!img) {
+        ufsErrno = UFS_BAD_CALL;
+        return NULL;
+    }
+
+    struct ufsHeaderSizeRequestStruct sizes;
     struct ufsHeaderStruct
         *header = ufsHeaderGet( img );
+    uint64_t size, expectedSize,
+        minSize = roundToBoundary( sizeof( uint64_t ),
+                _Alignof( struct ufsHeaderStruct ) ) +
+                 sizeof( struct ufsHeaderStruct );
+
+
+    size = *(uint64_t*)img;
+
+    if ( size < minSize ) {
+        ufsErrno = UFS_IMAGE_TOO_SMALL;
+        ufsImageFree( img );
+        return NULL;
+    }
 
     if (header -> magicNumber != UFS_MAGIC_NUMBER) {
         ufsErrno = UFS_IMAGE_IS_CORRUPTED;
+        ufsImageFree( img );
         return NULL;
     }
 
-    if (header -> version != UFS_INDEX_VERSION ) {
+    if (header -> version != UFS_VERSION ) {
         ufsErrno = UFS_VERSION_MISMATCH;
+        ufsImageFree( img );
         return NULL;
     }
 
+    sizes.numFiles = header -> sizes[ UFS_TYPES_FILE ];
+    sizes.numAreas = header -> sizes[ UFS_TYPES_AREA ];
+    sizes.numNodes = header -> sizes[ UFS_TYPES_NODE ];
+    sizes.numStrBytes = header -> sizes[ UFS_TYPES_STRING ];
+
+    expectedSize = resolveSize( sizes );
+    if ( size < expectedSize ) {
+        ufsErrno = UFS_IMAGE_BAD_SIZE;
+        ufsImageFree( img );
+        return NULL;
+    }
+
+    ufsErrno = UFS_NO_ERROR;
     return img;
 }
 
 struct ufsHeaderStruct *ufsHeaderGet( ufsImagePtr img )
 {
+    if (!img) {
+        ufsErrno = UFS_BAD_CALL;
+        return NULL;
+    }
     return (struct ufsHeaderStruct*)((uint8_t*)img +
             roundToBoundary( sizeof( uint64_t ), _Alignof(struct ufsHeaderStruct)));
 }
@@ -84,7 +122,7 @@ static inline ufsImagePtr mountHeader( ufsImagePtr img,
         *header = ufsHeaderGet( img );
 
     header -> magicNumber = UFS_MAGIC_NUMBER;
-    header -> version = UFS_INDEX_VERSION;
+    header -> version = UFS_VERSION;
 
     header -> sizes[ UFS_TYPES_FILE ] = sizes.numFiles;
     header -> sizes[ UFS_TYPES_AREA ] = sizes.numAreas;
