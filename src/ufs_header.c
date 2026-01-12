@@ -67,26 +67,25 @@ ufsImagePtr ufsHeaderValidate( ufsImagePtr img )
                 _Alignof( struct ufsHeaderStruct ) ) +
                  sizeof( struct ufsHeaderStruct );
 
-
     size = *(uint64_t*)img;
 
     /* First check that the header we got is valid...                         */
     /* This has to be done first otherwise we'd invoke UB later.              */
     if ( size < minSize ) {
-        ufsErrno = UFS_IMAGE_TOO_SMALL;
         ufsImageFree( img );
+        ufsErrno = UFS_IMAGE_TOO_SMALL;
         return NULL;
     }
 
     if (header -> magicNumber != UFS_MAGIC_NUMBER) {
-        ufsErrno = UFS_IMAGE_IS_CORRUPTED;
         ufsImageFree( img );
+        ufsErrno = UFS_IMAGE_IS_CORRUPTED;
         return NULL;
     }
 
     if (header -> version != UFS_VERSION ) {
-        ufsErrno = UFS_VERSION_MISMATCH;
         ufsImageFree( img );
+        ufsErrno = UFS_VERSION_MISMATCH;
         return NULL;
     }
 
@@ -99,8 +98,8 @@ ufsImagePtr ufsHeaderValidate( ufsImagePtr img )
 
     /* We could check for exact match, but we don't mind if it's greater.     */
     if ( size < expectedSize ) {
-        ufsErrno = UFS_IMAGE_BAD_SIZE;
         ufsImageFree( img );
+        ufsErrno = UFS_IMAGE_BAD_SIZE;
         return NULL;
     }
 
@@ -114,6 +113,7 @@ struct ufsHeaderStruct *ufsHeaderGet( ufsImagePtr img )
         ufsErrno = UFS_BAD_CALL;
         return NULL;
     }
+    ufsErrno = UFS_NO_ERROR;
     return (struct ufsHeaderStruct*)((uint8_t*)img +
             roundToBoundary( sizeof( uint64_t ), _Alignof(struct ufsHeaderStruct)));
 }
