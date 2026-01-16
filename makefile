@@ -7,12 +7,14 @@ PROJECT_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 
 DEPS_DIR := $(PROJECT_DIR)deps
 FUSE_DIR := $(DEPS_DIR)/fuse
+SQLITE_DIR := $(DEPS_DIR)/sqlite
+
 SRC_DIR := src
 INCLUDE_DIR := $(PROJECT_DIR)include
 BUILD_DIR := $(PROJECT_DIR)build
 TESTS_DIR := $(PROJECT_DIR)tests
 
-CFLAGS := -I$(FUSE_DIR)/include -I$(INCLUDE_DIR) -Wall -Werror -g \
+CFLAGS := -I$(FUSE_DIR)/include -I$(SQLITE_DIR) -I$(INCLUDE_DIR) -Wall -Werror -g \
 		   -fdiagnostics-color=always 
 LDFLAGS := -L$(FUSE_DIR)/lib -L$(BUILD_DIR) \
 		   -Wl,-rpath=$(abspath $(FUSE_DIR)/lib)
