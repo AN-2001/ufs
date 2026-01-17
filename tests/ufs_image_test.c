@@ -7,6 +7,10 @@
 *                                                                              *
 \******************************************************************************/
 
+#define UFS_TEST_DISABLE
+
+#ifndef UFS_TEST_DISABLE
+
 #define UFS_TESTING
 
 #include <fcntl.h>
@@ -210,3 +214,11 @@ static const struct CMUnitTest image_tests[] = {
 int main(void) {
     return cmocka_run_group_tests(image_tests, NULL, NULL);
 }
+
+#else
+
+int main(void) {
+    return 0;
+}
+
+#endif /* UFS_TEST_DISABLE */

@@ -22,22 +22,27 @@
 #define UFS_DIRECTORY (".ufs")
 #define UFS_IMAGE_FILE UFS_DIRECTORY ("ufs_index")
 
-#define UFS_NO_ERROR (0)
-#define UFS_IMAGE_DOES_NOT_EXIST (-1)
-#define UFS_IMAGE_IS_CORRUPTED (-2)
-#define UFS_VERSION_MISMATCH (-3)
-#define UFS_BAD_CALL (-4)
-#define UFS_AREA_ALREADY_EXISTS (-5)
-#define UFS_OUT_OF_MEMORY (-6)
-#define UFS_AREA_DOES_NOT_EXIST (-7)
-#define UFS_FILE_ALREADY_EXISTS (-8)
-#define UFS_FILE_DOES_NOT_EXIST (-9)
-#define UFS_MAPPING_ALREADY_EXISTS (-10)
-#define UFS_CANT_CREATE_FILE (-11)
-#define UFS_UNKNOWN_ERROR (-12)
-#define UFS_IMAGE_TOO_SMALL (-12)
-#define UFS_IMAGE_COULD_NOT_SYNC (-13)
-#define UFS_IMAGE_BAD_SIZE (-14)
+enum {
+    UFS_NO_ERROR = 0,
+    UFS_IMAGE_DOES_NOT_EXIST,
+    UFS_IMAGE_IS_CORRUPTED,
+    UFS_VERSION_MISMATCH,
+    UFS_BAD_CALL,
+    UFS_AREA_ALREADY_EXISTS,
+    UFS_OUT_OF_MEMORY,
+    UFS_AREA_DOES_NOT_EXIST,
+    UFS_FILE_ALREADY_EXISTS,
+    UFS_FILE_DOES_NOT_EXIST,
+    UFS_MAPPING_ALREADY_EXISTS,
+    UFS_CANT_CREATE_FILE,
+    UFS_UNKNOWN_ERROR,
+    UFS_IMAGE_TOO_SMALL,
+    UFS_IMAGE_COULD_NOT_SYNC,
+    UFS_IMAGE_BAD_SIZE,
+};
+
+typedef uint8_t ufsStatusType;
+extern ufsStatusType ufsErrno;
 
 enum ufsTyepesEnum {
     UFS_TYPES_FILE = 0,
@@ -49,10 +54,5 @@ enum ufsTyepesEnum {
 
 typedef int64_t ufsIdType;
 
-/* Errors are defined as negative, so that functions that could return        */
-/* ufsIdType could also return errors.                                        */
-typedef int64_t ufsStatusType;
-
-extern ufsStatusType ufsErrno;
 
 #endif /* UFS_DEFS_H */
