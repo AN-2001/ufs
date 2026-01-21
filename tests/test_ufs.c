@@ -341,6 +341,50 @@ static void test_ufs_get_file_exists_in_different_directory( void **state )
 }
 /* ########################################################################## */
 
+/* ufsGetArea                                                                 */
+static void test_ufs_get_area_bad_args( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType id;
+
+    ufsStruct = *state;
+
+    id = ufsGetArea( NULL, "test" );
+    ASSERT_UFS_ERROR( id, UFS_BAD_CALL );
+
+    id = ufsGetArea( ufsStruct -> ufs, NULL );
+    ASSERT_UFS_ERROR( id, UFS_BAD_CALL );
+
+}
+
+static void test_ufs_get_area( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType id0, id1;
+
+    ufsStruct = *state;
+
+    id0 = ufsAddArea( ufsStruct -> ufs, "test" );
+    ASSERT_UFS_NO_ERROR( id0 );
+
+    id1 = ufsGetArea( ufsStruct -> ufs, "test" );
+    ASSERT_UFS_NO_ERROR( id1 );
+
+    assert_int_equal( id0, id1 );
+}
+
+static void test_ufs_get_area_does_not_exist( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType id;
+
+    ufsStruct = *state;
+
+    id = ufsGetArea( ufsStruct -> ufs, "test" );
+    ASSERT_UFS_ERROR( id, UFS_DOES_NOT_EXIST );
+}
+/* ########################################################################## */
+
 static const struct CMUnitTest image_tests[] = {
 
     cmocka_unit_test( test_ufs_init ),
@@ -378,6 +422,12 @@ static const struct CMUnitTest image_tests[] = {
     cmocka_unit_test_setup_teardown( test_ufs_get_file_does_not_exist, ufsGetInstance, ufsCleanup ),
     cmocka_unit_test_setup_teardown( test_ufs_get_file_directory_does_not_exist, ufsGetInstance, ufsCleanup ),
     cmocka_unit_test_setup_teardown( test_ufs_get_file_exists_in_different_directory, ufsGetInstance, ufsCleanup ),
+    /* ====================================================================== */
+
+    /* ufsGetArea tests.                                                      */
+    cmocka_unit_test_setup_teardown( test_ufs_get_area_bad_args, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_get_area, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_get_area_does_not_exist, ufsGetInstance, ufsCleanup ),
     /* ====================================================================== */
 
 };
