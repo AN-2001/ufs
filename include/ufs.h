@@ -128,6 +128,7 @@
     UFS_X( UFS_DIRECTORY_IS_NOT_EMPTY ) \
     UFS_X( UFS_CANNOT_RESOLVE_STORAGE ) \
     UFS_X( UFS_ILLEGAL_AREA_NAME ) \
+    UFS_X( UFS_DIRECTORY_DOES_NOT_EXIST ) \
     UFS_X( UFS_UNKNOWN_ERROR )
 
 enum {
@@ -227,7 +228,7 @@ ufsIdentifierType ufsAddDirectory( ufsType ufs,
 *  Possible errors:                                                            *
 *   -UFS_BAD_CALL: The function received bad arguments.                        *
 *   -UFS_ALREADY_EXISTS: The file already exists.                              *
-*   -UFS_DOES_NOT_EXIST: The specified directory does not exist.               *
+*   -UFS_DIRECTORY_DOES_NOT_EXIST: The specified directory does not exist.     *
 *   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
 *                                                                              *
 * Parameters                                                                   *
@@ -302,7 +303,8 @@ ufsIdentifierType ufsGetDirectory( ufsType ufs,
 *                                                                              *
 *  Possible errors:                                                            *
 *   -UFS_BAD_CALL: The function received bad arguments.                        *
-*   -UFS_DOES_NOT_EXIST: The file or directory do not exist in ufs.            *
+*   -UFS_DOES_NOT_EXIST: The specified file does not eixst.                    *
+*   -UFS_DIRECTORY_DOES_NOT_EXIST: The specified directory does not exist.     *
 *   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
 *                                                                              *
 * Parameters                                                                   *

@@ -122,7 +122,7 @@ static void test_ufs_add_file_no_directory( void **state )
     ufsStruct = *state;
 
     id = ufsAddFile( ufsStruct -> ufs, 1, "testName" );
-    ASSERT_UFS_ERROR( id, UFS_DOES_NOT_EXIST );
+    ASSERT_UFS_ERROR( id, UFS_DIRECTORY_DOES_NOT_EXIST );
 }
 
 static void test_ufs_add_file_duplicate( void **state )
@@ -259,6 +259,88 @@ static void test_ufs_get_directory_does_not_exist( void **state )
 }
 /* ########################################################################## */
 
+/* ufsGetFile                                                                 */
+static void test_ufs_get_file_bad_args( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType id;
+
+    ufsStruct = *state;
+    id = ufsGetFile( NULL, 1, "test" );
+    ASSERT_UFS_ERROR( id, UFS_BAD_CALL );
+
+    id = ufsGetFile( ufsStruct -> ufs, -1, "test" );
+    ASSERT_UFS_ERROR( id, UFS_BAD_CALL );
+
+    id = ufsGetFile( ufsStruct -> ufs, 1, NULL );
+    ASSERT_UFS_ERROR( id, UFS_BAD_CALL );
+}
+
+static void test_ufs_get_file( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType id0, dirId, id1;
+
+    ufsStruct = *state;
+
+    dirId = ufsAddDirectory( ufsStruct -> ufs, "testDir" );
+    ASSERT_UFS_NO_ERROR( dirId );
+
+    id0 = ufsAddFile( ufsStruct -> ufs, dirId, "testFile" );
+    ASSERT_UFS_NO_ERROR( id0 );
+
+    id1 = ufsGetFile( ufsStruct -> ufs, dirId, "testFile" );
+    ASSERT_UFS_NO_ERROR( id1 );
+
+    assert_int_equal( id0, id1 );
+}
+
+static void test_ufs_get_file_does_not_exist( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType id, dirId;
+
+    ufsStruct = *state;
+
+    dirId = ufsAddDirectory( ufsStruct -> ufs, "testDir" );
+    ASSERT_UFS_NO_ERROR( dirId );
+
+    id = ufsGetFile( ufsStruct -> ufs, dirId, "testFile" );
+    ASSERT_UFS_ERROR( id, UFS_DOES_NOT_EXIST );
+}
+
+static void test_ufs_get_file_directory_does_not_exist( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType id;
+
+    ufsStruct = *state;
+
+    id = ufsGetFile( ufsStruct -> ufs, 1, "testFile" );
+    ASSERT_UFS_ERROR( id, UFS_DIRECTORY_DOES_NOT_EXIST );
+}
+
+static void test_ufs_get_file_exists_in_different_directory( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType id0, id1, dirId0, dirId1;
+
+    ufsStruct = *state;
+
+    dirId0 = ufsAddDirectory( ufsStruct -> ufs, "testDir0" );
+    ASSERT_UFS_NO_ERROR( dirId0 );
+
+    dirId1 = ufsAddDirectory( ufsStruct -> ufs, "testDir1" );
+    ASSERT_UFS_NO_ERROR( dirId1 );
+
+    id0 = ufsAddFile( ufsStruct -> ufs, dirId0, "testFile" );
+    ASSERT_UFS_NO_ERROR( id0 );
+
+    id1 = ufsGetFile( ufsStruct -> ufs, dirId1, "testFile" );
+    ASSERT_UFS_ERROR( id1, UFS_DOES_NOT_EXIST );
+}
+/* ########################################################################## */
+
 static const struct CMUnitTest image_tests[] = {
 
     cmocka_unit_test( test_ufs_init ),
@@ -290,7 +372,14 @@ static const struct CMUnitTest image_tests[] = {
     cmocka_unit_test_setup_teardown( test_ufs_get_directory_does_not_exist, ufsGetInstance, ufsCleanup ),
     /* ====================================================================== */
 
-    /* TODO: add "add then get" tests.                                        */
+    /* ufsGetFile tests.                                                      */
+    cmocka_unit_test_setup_teardown( test_ufs_get_file_bad_args, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_get_file, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_get_file_does_not_exist, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_get_file_directory_does_not_exist, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_get_file_exists_in_different_directory, ufsGetInstance, ufsCleanup ),
+    /* ====================================================================== */
+
 };
 
 int main( void ) {
