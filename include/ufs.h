@@ -118,25 +118,26 @@
 #include <sys/types.h>
 
 #define UFS_STATUS_LIST \
-    UFS_X(UFS_NO_ERROR) \
-    UFS_X(UFS_OUT_OF_MEMORY) \
-    UFS_X(UFS_BAD_CALL) \
-    UFS_X(UFS_VIEW_CONTAINS_DUPLICATES) \
-    UFS_X(UFS_INVALID_AREA_IN_VIEW) \
-    UFS_X(UFS_ALREADY_EXISTS) \
-    UFS_X(UFS_DOES_NOT_EXIST) \
-    UFS_X(UFS_DIRECTORY_IS_NOT_EMPTY) \
-    UFS_X(UFS_CANNOT_RESOLVE_STORAGE) \
-    UFS_X(UFS_UNKNOWN_ERROR)
+    UFS_X( UFS_NO_ERROR ) \
+    UFS_X( UFS_OUT_OF_MEMORY ) \
+    UFS_X( UFS_BAD_CALL ) \
+    UFS_X( UFS_VIEW_CONTAINS_DUPLICATES ) \
+    UFS_X( UFS_INVALID_AREA_IN_VIEW ) \
+    UFS_X( UFS_ALREADY_EXISTS ) \
+    UFS_X( UFS_DOES_NOT_EXIST ) \
+    UFS_X( UFS_DIRECTORY_IS_NOT_EMPTY ) \
+    UFS_X( UFS_CANNOT_RESOLVE_STORAGE ) \
+    UFS_X( UFS_ILLEGAL_AREA_NAME ) \
+    UFS_X( UFS_UNKNOWN_ERROR )
 
 enum {
-#define UFS_X(name) name,
+#define UFS_X( name ) name,
     UFS_STATUS_LIST
 #undef UFS_X
 };
 
 const char *ufsStatusStrings[] = {
-#define UFS_X(name) #name,
+#define UFS_X( name ) #name,
     UFS_STATUS_LIST
 #undef UFS_X
 };
@@ -253,6 +254,7 @@ ufsIdentifierType ufsAddFile( ufsType ufs,
 *  Possible errors:                                                            *
 *   -UFS_BAD_CALL: The function received bad arguments.                        *
 *   -UFS_ALREADY_EXISTS: The area already exists.                              *
+*   -UFS_ILLEGAL_AREA_NAME: an illegal area name (e.e "BASE") was provided.    *
 *   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
 *                                                                              *
 * Parameters                                                                   *

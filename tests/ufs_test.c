@@ -43,6 +43,7 @@ static void test_ufs_init( void **state ) {
     assert_int_equal( ufsErrno, UFS_NO_ERROR );
 }
 
+/* ufsAddDirectory tests                                                      */
 static void test_ufs_add_directory_bad_args( void **state ) {
     struct ufsTestUfsStateStruct *ufsStruct;
     ufsIdentifierType id;
@@ -79,8 +80,9 @@ static void test_ufs_add_directory_duplicate( void **state ) {
     id = ufsAddDirectory( ufsStruct -> ufs, "testDir" );
     ASSERT_UFS_ERROR( id, UFS_ALREADY_EXISTS );
 }
+/* ########################################################################## */
 
-
+/* ufsAddFile tests                                                           */
 static void test_ufs_add_file_bad_args( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
@@ -162,6 +164,59 @@ static void test_ufs_add_file_same_name_different_directory( void **state )
 
     assert_int_not_equal( id0, id1 );
 }
+/* ########################################################################## */
+
+/* ufsAddArea tests                                                           */
+static void test_ufs_add_area_bad_args( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType id;
+
+    ufsStruct = *state;
+
+    id = ufsAddArea( NULL, "test" );
+    ASSERT_UFS_ERROR( id, UFS_BAD_CALL );
+
+    id = ufsAddArea( ufsStruct -> ufs, NULL );
+    ASSERT_UFS_ERROR( id, UFS_BAD_CALL );
+}
+
+static void test_ufs_add_area( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType id;
+
+    ufsStruct = *state;
+
+    id = ufsAddArea( ufsStruct -> ufs, "test" );
+    ASSERT_UFS_NO_ERROR( id );
+}
+
+static void test_ufs_add_area_duplicate( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType id;
+
+    ufsStruct = *state;
+
+    id = ufsAddArea( ufsStruct -> ufs, "test" );
+    ASSERT_UFS_NO_ERROR( id );
+
+    id = ufsAddArea( ufsStruct -> ufs, "test" );
+    ASSERT_UFS_ERROR( id, UFS_ALREADY_EXISTS );
+}
+
+static void test_ufs_add_area_illegal_name( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType id;
+
+    ufsStruct = *state;
+
+    id = ufsAddArea( ufsStruct -> ufs, "BASE" );
+    ASSERT_UFS_ERROR( id, UFS_ILLEGAL_AREA_NAME );
+}
+/* ########################################################################## */
 
 static const struct CMUnitTest image_tests[] = {
 
@@ -179,6 +234,13 @@ static const struct CMUnitTest image_tests[] = {
     cmocka_unit_test_setup_teardown( test_ufs_add_file_duplicate, ufsGetInstance, ufsCleanup ),
     cmocka_unit_test_setup_teardown( test_ufs_add_file_no_directory, ufsGetInstance, ufsCleanup ),
     cmocka_unit_test_setup_teardown( test_ufs_add_file_same_name_different_directory, ufsGetInstance, ufsCleanup ),
+    /* ====================================================================== */
+
+    /* ufsAddArea tests.                                                      */
+    cmocka_unit_test_setup_teardown( test_ufs_add_area_bad_args, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_add_area, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_add_area_duplicate, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_add_area_illegal_name, ufsGetInstance, ufsCleanup ),
     /* ====================================================================== */
 
     /* TODO: add "add then get" tests.                                        */
