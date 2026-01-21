@@ -24,7 +24,7 @@ LDFLAGS :=  -L$(CMOCKA_DIR)/lib -L$(FUSE_DIR)/lib -L$(BUILD_DIR) \
 LDLIBS := -lcmocka -lfuse3 -lufs -lpthread -ldl
 
 # project names.
-TESTS := ufs_image_test ufs_header_test
+TESTS := test_ufs
 
 # Place compilation targets here.
 OBJECTS := $(BUILD_DIR)/tests/utils.o
@@ -38,6 +38,10 @@ ufs_header_test: $(BUILD_DIR)/tests/ufs_header_test.o $(OBJECTS)
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $(BUILD_DIR)/tests/$@
 
 ufs_image_test: $(BUILD_DIR)/tests/ufs_image_test.o $(OBJECTS) 
+	@mkdir -p $(BUILD_DIR)/tests
+	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $(BUILD_DIR)/tests/$@
+
+test_ufs: $(BUILD_DIR)/tests/test_ufs.o $(OBJECTS) 
 	@mkdir -p $(BUILD_DIR)/tests
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $(BUILD_DIR)/tests/$@
 

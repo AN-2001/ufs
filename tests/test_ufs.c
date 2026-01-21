@@ -1,5 +1,5 @@
 /******************************************************************************\
-*  ufs_test.c                                                                  *
+*  test_ufs.c                                                                  *
 *                                                                              *
 *  Test suite for ufs implementation.                                          *
 *                                                                              *
@@ -218,6 +218,47 @@ static void test_ufs_add_area_illegal_name( void **state )
 }
 /* ########################################################################## */
 
+/* ufsGetDirectory                                                            */
+static void test_ufs_get_directory_bad_args( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType id;
+
+    ufsStruct = *state;
+    id = ufsGetDirectory( NULL , "test" );
+    ASSERT_UFS_ERROR( id, UFS_BAD_CALL );
+
+    id = ufsGetDirectory( ufsStruct -> ufs , NULL );
+    ASSERT_UFS_ERROR( id, UFS_BAD_CALL );
+}
+
+static void test_ufs_get_directory( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType id0, id1;
+
+    ufsStruct = *state;
+    id0 = ufsAddDirectory( ufsStruct -> ufs , "test" );
+    ASSERT_UFS_NO_ERROR( id0 );
+
+    id1 = ufsGetDirectory( ufsStruct -> ufs , "test" );
+    ASSERT_UFS_NO_ERROR( id1 );
+
+    assert_int_equal( id0, id1 );
+}
+
+static void test_ufs_get_directory_does_not_exist( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType id;
+
+    ufsStruct = *state;
+
+    id = ufsGetDirectory( ufsStruct -> ufs , "test" );
+    ASSERT_UFS_ERROR( id, UFS_DOES_NOT_EXIST );
+}
+/* ########################################################################## */
+
 static const struct CMUnitTest image_tests[] = {
 
     cmocka_unit_test( test_ufs_init ),
@@ -241,6 +282,12 @@ static const struct CMUnitTest image_tests[] = {
     cmocka_unit_test_setup_teardown( test_ufs_add_area, ufsGetInstance, ufsCleanup ),
     cmocka_unit_test_setup_teardown( test_ufs_add_area_duplicate, ufsGetInstance, ufsCleanup ),
     cmocka_unit_test_setup_teardown( test_ufs_add_area_illegal_name, ufsGetInstance, ufsCleanup ),
+    /* ====================================================================== */
+
+    /* ufsGetDirectory tests.                                                 */
+    cmocka_unit_test_setup_teardown( test_ufs_get_directory_bad_args, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_get_directory, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_get_directory_does_not_exist, ufsGetInstance, ufsCleanup ),
     /* ====================================================================== */
 
     /* TODO: add "add then get" tests.                                        */
