@@ -219,6 +219,10 @@ ufsIdentifierType ufsAddDirectory( ufsType ufs,
 *                                                                              *
 *  Adds a file to ufs.                                                         *
 *                                                                              *
+*  Note that file names are not global, a directory asks as the scope for      *
+*  the name. Meaning that the same name may be reused under different directo- *
+*  ies.                                                                        *
+*                                                                              *
 *  Possible errors:                                                            *
 *   -UFS_BAD_CALL: The function received bad arguments.                        *
 *   -UFS_ALREADY_EXISTS: The file already exists.                              *
