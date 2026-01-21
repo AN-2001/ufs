@@ -385,6 +385,24 @@ static void test_ufs_get_area_does_not_exist( void **state )
 }
 /* ########################################################################## */
 
+/* ufsRemoveArea                                                              */
+static void test_ufs_remove_directory_bad_args( void **state )
+{
+
+}
+
+static void test_ufs_remove_directory( void **state )
+{
+
+}
+
+static void test_ufs_remove_directory_does_not_exist( void **state )
+{
+
+}
+
+/* ########################################################################## */
+
 static const struct CMUnitTest image_tests[] = {
 
     cmocka_unit_test( test_ufs_init ),
@@ -428,6 +446,12 @@ static const struct CMUnitTest image_tests[] = {
     cmocka_unit_test_setup_teardown( test_ufs_get_area_bad_args, ufsGetInstance, ufsCleanup ),
     cmocka_unit_test_setup_teardown( test_ufs_get_area, ufsGetInstance, ufsCleanup ),
     cmocka_unit_test_setup_teardown( test_ufs_get_area_does_not_exist, ufsGetInstance, ufsCleanup ),
+    /* ====================================================================== */
+
+    /* ufsRemoveDirectory tests.                                              */
+    cmocka_unit_test_setup_teardown( test_ufs_remove_directory_bad_args, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_remove_directory, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_remove_directory_does_not_exist, ufsGetInstance, ufsCleanup ),
     /* ====================================================================== */
 
 };

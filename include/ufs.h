@@ -108,7 +108,34 @@
 /*   * An explicit mapping added view ufsAddMapping                           */
 /*   * An implicit mapping, if a file does not appear in an explicit mapping  */
 /*     then it is implicitly mapped to BASE.                                  */
+/*     Note, that the implicit mapping is "logical" in the sense that its a   */
+/*     system-wide system assumption that does not need to be stored as state */
 /*                                                                            */
+/* About removal semantics: Once a storage or area or mapping is removed in   */
+/* ufs then the ufs state should be as if that storage or area don't exist.   */
+/* * A subsequent removal would yield "UFS_DOES_NOT_EXIST".                   */
+/* * A get/probe would yield "UFS_DOES_NOT_EXIST".                            */
+/* * An add would succeed.                                                    */
+/* Note: ufs has a zero tolerance stance on side effects when it comes to     */
+/* removal. This can be fully described by the following rules:               */
+/* * A directory can't be removed if it contains files, or is references in a */
+/*   mapping.                                                                 */
+/* * A file can't be removed if it's referenced in a mapping.                 */
+/* * An area can't be removed if it exists in a mapping.                      */
+/*                                                                            */
+/* Mapping can be removed freely as no other ufs entity depends on them.      */
+/* ufs does not view "views" as state, meaning that if an area referenced in  */
+/* a view is removed, it should treated as a "does not exist" case.           */
+/*                                                                            */
+/* Dependency graph for reference (an edge encodes a "depends" relation ):    */
+/*                                                                            */
+/*           -----------------------                                          */
+/*          /                       \                                         */
+/* mapping -------> directory -------> file                                   */
+/*          \                                                                 */
+/*           -----> area                                                      */
+/*                                                                            */
+
 
 
 #define UFS_VIEW_MAX_SIZE (1024)
@@ -117,18 +144,20 @@
 #include <stdint.h>
 #include <sys/types.h>
 
-#define UFS_STATUS_LIST \
-    UFS_X( UFS_NO_ERROR ) \
-    UFS_X( UFS_OUT_OF_MEMORY ) \
-    UFS_X( UFS_BAD_CALL ) \
-    UFS_X( UFS_VIEW_CONTAINS_DUPLICATES ) \
-    UFS_X( UFS_INVALID_AREA_IN_VIEW ) \
-    UFS_X( UFS_ALREADY_EXISTS ) \
-    UFS_X( UFS_DOES_NOT_EXIST ) \
-    UFS_X( UFS_DIRECTORY_IS_NOT_EMPTY ) \
-    UFS_X( UFS_CANNOT_RESOLVE_STORAGE ) \
-    UFS_X( UFS_ILLEGAL_AREA_NAME ) \
-    UFS_X( UFS_DIRECTORY_DOES_NOT_EXIST ) \
+#define UFS_STATUS_LIST                                                        \
+    UFS_X( UFS_NO_ERROR )                                                      \
+    UFS_X( UFS_OUT_OF_MEMORY )                                                 \
+    UFS_X( UFS_BAD_CALL )                                                      \
+    UFS_X( UFS_VIEW_CONTAINS_DUPLICATES )                                      \
+    UFS_X( UFS_INVALID_AREA_IN_VIEW )                                          \
+    UFS_X( UFS_ALREADY_EXISTS )                                                \
+    UFS_X( UFS_DOES_NOT_EXIST )                                                \
+    UFS_X( UFS_DIRECTORY_IS_NOT_EMPTY )                                        \
+    UFS_X( UFS_CANNOT_RESOLVE_STORAGE )                                        \
+    UFS_X( UFS_ILLEGAL_AREA_NAME )                                             \
+    UFS_X( UFS_DIRECTORY_DOES_NOT_EXIST )                                      \
+    UFS_X( UFS_EXISTS_IN_A_MAPPING )                                           \
+    UFS_X( UFS_MAPPING_DOES_NOT_EXIST )                                        \
     UFS_X( UFS_UNKNOWN_ERROR )
 
 enum {
@@ -255,7 +284,7 @@ ufsIdentifierType ufsAddFile( ufsType ufs,
 *  Possible errors:                                                            *
 *   -UFS_BAD_CALL: The function received bad arguments.                        *
 *   -UFS_ALREADY_EXISTS: The area already exists.                              *
-*   -UFS_ILLEGAL_AREA_NAME: an illegal area name (e.e "BASE") was provided.    *
+*   -UFS_ILLEGAL_AREA_NAME: An illegal area name (e.e "BASE") was provided.    *
 *   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
 *                                                                              *
 * Parameters                                                                   *
@@ -271,6 +300,32 @@ ufsIdentifierType ufsAddFile( ufsType ufs,
 \******************************************************************************/
 ufsIdentifierType ufsAddArea( ufsType ufs,
                               const char *name );
+
+/******************************************************************************\
+* ufsAddMapping                                                                *
+*                                                                              *
+*  Adds a ufs mapping in the form of (area, storage).                          *
+*                                                                              *
+*  Possible errors:                                                            *
+*   -UFS_BAD_CALL: The function received bad arguments.                        *
+*   -UFS_DOES_NOT_EXIST: The area or the storage do not exist in ufs.          *
+*   -UFS_ALREADY_EXISTS: The mapping already exists in ufs.                    *
+*   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
+*                                                                              *
+* Parameters                                                                   *
+*                                                                              *
+*  -ufs: The ufs instance, must not be NULL.                                   *
+*  -area: the area's unique identifier, must be greater than 0.                *
+*  -storage: the storage's unique identifier, must be greater than 0.          *
+*                                                                              *
+* Return                                                                       *
+*                                                                              *
+*  -ufsStatusType: The status of this call, errno is also set.                 *
+*                                                                              *
+\******************************************************************************/
+ufsStatusType ufsAddMapping( ufsType ufs,
+                             ufsIdentifierType area,
+                             ufsIdentifierType storage );
 
 /******************************************************************************\
 * ufsGetDirectory                                                              *
@@ -303,7 +358,7 @@ ufsIdentifierType ufsGetDirectory( ufsType ufs,
 *                                                                              *
 *  Possible errors:                                                            *
 *   -UFS_BAD_CALL: The function received bad arguments.                        *
-*   -UFS_DOES_NOT_EXIST: The specified file does not eixst.                    *
+*   -UFS_DOES_NOT_EXIST: The specified file does not exist.                    *
 *   -UFS_DIRECTORY_DOES_NOT_EXIST: The specified directory does not exist.     *
 *   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
 *                                                                              *
@@ -321,7 +376,7 @@ ufsIdentifierType ufsGetDirectory( ufsType ufs,
 \******************************************************************************/
 ufsIdentifierType ufsGetFile( ufsType ufs,
                               ufsIdentifierType directory,
-                              char *name );
+                              const char *name );
 
 /******************************************************************************\
 * ufsGetArea                                                                   *
@@ -348,6 +403,32 @@ ufsIdentifierType ufsGetArea( ufsType ufs,
                               const char *name );
 
 /******************************************************************************\
+* ufsProbeMapping                                                              *
+*                                                                              *
+*  Probes ufs for a mapping.                                                   *
+*                                                                              *
+*  Possible errors:                                                            *
+*   -UFS_BAD_CALL: The function received bad arguments.                        *
+*   -UFS_DOES_NOT_EXIST: The area or the storage do not exist in ufs.          *
+*   -UFS_MAPPING_DOES_NOT_EXIST: The mapping does not exist.                   *
+*   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
+*                                                                              *
+* Parameters                                                                   *
+*                                                                              *
+*  -ufs: The ufs instance, must not be NULL.                                   *
+*  -area: the area's unique identifier, must be greater than 0.                *
+*  -storage: the storage's unique identifier, must be greater than 0.          *
+*                                                                              *
+* Return                                                                       *
+*                                                                              *
+*  -ufsStatusType: The status of this call, errno is also set.                 *
+*                                                                              *
+\******************************************************************************/
+ufsStatusType ufsProbeMapping( ufsType ufs,
+                               ufsIdentifierType area,
+                               ufsIdentifierType storage );
+
+/******************************************************************************\
 * ufsRemoveDirectory                                                           *
 *                                                                              *
 *  Removes a directory from ufs.                                               *
@@ -359,6 +440,8 @@ ufsIdentifierType ufsGetArea( ufsType ufs,
 *   -UFS_DOES_NOT_EXIST: The directory does not exist in ufs.                  *
 *   -UFS_DIRECTORY_IS_NOT_EMPTY: The directory is not empty and can't be       *
 *                                removed.                                      *
+*   -UFS_EXISTS_IN_A_MAPPING: The directory is referenced in a ufs mapping     *
+*                             and cannot be removed.                           *
 *   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
 *                                                                              *
 * Parameters                                                                   *
@@ -382,6 +465,8 @@ ufsStatusType ufsRemoveDirectory( ufsType ufs,
 *  Possible errors:                                                            *
 *   -UFS_BAD_CALL: The function received bad arguments.                        *
 *   -UFS_DOES_NOT_EXIST: The file does not exist in ufs.                       *
+*   -UFS_EXISTS_IN_A_MAPPING: The file is referenced in a ufs mapping and can- *
+*                             not be removed.                                  *
 *   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
 *                                                                              *
 * Parameters                                                                   *
@@ -401,11 +486,12 @@ ufsStatusType ufsRemoveFile( ufsType ufs,
 * ufsRemoveArea                                                                *
 *                                                                              *
 *  Removes a area from ufs.                                                    *
-*  Removing an area results in all its mappings getting removed as well.       *
 *                                                                              *
 *  Possible errors:                                                            *
 *   -UFS_BAD_CALL: The function received bad arguments.                        *
 *   -UFS_DOES_NOT_EXIST: The area does not exist in ufs.                       *
+*   -UFS_EXISTS_IN_A_MAPPING: The area is referenced in a ufs mapping and can- *
+*                             not be removed.                                  *
 *   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
 *                                                                              *
 * Parameters                                                                   *
@@ -422,14 +508,14 @@ ufsStatusType ufsRemoveArea( ufsType ufs,
                              ufsIdentifierType area );
 
 /******************************************************************************\
-* ufsAddMapping                                                                *
+* ufsRemoveMapping                                                             *
 *                                                                              *
-*  Adds a ufs mapping in the form of (area, storage).                          *
+*  Removes an (area, storage) mapping from ufs.                                *
 *                                                                              *
 *  Possible errors:                                                            *
 *   -UFS_BAD_CALL: The function received bad arguments.                        *
-*   -UFS_DOES_NOT_EXIST: The area or the storage do not exist in ufs.          *
-*   -UFS_ALREADY_EXISTS: The mapping already exists in ufs.                    *
+*   -UFS_DOES_NOT_EXIST: The area or the storage or the (area, storage) mappi- *
+*                        ng do not exist in ufs.                               *
 *   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
 *                                                                              *
 * Parameters                                                                   *
@@ -443,35 +529,9 @@ ufsStatusType ufsRemoveArea( ufsType ufs,
 *  -ufsStatusType: The status of this call, errno is also set.                 *
 *                                                                              *
 \******************************************************************************/
-ufsStatusType ufsAddMapping( ufsType ufs,
-                             ufsIdentifierType area,
-                             ufsIdentifierType storage );
-
-/******************************************************************************\
-* ufsProbeMapping                                                              *
-*                                                                              *
-*  Probes ufs for mapping.                                                     *
-*                                                                              *
-*  Possible errors:                                                            *
-*   -UFS_BAD_CALL: The function received bad arguments.                        *
-*   -UFS_DOES_NOT_EXIST: The area or the storage do not exist in ufs.          *
-*   -UFS_MAPPING_DOES_NOT_EXIST: The mapping does not exist.                   *
-*   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
-*                                                                              *
-* Parameters                                                                   *
-*                                                                              *
-*  -ufs: The ufs instance, must not be NULL.                                   *
-*  -area: the area's unique identifier, must be greater than 0.                *
-*  -storage: the storage's unique identifier, must be greater than 0.          *
-*                                                                              *
-* Return                                                                       *
-*                                                                              *
-*  -ufsStatusType: The status of this call, errno is also set.                 *
-*                                                                              *
-\******************************************************************************/
-ufsStatusType ufsProbeMapping( ufsType ufs,
-                               ufsIdentifierType area,
-                               ufsIdentifierType storage );
+ufsStatusType ufsRemoveMapping( ufsType ufs,
+                                ufsIdentifierType area,
+                                ufsIdentifierType storage );
 
 /******************************************************************************\
 * ufsResolveStorageInView                                                      *
