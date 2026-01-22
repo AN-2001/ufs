@@ -422,6 +422,10 @@ ufsIdentifierType ufsGetArea( ufsType ufs,
 * Return                                                                       *
 *                                                                              *
 *  -ufsStatusType: The status of this call, errno is also set.                 *
+*  Note, if the mapping does not exist UFS_MAPPING_DOES_NOT_EXIST is returned  *
+*  and is set in ufsErrno, this is not a traditional error as it's the result  *
+*  of the query.                                                               *
+*  If the mapping exists UFS_NO_ERROR is returned and set in ufsErrno.         *
 *                                                                              *
 \******************************************************************************/
 ufsStatusType ufsProbeMapping( ufsType ufs,

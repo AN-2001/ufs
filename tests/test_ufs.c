@@ -482,6 +482,95 @@ static void test_ufs_get_area_does_not_exist( void **state )
 }
 /* ########################################################################## */
 
+/* ufsProbeMapping                                                            */
+static void test_ufs_probe_mapping_bad_args( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsStatusType status;
+
+    ufsStruct = *state;
+
+    status = ufsAddMapping( NULL, 1, 1 );
+    ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
+
+    status = ufsAddMapping( ufsStruct -> ufs, -1, 1 );
+    ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
+
+    status = ufsAddMapping( ufsStruct -> ufs, 1, -1 );
+    ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
+
+}
+
+static void test_ufs_probe_mapping( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsStatusType status0, status1, areaId, dirId, fileId;
+
+    ufsStruct = *state;
+
+    areaId = ufsAddArea( ufsStruct -> ufs, "testArea" );
+    ASSERT_UFS_NO_ERROR( areaId );
+
+    dirId = ufsAddDirectory( ufsStruct -> ufs, "testDirectory" );
+    ASSERT_UFS_NO_ERROR( dirId );
+
+    fileId = ufsAddFile( ufsStruct -> ufs, dirId, "testFile" );
+    ASSERT_UFS_NO_ERROR( fileId );
+
+    status0 = ufsAddMapping( ufsStruct -> ufs, areaId, fileId );
+    ASSERT_UFS_STATUS_NO_ERROR( status0 );
+
+    status1 = ufsProbeMapping( ufsStruct -> ufs, areaId, fileId );
+    ASSERT_UFS_STATUS_NO_ERROR( status1 );
+
+}
+
+static void test_ufs_probe_mapping_area_does_not_exist( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsStatusType status, dirId, fileId;
+
+    ufsStruct = *state;
+
+    dirId = ufsAddDirectory( ufsStruct -> ufs, "testDirectory" );
+    ASSERT_UFS_NO_ERROR( dirId );
+
+    fileId = ufsAddFile( ufsStruct -> ufs, dirId, "testFile" );
+    ASSERT_UFS_NO_ERROR( fileId );
+
+    status = ufsProbeMapping( ufsStruct -> ufs, 1, fileId );
+    ASSERT_UFS_STATUS( status, UFS_DOES_NOT_EXIST );
+
+}
+
+static void test_ufs_probe_mapping_file_does_not_exist( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsStatusType status, areaId;
+
+    ufsStruct = *state;
+
+    areaId = ufsAddArea( ufsStruct -> ufs, "testArea" );
+    ASSERT_UFS_NO_ERROR( areaId );
+
+
+    status = ufsProbeMapping( ufsStruct -> ufs, areaId, 1 );
+    ASSERT_UFS_STATUS( status, UFS_DOES_NOT_EXIST );
+
+}
+
+static void test_ufs_probe_mapping_mapping_does_not_exist( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsStatusType status;
+
+    ufsStruct = *state;
+
+    status = ufsProbeMapping( ufsStruct -> ufs, 1, 1 );
+    ASSERT_UFS_STATUS( status, UFS_MAPPING_DOES_NOT_EXIST );
+}
+/* ########################################################################## */
+
 static const struct CMUnitTest image_tests[] = {
 
     cmocka_unit_test( test_ufs_init ),
@@ -533,6 +622,14 @@ static const struct CMUnitTest image_tests[] = {
     cmocka_unit_test_setup_teardown( test_ufs_get_area_bad_args, ufsGetInstance, ufsCleanup ),
     cmocka_unit_test_setup_teardown( test_ufs_get_area, ufsGetInstance, ufsCleanup ),
     cmocka_unit_test_setup_teardown( test_ufs_get_area_does_not_exist, ufsGetInstance, ufsCleanup ),
+    /* ====================================================================== */
+
+    /* ufsProbeMapping                                                        */
+    cmocka_unit_test_setup_teardown( test_ufs_probe_mapping_bad_args, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_probe_mapping, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_probe_mapping_area_does_not_exist, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_probe_mapping_file_does_not_exist, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_probe_mapping_mapping_does_not_exist, ufsGetInstance, ufsCleanup ),
     /* ====================================================================== */
 
 };
