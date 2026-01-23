@@ -870,6 +870,132 @@ static void test_ufs_remove_file_remove_then_get( void **state )
 }
 /* ########################################################################## */
 
+/* ufsRemoveArea                                                              */
+static void test_ufs_remove_area_bad_args( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsStatusType status;
+
+    ufsStruct = *state;
+
+    status = ufsRemoveArea( NULL, 1 );
+    ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
+
+    status = ufsRemoveArea( ufsStruct -> ufs, -1 );
+    ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
+
+}
+
+static void test_ufs_remove_area( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType areaId;
+    ufsStatusType status;
+
+    ufsStruct = *state;
+
+    areaId = ufsAddArea( ufsStruct -> ufs, "testArea" );
+    ASSERT_UFS_NO_ERROR( areaId );
+
+    status = ufsRemoveArea( ufsStruct -> ufs, areaId );
+    ASSERT_UFS_STATUS_NO_ERROR( status );
+}
+
+static void test_ufs_remove_area_does_not_exist( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsStatusType status;
+
+    ufsStruct = *state;
+
+    status = ufsRemoveArea( ufsStruct -> ufs, 1 );
+    ASSERT_UFS_STATUS( status, UFS_DOES_NOT_EXIST );
+
+}
+
+static void test_ufs_remove_area_exists_in_mapping( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType areaId, dirId, fileId;
+    ufsStatusType status;
+
+    ufsStruct = *state;
+
+    areaId = ufsAddArea( ufsStruct -> ufs, "testArea" );
+    ASSERT_UFS_NO_ERROR( areaId );
+
+    dirId = ufsAddDirectory( ufsStruct -> ufs, "testDirectory" );
+    ASSERT_UFS_NO_ERROR( dirId );
+
+    fileId = ufsAddFile( ufsStruct -> ufs, dirId, "testFile" );
+    ASSERT_UFS_NO_ERROR( fileId );
+
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId );
+    ASSERT_UFS_STATUS_NO_ERROR( status );
+
+    status = ufsRemoveArea( ufsStruct -> ufs, areaId );
+    ASSERT_UFS_STATUS( status, UFS_EXISTS_IN_EXPLICIT_MAPPING );
+
+}
+
+static void test_ufs_remove_area_double_remove( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType areaId;
+    ufsStatusType status;
+
+    ufsStruct = *state;
+
+    areaId = ufsAddArea( ufsStruct -> ufs, "testArea" );
+    ASSERT_UFS_NO_ERROR( areaId );
+
+    status = ufsRemoveArea( ufsStruct -> ufs, areaId );
+    ASSERT_UFS_STATUS_NO_ERROR( status );
+
+    status = ufsRemoveArea( ufsStruct -> ufs, areaId );
+    ASSERT_UFS_STATUS( status, UFS_DOES_NOT_EXIST );
+
+}
+
+static void test_ufs_remove_area_remove_then_add( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType areaId;
+    ufsStatusType status;
+
+    ufsStruct = *state;
+
+    areaId = ufsAddArea( ufsStruct -> ufs, "testArea" );
+    ASSERT_UFS_NO_ERROR( areaId );
+
+    status = ufsRemoveArea( ufsStruct -> ufs, areaId );
+    ASSERT_UFS_STATUS_NO_ERROR( status );
+
+    areaId = ufsAddArea( ufsStruct -> ufs, "testArea" );
+    ASSERT_UFS_NO_ERROR( areaId );
+
+}
+
+static void test_ufs_remove_area_remove_then_get( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType areaId;
+    ufsStatusType status;
+
+    ufsStruct = *state;
+
+    areaId = ufsAddArea( ufsStruct -> ufs, "testArea" );
+    ASSERT_UFS_NO_ERROR( areaId );
+
+    status = ufsRemoveArea( ufsStruct -> ufs, areaId );
+    ASSERT_UFS_STATUS_NO_ERROR( status );
+
+    areaId = ufsGetArea( ufsStruct -> ufs, "testArea" );
+    ASSERT_UFS_ERROR( areaId, UFS_DOES_NOT_EXIST );
+
+}
+/* ########################################################################## */
+
 
 static const struct CMUnitTest image_tests[] = {
 
@@ -952,6 +1078,16 @@ static const struct CMUnitTest image_tests[] = {
     cmocka_unit_test_setup_teardown( test_ufs_remove_file_double_remove, ufsGetInstance, ufsCleanup ),
     cmocka_unit_test_setup_teardown( test_ufs_remove_file_remove_then_add, ufsGetInstance, ufsCleanup ),
     cmocka_unit_test_setup_teardown( test_ufs_remove_file_remove_then_get, ufsGetInstance, ufsCleanup ),
+    /* ====================================================================== */
+
+    /* ufsRemoveArea                                                          */
+    cmocka_unit_test_setup_teardown( test_ufs_remove_area_bad_args, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_remove_area, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_remove_area_does_not_exist, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_remove_area_exists_in_mapping, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_remove_area_double_remove, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_remove_area_remove_then_add, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_remove_area_remove_then_get, ufsGetInstance, ufsCleanup ),
     /* ====================================================================== */
 };
 
