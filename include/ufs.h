@@ -196,13 +196,10 @@ enum {
 #define UFS_X( name, val ) name = val,
     UFS_STATUS_LIST
 #undef UFS_X
+    UFS_NUM_ERRORS
 };
 
-const char *ufsStatusStrings[] = {
-#define UFS_X( name, val ) #name,
-    UFS_STATUS_LIST
-#undef UFS_X
-};
+extern const char *ufsStatusStrings[ UFS_NUM_ERRORS ];
 
 typedef uint64_t ufsStatusType;
 typedef int64_t ufsIdentifierType;

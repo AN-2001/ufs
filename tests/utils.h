@@ -15,7 +15,6 @@
 #ifndef UFS_TEST_UTILS_H
 #define UFS_TEST_UTILS_H
 
-#define UFS_TEST_UTILS_BUFF_SIZE (1024)
 #include <stdbool.h>
 #include "ufs.h"
 
@@ -43,27 +42,12 @@
         assert_int_equal( ufsErrno, UFS_NO_ERROR ); \
     } while ( 0 )
 
-struct ufsTestUtilsFileNameStruct {
-    char name[ UFS_TEST_UTILS_BUFF_SIZE ];
-    int fd;
-};
-
 struct ufsTestUfsStateStruct {
     ufsType ufs;
 };
 
-bool ufsTestUtilsGetTmpFileName( struct ufsTestUtilsFileNameStruct *fn );
-
-bool ufsTestUtilsGetTmpFile( struct ufsTestUtilsFileNameStruct *fn );
-
 int ufsGetInstance( void **state );
 
 int ufsCleanup( void **state );
-
-int getFileNameSetup( void **state );
-
-int getFileSetup( void **state );
-
-int cleanUpTeardown( void **state );
 
 #endif /* UFS_TEST_UTILS_H */
