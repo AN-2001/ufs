@@ -16,10 +16,11 @@
 /* The goal of this spec is to define the semantics of how ufs represents     */
 /* its internal data, in other words: this is the core of ufs.                */
 /* Definitions:                                                               */
+/*                                                                            */
 /* File: An entity represented by a name.                                     */
 /*                                                                            */
 /* Directory: a directory on a file system, semantically it should be thought */
-/*            or as a container of files in our context.                      */
+/*            or as a container of files.                                     */
 /*                                                                            */
 /* The distinction between files are directories is needed since directories  */
 /* are iterable, files are not.                                               */
@@ -29,15 +30,16 @@
 /* Area: A set of storage represented by a unique name.                       */
 /*       areas DO NOT own said storage, they only project it using a name.    */
 /*                                                                            */
-/* a ufs type: Is either a storage or area.                                   */
+/* a ufs type: Is either a storage or an area.                                */
 /*                                                                            */
 /* Mapping: A (area, storage) relation, defined as area projects storage.     */
 /*          Mappings are defined as a proper mathematical relation, meaning:  */
 /*            * They have set semantics.                                      */
 /*            * The same storage can appear with different areas.             */
 /*                                                                            */
-/* external filesystem: Referred to as external fs in other places in this doc*/
-/*                      Is the file-system that ufs is mounted on top of.     */
+/* external filesystem: Referred to as external fs in other places in this d- */
+/*                      ocument. It Is the file-system that ufs is mounted on */
+/*                      top of.                                               */
 /*                      Formally it is the filesystem that existed before     */
 /*                      running ufsInit.                                      */
 /*                                                                            */
@@ -47,10 +49,23 @@
 /*       area. It can be used when specifying a view to refer to the external */
 /*       filesystem. BASE is guaranteed to be valid after a ufsInit.          */
 /*       BASE cannot appear in a mapping, the filesystem semantics of search  */
-/*       are that of the external fs, meaning if ufs encounters BASE it should*/
-/*       dispatch queries to the external fs.                                 */
+/*       are that of the external fs, meaning if ufs encounters BASE it shou- */
+/*       ld dispatch queries to the external fs.                              */
 /*       the external fs references by BASE should be immutable except when   */
 /*       calling ufsCollapse on a view that ends with BASE.                   */
+/*                                                                            */
+/* About storage and mappings: Storage should always exist in a mapping, to   */
+/* satisfy this constraint we define two types of mappings:                   */
+/*   * An explicit mapping added view ufsAddMapping                           */
+/*   * An implicit mapping, if a file does not appear in an explicit mapping  */
+/*     then it is implicitly mapped to BASE.                                  */
+/*     Note, that the implicit mapping is "logical" in the sense that its a   */
+/*     system-wide system assumption that does not need to be stored as state */
+/*                                                                            */
+/*                                                                            */
+/* Area containing storage: we say that an area A contains storage S if the   */
+/*                          implicit or explicit mapping (A, s) exists in     */
+/*                          ufs.                                              */
 /*                                                                            */
 /* View: a list of areas, in our context it can be UFS_VIEW_MAX_SIZE          */
 /*       size max. Semantically this is a union of areas:                     */
@@ -62,12 +77,15 @@
 /*          Otherwise continue to k + 1                                       */
 /*          Stop once n = k                                                   */
 /*       Views are not allowed to contain duplicate areas.                    */
-/*       BASE is allowed to exist anywhere in the view, although it'll be     */
-/*       most commonly at the end.                                            */
+/*       BASE is only allowed to exist at the end of an area.                 */
 /*       Views are to be terminated with a UFS_VIEW_TERMINATOR or they can    */
 /*       extend to UFS_VIEW_MAX_SIZE. Meaning when looking at a view an       */
 /*       observer must stop at the FIRST UFS_VIEW_TERMINATOR or until they    */
 /*       exhaust all of UFS_VIEW_MAX_SIZE.                                    */
+/*                                                                            */
+/* Note: ufs views are treated as immutable state given by the user. Ufs onl- */
+/*       y reads and validates them, it does not store or mutate them in any  */
+/*       way.                                                                 */
 /*                                                                            */
 /* Directory iteration in the context of views: A directory can be iterated   */
 /* over given a view, the semantics of iteration don't take the view order    */
@@ -83,33 +101,31 @@
 /*    * The entry position in the iteration.                                  */
 /*    * The total number of entries that its iterating over.                  */
 /*    * User provided data.                                                   */
-/* An iterator can return an error status, it'd halt iteration and set errno. */
+/* An iterator can return an error status, it'd halt iteration and set ufsEr- */
+/* rno.                                                                       */
 /*                                                                            */
 /* IdentifierType: A numeric unique identifier to ufs type instance.          */
-/*                 identifiers are unique per ufs type and are not global     */
-/*                 across all ufs types.                                      */
+/*                 ufs areas have their own identifier space while ufs stora- */
+/*                 ge shares their space.                                     */
 /*                 The identifier must be strictly greater than 0.            */
 /*                 Note: it is up to the implementer to deduce the ufs type   */
-/*                       of something, IdentifierType doesn't define a tagging*/
-/*                       mechanism.                                           */
+/*                       of a ufs type, IdentifierType doesn't define a tagg- */
+/*                       ing mechanism.                                       */
 /*                                                                            */
 /* Note: BASE has the unique identifier 0.                                    */
 /*                                                                            */
-/* StatusType: A status that ufs stores in errno, shows the current status    */
+/* StatusType: A status that ufs stores in ufsErrno, shows the current status */
 /*             of ufs, its set as a side effect of all ufs functions.         */
 /*                                                                            */
-/* collapse semantics: A ufs collapse on a view has should take all mappings  */
-/*                     in the view and apply them to the last area.           */
+/* Applying mapping to an area: Applying mappings to an area A, means that if */
+/*                              a view V = [ a, UFS_VIEW_TERMINATOR ] is used */
+/*                              for resolution/iteration then those changes   */
+/*                              should be observed.                           */
+/*                                                                            */
+/* collapse semantics: A ufs collapse on a view should take all mappings in  */
+/*                     the view and apply them on the last area.              */
 /*                     If the last area happens to be BASE the changes are    */
 /*                     applied to the external filesystem.                    */
-/*                                                                            */
-/* About files and mappings: Files should always exist in a mapping, to       */
-/* satisfy this constraint we define two types of mappings:                   */
-/*   * An explicit mapping added view ufsAddMapping                           */
-/*   * An implicit mapping, if a file does not appear in an explicit mapping  */
-/*     then it is implicitly mapped to BASE.                                  */
-/*     Note, that the implicit mapping is "logical" in the sense that its a   */
-/*     system-wide system assumption that does not need to be stored as state */
 /*                                                                            */
 /* About removal semantics: Once a storage or area or mapping is removed in   */
 /* ufs then the ufs state should be as if that storage or area don't exist.   */
@@ -129,16 +145,22 @@
 /*                                                                            */
 /* Dependency graph for reference (an edge encodes a "depends" relation ):    */
 /*                                                                            */
-/*           -----------------------                                          */
-/*          /                       \                                         */
-/* mapping -------> directory -------> file                                   */
-/*          \                                                                 */
-/*           -----> area                                                      */
+/*                                   area ----                                */
+/*                                            \                               */
+/*                   directory ----> file ----> mapping                       */
+/*                             \             /                                */
+/*                              -------------                                 */
+/*                                                                            */
+/*             An edge ( A, B ) means that a type A cannot be deleted         */
+/*             if it depends on something in type B.                          */
+/*                                                                            */
+/* * a directory D depends on file f if f exists inside of D.                 */
+/* * a file F depends on mapping M if M = (A, F) for some area A.             */
+/* * an area A depends on mapping M if M = (A, S) for some storage S.         */
+/* * a directory D depends on mapping M if M = (A, D) for some area A.        */
 /*                                                                            */
 
-
-
-#define UFS_VIEW_MAX_SIZE (1024)
+#define UFS_VIEW_MAX_SIZE (4096)
 #define UFS_VIEW_TERMINATOR (-1)
 
 #include <stdint.h>
@@ -146,19 +168,20 @@
 
 #define UFS_STATUS_LIST                                                        \
     UFS_X( UFS_NO_ERROR )                                                      \
-    UFS_X( UFS_OUT_OF_MEMORY )                                                 \
-    UFS_X( UFS_BAD_CALL )                                                      \
-    UFS_X( UFS_VIEW_CONTAINS_DUPLICATES )                                      \
-    UFS_X( UFS_INVALID_AREA_IN_VIEW )                                          \
     UFS_X( UFS_ALREADY_EXISTS )                                                \
-    UFS_X( UFS_DOES_NOT_EXIST )                                                \
-    UFS_X( UFS_DIRECTORY_IS_NOT_EMPTY )                                        \
+    UFS_X( UFS_BAD_CALL )                                                      \
     UFS_X( UFS_CANNOT_RESOLVE_STORAGE )                                        \
-    UFS_X( UFS_ILLEGAL_AREA_NAME )                                             \
     UFS_X( UFS_DIRECTORY_DOES_NOT_EXIST )                                      \
+    UFS_X( UFS_DIRECTORY_IS_NOT_EMPTY )                                        \
+    UFS_X( UFS_DOES_NOT_EXIST )                                                \
     UFS_X( UFS_EXISTS_IN_A_MAPPING )                                           \
+    UFS_X( UFS_ILLEGAL_AREA_NAME )                                             \
+    UFS_X( UFS_INVALID_AREA_IN_VIEW )                                          \
     UFS_X( UFS_MAPPING_DOES_NOT_EXIST )                                        \
-    UFS_X( UFS_UNKNOWN_ERROR )
+    UFS_X( UFS_OUT_OF_MEMORY )                                                 \
+    UFS_X( UFS_UNKNOWN_ERROR )                                                 \
+    UFS_X( UFS_VIEW_CONTAINS_DUPLICATES )                                      \
+    UFS_X( UFS_BASE_IS_NOT_LAST_AREA )                                         
 
 enum {
 #define UFS_X( name ) name,
@@ -320,7 +343,7 @@ ufsIdentifierType ufsAddArea( ufsType ufs,
 *                                                                              *
 * Return                                                                       *
 *                                                                              *
-*  -ufsStatusType: The status of this call, errno is also set.                 *
+*  -ufsStatusType: The status of this call, ufsErrno is also set.              *
 *                                                                              *
 \******************************************************************************/
 ufsStatusType ufsAddMapping( ufsType ufs,
@@ -421,7 +444,7 @@ ufsIdentifierType ufsGetArea( ufsType ufs,
 *                                                                              *
 * Return                                                                       *
 *                                                                              *
-*  -ufsStatusType: The status of this call, errno is also set.                 *
+*  -ufsStatusType: The status of this call, ufsErrno is also set.              *
 *  Note, if the mapping does not exist UFS_MAPPING_DOES_NOT_EXIST is returned  *
 *  and is set in ufsErrno, this is not a traditional error as it's the result  *
 *  of the query.                                                               *
@@ -455,7 +478,7 @@ ufsStatusType ufsProbeMapping( ufsType ufs,
 *                                                                              *
 * Return                                                                       *
 *                                                                              *
-*  -ufsStatusType: The status of this call, errno is also set.                 *
+*  -ufsStatusType: The status of this call, ufsErrno is also set.              *
 *                                                                              *
 \******************************************************************************/
 ufsStatusType ufsRemoveDirectory( ufsType ufs,
@@ -480,7 +503,7 @@ ufsStatusType ufsRemoveDirectory( ufsType ufs,
 *                                                                              *
 * Return                                                                       *
 *                                                                              *
-*  -ufsStatusType: The status of this call, errno is also set.                 *
+*  -ufsStatusType: The status of this call, ufsErrno is also set.              *
 *                                                                              *
 \******************************************************************************/
 ufsStatusType ufsRemoveFile( ufsType ufs,
@@ -505,7 +528,7 @@ ufsStatusType ufsRemoveFile( ufsType ufs,
 *                                                                              *
 * Return                                                                       *
 *                                                                              *
-*  -ufsStatusType: The status of this call, errno is also set.                 *
+*  -ufsStatusType: The status of this call, ufsErrno is also set.              *
 *                                                                              *
 \******************************************************************************/
 ufsStatusType ufsRemoveArea( ufsType ufs,
@@ -530,7 +553,7 @@ ufsStatusType ufsRemoveArea( ufsType ufs,
 *                                                                              *
 * Return                                                                       *
 *                                                                              *
-*  -ufsStatusType: The status of this call, errno is also set.                 *
+*  -ufsStatusType: The status of this call, ufsErrno is also set.              *
 *                                                                              *
 \******************************************************************************/
 ufsStatusType ufsRemoveMapping( ufsType ufs,
@@ -548,6 +571,8 @@ ufsStatusType ufsRemoveMapping( ufsType ufs,
 *   -UFS_CANNOT_RESOLVE_STORAGE: Could not resolve storage in the view.        *
 *   -UFS_VIEW_CONTAINS_DUPLICATES: The view contains duplicate areas.          *
 *   -UFS_INVALID_AREA_IN_VIEW: The view contains a non-existent area.          *
+*   -UFS_BASE_IS_NOT_LAST_AREA: BASE was used but was not the last area in th- *
+*                               e view.                                        *
 *   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
 *                                                                              *
 * Parameters                                                                   *
@@ -578,6 +603,8 @@ ufsIdentifierType ufsResolveStorageInView( ufsType ufs,
 *   -UFS_DOES_NOT_EXIST: The directory does not exist in ufs.                  *
 *   -UFS_VIEW_CONTAINS_DUPLICATES: The view contains duplicate areas.          *
 *   -UFS_INVALID_AREA_IN_VIEW: The view contains a non-existent area.          *
+*   -UFS_BASE_IS_NOT_LAST_AREA: BASE was used but was not the last area in th- *
+*                               e view.                                        *
 *   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
 *                                                                              *
 * Parameters                                                                   *
@@ -590,7 +617,7 @@ ufsIdentifierType ufsResolveStorageInView( ufsType ufs,
 *                                                                              *
 * Return                                                                       *
 *                                                                              *
-*  -ufsStatusType: The status of this call, errno is also set.                 *
+*  -ufsStatusType: The status of this call, ufsErrno is also set.              *
 *                                                                              *
 \******************************************************************************/
 ufsStatusType ufsIterateDirInView( ufsType ufs,
@@ -609,6 +636,8 @@ ufsStatusType ufsIterateDirInView( ufsType ufs,
 *   -UFS_DOES_NOT_EXIST: The directory does not exist in ufs.                  *
 *   -UFS_VIEW_CONTAINS_DUPLICATES: The view contains duplicate areas.          *
 *   -UFS_INVALID_AREA_IN_VIEW: The view contains a non-existent area.          *
+*   -UFS_BASE_IS_NOT_LAST_AREA: BASE was used but was not the last area in th- *
+*                               e view.                                        *
 *   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
 *                                                                              *
 * Parameters                                                                   *
@@ -618,7 +647,7 @@ ufsStatusType ufsIterateDirInView( ufsType ufs,
 *                                                                              *
 * Return                                                                       *
 *                                                                              *
-*  -ufsStatusType: The status of this call, errno is also set.                 *
+*  -ufsStatusType: The status of this call, ufsErrno is also set.              *
 *                                                                              *
 \******************************************************************************/
 ufsStatusType ufsCollapse( ufsType ufs,
