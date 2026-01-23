@@ -29,17 +29,9 @@ TESTS := test_ufs
 # Place compilation targets here.
 OBJECTS := $(BUILD_DIR)/tests/utils.o
 
-GLOBAL_HEADERS := $(INCLUDE_DIR)/ufs_defs.h
+GLOBAL_HEADERS := $(INCLUDE_DIR)/ufs.h
 
 all: $(TESTS) $(BUILD_DIR)/ufs_tests.sh
-
-ufs_header_test: $(BUILD_DIR)/tests/ufs_header_test.o $(OBJECTS)
-	@mkdir -p $(BUILD_DIR)/tests
-	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $(BUILD_DIR)/tests/$@
-
-ufs_image_test: $(BUILD_DIR)/tests/ufs_image_test.o $(OBJECTS) 
-	@mkdir -p $(BUILD_DIR)/tests
-	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $(BUILD_DIR)/tests/$@
 
 test_ufs: $(BUILD_DIR)/tests/test_ufs.o $(OBJECTS) 
 	@mkdir -p $(BUILD_DIR)/tests

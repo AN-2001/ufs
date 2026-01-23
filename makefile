@@ -27,9 +27,9 @@ PROJ := ufs
 ARCHIVE := $(BUILD_DIR)/libufs.a
 
 # Place compilation targets here.
-OBJECTS := $(BUILD_DIR)/src/ufs_image.o $(BUILD_DIR)/src/ufs_header.o
+OBJECTS := 
 
-GLOBAL_HEADERS := $(INCLUDE_DIR)/ufs_defs.h
+GLOBAL_HEADERS := $(INCLUDE_DIR)/ufs.h
 
 # Entry point to each executable target.
 MAIN_ENTRY := $(BUILD_DIR)/$(SRC_DIR)/main.o
