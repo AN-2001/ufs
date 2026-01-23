@@ -66,7 +66,7 @@ static void test_ufs_add_directory_bad_args( void **state ) {
     ASSERT_UFS_ERROR( id, UFS_BAD_CALL );
 
 
-    ufsAddDirectory( ufsStruct -> ufs, NULL );
+    id = ufsAddDirectory( ufsStruct -> ufs, NULL );
     ASSERT_UFS_ERROR( id, UFS_BAD_CALL );
 }
 
