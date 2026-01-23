@@ -122,24 +122,26 @@
 /*                              for resolution/iteration then those changes   */
 /*                              should be observed.                           */
 /*                                                                            */
-/* collapse semantics: A ufs collapse on a view should take all mappings in  */
+/* collapse semantics: A ufs collapse on a view should take all mappings in   */
 /*                     the view and apply them on the last area.              */
 /*                     If the last area happens to be BASE the changes are    */
 /*                     applied to the external filesystem.                    */
 /*                                                                            */
-/* About removal semantics: Once a storage or area or mapping is removed in   */
-/* ufs then the ufs state should be as if that storage or area don't exist.   */
+/* About removal semantics: Once a storage or area or explicit mapping is re- */
+/* moved in ufs, then the ufs state should be as if that storage or area or   */
+/* explicit mapping don't exist.                                              */
 /* * A subsequent removal would yield "UFS_DOES_NOT_EXIST".                   */
 /* * A get/probe would yield "UFS_DOES_NOT_EXIST".                            */
 /* * An add would succeed.                                                    */
 /* Note: ufs has a zero tolerance stance on side effects when it comes to     */
 /* removal. This can be fully described by the following rules:               */
-/* * A directory can't be removed if it contains files, or is references in a */
-/*   mapping.                                                                 */
-/* * A file can't be removed if it's referenced in a mapping.                 */
-/* * An area can't be removed if it exists in a mapping.                      */
+/* * A directory can't be removed if it contains files, or is references in   */
+/*   an explicit mapping.                                                     */
+/* * A file can't be removed if it's referenced in an explicit mapping.       */
+/* * An area can't be removed if it exists in an explicit mapping.            */
 /*                                                                            */
-/* Mapping can be removed freely as no other ufs entity depends on them.      */
+/* Explicit mappings can be removed freely as no other ufs entity depends on  */
+/* them.                                                                      */
 /* ufs does not view "views" as state, meaning that if an area referenced in  */
 /* a view is removed, it should treated as a "does not exist" case.           */
 /*                                                                            */
@@ -147,7 +149,7 @@
 /*                                                                            */
 /*                                   area ----                                */
 /*                                            \                               */
-/*                   directory ----> file ----> mapping                       */
+/*                   directory ----> file ----> explicit mapping              */
 /*                             \             /                                */
 /*                              -------------                                 */
 /*                                                                            */
@@ -155,9 +157,14 @@
 /*             if it depends on something in type B.                          */
 /*                                                                            */
 /* * a directory D depends on file f if f exists inside of D.                 */
-/* * a file F depends on mapping M if M = (A, F) for some area A.             */
-/* * an area A depends on mapping M if M = (A, S) for some storage S.         */
-/* * a directory D depends on mapping M if M = (A, D) for some area A.        */
+/* * a file F depends on explicit mapping M if M = (A, F) for some area A.    */
+/* * an area A depends on explicit mapping M if M = (A, S) for some storage   */
+/*  S.                                                                        */
+/* * a directory D depends on expilcit mapping M if M = (A, D) for some area  */
+/*   A.                                                                       */
+/*                                                                            */
+/* Note: Implicit mappings do not place removal constraints, as they are log- */
+/* ical and aren't stored as state.                                           */
 /*                                                                            */
 
 #define UFS_VIEW_MAX_SIZE (4096)
@@ -167,35 +174,35 @@
 #include <sys/types.h>
 
 #define UFS_STATUS_LIST                                                        \
-    UFS_X( UFS_NO_ERROR )                                                      \
-    UFS_X( UFS_ALREADY_EXISTS )                                                \
-    UFS_X( UFS_BAD_CALL )                                                      \
-    UFS_X( UFS_CANNOT_RESOLVE_STORAGE )                                        \
-    UFS_X( UFS_DIRECTORY_DOES_NOT_EXIST )                                      \
-    UFS_X( UFS_DIRECTORY_IS_NOT_EMPTY )                                        \
-    UFS_X( UFS_DOES_NOT_EXIST )                                                \
-    UFS_X( UFS_EXISTS_IN_A_MAPPING )                                           \
-    UFS_X( UFS_ILLEGAL_AREA_NAME )                                             \
-    UFS_X( UFS_INVALID_AREA_IN_VIEW )                                          \
-    UFS_X( UFS_MAPPING_DOES_NOT_EXIST )                                        \
-    UFS_X( UFS_OUT_OF_MEMORY )                                                 \
-    UFS_X( UFS_UNKNOWN_ERROR )                                                 \
-    UFS_X( UFS_VIEW_CONTAINS_DUPLICATES )                                      \
-    UFS_X( UFS_BASE_IS_NOT_LAST_AREA )                                         
+    UFS_X( UFS_NO_ERROR,                   0 )                                 \
+    UFS_X( UFS_ALREADY_EXISTS,             1ULL << 0 )                         \
+    UFS_X( UFS_BAD_CALL,                   1ULL << 1 )                         \
+    UFS_X( UFS_CANNOT_RESOLVE_STORAGE,     1ULL << 2 )                         \
+    UFS_X( UFS_DIRECTORY_DOES_NOT_EXIST,   1ULL << 3 )                         \
+    UFS_X( UFS_DIRECTORY_IS_NOT_EMPTY,     1ULL << 4 )                         \
+    UFS_X( UFS_DOES_NOT_EXIST,             1ULL << 5 )                         \
+    UFS_X( UFS_EXISTS_IN_EXPLICIT_MAPPING, 1ULL << 6 )                         \
+    UFS_X( UFS_ILLEGAL_AREA_NAME,          1ULL << 7 )                         \
+    UFS_X( UFS_INVALID_AREA_IN_VIEW,       1ULL << 8 )                         \
+    UFS_X( UFS_MAPPING_DOES_NOT_EXIST,     1ULL << 9 )                         \
+    UFS_X( UFS_OUT_OF_MEMORY,              1ULL << 10 )                        \
+    UFS_X( UFS_UNKNOWN_ERROR,              1ULL << 11 )                        \
+    UFS_X( UFS_VIEW_CONTAINS_DUPLICATES,   1ULL << 12 )                        \
+    UFS_X( UFS_BASE_IS_NOT_LAST_AREA,      1ULL << 13 )                                         
 
 enum {
-#define UFS_X( name ) name,
+#define UFS_X( name, val ) name = val,
     UFS_STATUS_LIST
 #undef UFS_X
 };
 
 const char *ufsStatusStrings[] = {
-#define UFS_X( name ) #name,
+#define UFS_X( name, val ) #name,
     UFS_STATUS_LIST
 #undef UFS_X
 };
 
-typedef uint8_t ufsStatusType;
+typedef uint64_t ufsStatusType;
 typedef int64_t ufsIdentifierType;
 
 typedef void *ufsType;
@@ -467,8 +474,8 @@ ufsStatusType ufsProbeMapping( ufsType ufs,
 *   -UFS_DOES_NOT_EXIST: The directory does not exist in ufs.                  *
 *   -UFS_DIRECTORY_IS_NOT_EMPTY: The directory is not empty and can't be       *
 *                                removed.                                      *
-*   -UFS_EXISTS_IN_A_MAPPING: The directory is referenced in a ufs mapping     *
-*                             and cannot be removed.                           *
+*   -UFS_EXISTS_IN_EXPLICIT_MAPPING: The directory is referenced in an explic- *
+*                                    it mapping and cannot be removed.         *
 *   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
 *                                                                              *
 * Parameters                                                                   *
@@ -492,8 +499,8 @@ ufsStatusType ufsRemoveDirectory( ufsType ufs,
 *  Possible errors:                                                            *
 *   -UFS_BAD_CALL: The function received bad arguments.                        *
 *   -UFS_DOES_NOT_EXIST: The file does not exist in ufs.                       *
-*   -UFS_EXISTS_IN_A_MAPPING: The file is referenced in a ufs mapping and can- *
-*                             not be removed.                                  *
+*   -UFS_EXISTS_IN_EXPLICIT_MAPPING: The file is referenced in an explicit ma- *
+*                                    pping and cannot be removed.              *
 *   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
 *                                                                              *
 * Parameters                                                                   *
@@ -517,8 +524,8 @@ ufsStatusType ufsRemoveFile( ufsType ufs,
 *  Possible errors:                                                            *
 *   -UFS_BAD_CALL: The function received bad arguments.                        *
 *   -UFS_DOES_NOT_EXIST: The area does not exist in ufs.                       *
-*   -UFS_EXISTS_IN_A_MAPPING: The area is referenced in a ufs mapping and can- *
-*                             not be removed.                                  *
+*   -UFS_EXISTS_IN_EXPLICIT_MAPPING: The area is referenced in an explicit ma- *
+*                                    pping and cannot be removed.              *
 *   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
 *                                                                              *
 * Parameters                                                                   *
@@ -541,8 +548,7 @@ ufsStatusType ufsRemoveArea( ufsType ufs,
 *                                                                              *
 *  Possible errors:                                                            *
 *   -UFS_BAD_CALL: The function received bad arguments.                        *
-*   -UFS_DOES_NOT_EXIST: The area or the storage or the (area, storage) mappi- *
-*                        ng do not exist in ufs.                               *
+*   -UFS_DOES_NOT_EXIST: The (area, storage) mapping does not exist in ufs.    *
 *   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
 *                                                                              *
 * Parameters                                                                   *
