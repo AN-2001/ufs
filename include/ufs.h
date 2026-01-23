@@ -169,6 +169,8 @@
 
 #define UFS_VIEW_MAX_SIZE (4096)
 #define UFS_VIEW_TERMINATOR (-1)
+#define UFS_AREA_BASE_NAME ("BASE") 
+#define UFS_AREA_BASE_IDENTIFIER (0)
 
 #include <stdint.h>
 #include <sys/types.h>
