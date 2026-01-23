@@ -237,7 +237,7 @@ static void test_ufs_add_mapping_bad_args( void **state )
 
 }
 
-static void test_ufs_add_mapping( void **state )
+static void test_ufs_add_mapping_area_file( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
     ufsStatusType status, areaId, dirId, fileId;
@@ -254,6 +254,24 @@ static void test_ufs_add_mapping( void **state )
     ASSERT_UFS_NO_ERROR( fileId );
 
     status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId );
+    ASSERT_UFS_STATUS_NO_ERROR( status );
+
+}
+
+static void test_ufs_add_mapping_area_directory( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsStatusType status, areaId, dirId;
+
+    ufsStruct = *state;
+
+    areaId = ufsAddArea( ufsStruct -> ufs, "testArea" );
+    ASSERT_UFS_NO_ERROR( areaId );
+
+    dirId = ufsAddDirectory( ufsStruct -> ufs, "testDirectory" );
+    ASSERT_UFS_NO_ERROR( dirId );
+
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
 }
@@ -880,7 +898,8 @@ static const struct CMUnitTest image_tests[] = {
 
     /* ufsAddMapping tests.                                                   */
     cmocka_unit_test_setup_teardown( test_ufs_add_mapping_bad_args, ufsGetInstance, ufsCleanup ),
-    cmocka_unit_test_setup_teardown( test_ufs_add_mapping, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_add_mapping_area_file, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_add_mapping_area_directory, ufsGetInstance, ufsCleanup ),
     cmocka_unit_test_setup_teardown( test_ufs_add_mapping_duplicate, ufsGetInstance, ufsCleanup ),
     cmocka_unit_test_setup_teardown( test_ufs_add_mapping_area_does_not_exist, ufsGetInstance, ufsCleanup ),
     cmocka_unit_test_setup_teardown( test_ufs_add_mapping_file_does_not_exist, ufsGetInstance, ufsCleanup ),
