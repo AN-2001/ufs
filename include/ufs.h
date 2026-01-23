@@ -156,7 +156,7 @@
 /*             An edge ( A, B ) means that a type A cannot be deleted         */
 /*             if it depends on something in type B.                          */
 /*                                                                            */
-/* * a directory D depends on file f if f exists inside of D.                 */
+/* * a directory D depends on file F if F exists inside of D.                 */
 /* * a file F depends on explicit mapping M if M = (A, F) for some area A.    */
 /* * an area A depends on explicit mapping M if M = (A, S) for some storage   */
 /*  S.                                                                        */
