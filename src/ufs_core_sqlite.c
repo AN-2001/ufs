@@ -12,6 +12,7 @@
 #include "ufs_core.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 enum ufsSqliteStatementType {
     UFS_STATMENT_INSERT_INTO_STORAGE,
@@ -19,6 +20,8 @@ enum ufsSqliteStatementType {
     UFS_STATMENT_QUERY_STORAGE_BY_ID,
     UFS_STATMENT_QUERY_FILES_BY_IDS,
     UFS_STATMENT_INSERT_INTO_FILES,
+    UFS_STATMENT_INSERT_INTO_AREAS,
+    UFS_STATMENT_QUERY_AREAS_BY_NAME,
     NUM_UFS_STATEMENTS,
 };
 
@@ -34,7 +37,8 @@ static const char *UFS_SQL_TEXT[ NUM_UFS_STATEMENTS + 2 ] = {
     "CREATE TABLE IF NOT EXISTS ufsStorage(id INTEGER PRIMARY KEY, name STRING NOT NULL, isDir BOOLEAN);" ""
     "CREATE TABLE IF NOT EXISTS ufsFiles( id INTEGER PRIMARY KEY, dirId INTEGER, fileId INTEGER,"
                                                  "FOREIGN KEY (dirId) REFERENCES ufsStorage(id),"
-                                                 "FOREIGN KEY (fileId) REFERENCES ufsStorage(id) );",
+                                                 "FOREIGN KEY (fileId) REFERENCES ufsStorage(id) );"
+    "CREATE TABLE IF NOT EXISTS ufsAreas(id INTEGER PRIMARY KEY, name STRING NOT NULL);" "",
 
     /* Insert into the storage table:                                         */
     "INSERT INTO ufsStorage (name, isDir) VALUES (?, ?);",
@@ -50,6 +54,12 @@ static const char *UFS_SQL_TEXT[ NUM_UFS_STATEMENTS + 2 ] = {
 
     /* Insert into files:                                                     */
     "INSERT INTO ufsFiles (dirId, fileId) VALUES (?, ?);", 
+
+    /* Insert into areas:                                                     */
+    "INSERT INTO ufsAreas (name) VALUES (?);", 
+
+    /* Query area by name:                                                    */
+    "SELECT id from ufsAreas WHERE name = ?;", 
 
     NULL
 };
@@ -195,7 +205,7 @@ ufsIdentifierType ufsAddFile( ufsType ufs,
                               const char *name )
 {
     ufsSqliteStruct *ufsSqlite;
-    ufsIdentifierType fileId;
+    ufsIdentifierType storageId;
     int res;
     if ( !ufs || directory <= 0 || !name ) {
         ufsErrno = UFS_BAD_CALL;
@@ -233,7 +243,7 @@ ufsIdentifierType ufsAddFile( ufsType ufs,
             );
 
     if ( res == SQLITE_ROW ) {
-        fileId = sqlite3_column_int(
+        storageId = sqlite3_column_int(
             ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_NAME_TYPE ],
             0 );
 
@@ -245,7 +255,7 @@ ufsIdentifierType ufsAddFile( ufsType ufs,
                 1, directory);
         sqlite3_bind_int(
                 ufsSqlite -> statements[ UFS_STATMENT_QUERY_FILES_BY_IDS ],
-                2, fileId);
+                2, storageId);
 
         res = sqlite3_step(
                 ufsSqlite -> statements[ UFS_STATMENT_QUERY_FILES_BY_IDS ]
@@ -280,7 +290,7 @@ ufsIdentifierType ufsAddFile( ufsType ufs,
             return -1;
         }
 
-        fileId = sqlite3_last_insert_rowid( ufsSqlite -> db );
+        storageId = sqlite3_last_insert_rowid( ufsSqlite -> db );
     } else {
         ufsErrno = UFS_UNKNOWN_ERROR;
         return -1;
@@ -295,7 +305,7 @@ ufsIdentifierType ufsAddFile( ufsType ufs,
             1, directory );
     sqlite3_bind_int(
             ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_FILES ],
-            2, fileId );
+            2, storageId );
     res = sqlite3_step(
             ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_FILES ] );
 
@@ -311,8 +321,56 @@ ufsIdentifierType ufsAddFile( ufsType ufs,
 ufsIdentifierType ufsAddArea( ufsType ufs,
                               const char *name )
 {
+    ufsSqliteStruct *ufsSqlite;
+    int res;
+    if ( !ufs || !name ) {
+        ufsErrno = UFS_BAD_CALL;
+        return -1;
+    }
+
+    if ( strcmp( name, UFS_AREA_BASE_NAME ) == 0 )  {
+        ufsErrno = UFS_ILLEGAL_AREA_NAME;
+        return -1;
+    }
+
+    ufsSqlite = ufs;
+
+    /* First check if it already exists.                                      */
+
+    sqlite3_reset(
+            ufsSqlite -> statements[ UFS_STATMENT_QUERY_AREAS_BY_NAME ] );
+    sqlite3_bind_text(
+            ufsSqlite -> statements[ UFS_STATMENT_QUERY_AREAS_BY_NAME ],
+            1, name, -1, SQLITE_TRANSIENT );
+    res = sqlite3_step(
+            ufsSqlite -> statements[ UFS_STATMENT_QUERY_AREAS_BY_NAME ]
+            );
+
+    if ( res == SQLITE_ROW ) {
+        ufsErrno = UFS_ALREADY_EXISTS;
+        return -1;
+    }
+
+    if ( res != SQLITE_DONE ) {
+        ufsErrno = UFS_UNKNOWN_ERROR;
+        return -1;
+    }
+
+    /* Then insert the direcotry into the table.                              */
+    sqlite3_reset(
+            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_AREAS ] );
+    sqlite3_bind_text(
+            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_AREAS ],
+            1, name, -1, SQLITE_TRANSIENT );
+    res = sqlite3_step(
+            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_AREAS ] );
+    if ( res != SQLITE_DONE ) {
+        ufsErrno = UFS_UNKNOWN_ERROR;
+        return -1;
+    }
+
     ufsErrno = UFS_NO_ERROR;
-	return 0;
+    return sqlite3_last_insert_rowid( ufsSqlite -> db );
 }
 
 ufsStatusType ufsAddMapping( ufsType ufs,
