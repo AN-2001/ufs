@@ -17,15 +17,14 @@
 /* its internal data, in other words: this is the core of ufs.                */
 /* Definitions:                                                               */
 /*                                                                            */
-/* File: An entity represented by a name.                                     */
+/* Storage: An entuty represnted by a name.                                   */
 /*                                                                            */
-/* Directory: a directory on a file system, semantically it should be thought */
-/*            or as a container of files.                                     */
+/* Directory: Storage that can contain other storage.                         */
 /*                                                                            */
-/* The distinction between files are directories is needed since directories  */
-/* are iterable, files are not.                                               */
+/* ROOT: The root directory of ufs, internally it has the unique name UFS_RO- */
+/*       OT_DIR_NAME, no other directory can be given this name.              */
 /*                                                                            */
-/* Storage: a file or a directory.                                            */
+/* File: Storage that cannot contain other storage.                           */
 /*                                                                            */
 /* Area: A set of storage represented by a unique name.                       */
 /*       areas DO NOT own said storage, they only project it using a name.    */
@@ -113,6 +112,7 @@
 /*                       ing mechanism.                                       */
 /*                                                                            */
 /* Note: BASE has the unique identifier 0.                                    */
+/* Note: ROOT has the unique identifier 0.                                    */
 /*                                                                            */
 /* StatusType: A status that ufs stores in ufsErrno, shows the current status */
 /*             of ufs, its set as a side effect of all ufs functions.         */
@@ -166,6 +166,8 @@
 /* Note: Implicit mappings do not place removal constraints, as they are log- */
 /* ical and aren't stored as state.                                           */
 /*                                                                            */
+/* Note: both ROOT and BASE cannot be removed.                                */
+/*                                                                            */
 
 #define UFS_VIEW_MAX_SIZE (4096)
 #define UFS_VIEW_TERMINATOR (-1)
@@ -190,7 +192,8 @@
     UFS_X( UFS_OUT_OF_MEMORY,              1ULL << 10 )                        \
     UFS_X( UFS_UNKNOWN_ERROR,              1ULL << 11 )                        \
     UFS_X( UFS_VIEW_CONTAINS_DUPLICATES,   1ULL << 12 )                        \
-    UFS_X( UFS_BASE_IS_NOT_LAST_AREA,      1ULL << 13 )                                         
+    UFS_X( UFS_ILLEGAL_STORAGE_NAME,       1ULL << 13 )                        \
+    UFS_X( UFS_BASE_IS_NOT_LAST_AREA,      1ULL << 14 ) 
 
 enum {
 #define UFS_X( name, val ) name = val,
@@ -217,7 +220,9 @@ extern ufsStatusType ufsErrno;
 * ufsInit                                                                      *
 *                                                                              *
 *  Initialise a ufs and return it.                                             *
-*  NOTE: this function DOES not mount ufs, it just returns an instance of it.  *
+*  The function will initialize both ROOT and BASE and get them to a state wh- *
+*  ere users can use them.                                                     *
+*  Meaning, after ufsInit, both ROOT and BASE can be referenced as intended.   *
 *                                                                              *
 *  Possible errors:                                                            *
 *   -UFS_OUT_OF_MEMORY: The system is out of memory and can't create ufs.      *
@@ -257,6 +262,8 @@ void ufsDestroy( ufsType ufs );
 *                                                                              *
 *  Possible errors:                                                            *
 *   -UFS_BAD_CALL: The function received bad arguments.                        *
+*   -UFS_ILLEGAL_STORAGE_NAME: An illegal directory name (e.g ROOT) was provi- *
+*                              ded.                                            *
 *   -UFS_ALREADY_EXISTS: The directory already exists.                         *
 *   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
 *                                                                              *
@@ -287,6 +294,7 @@ ufsIdentifierType ufsAddDirectory( ufsType ufs,
 *   -UFS_BAD_CALL: The function received bad arguments.                        *
 *   -UFS_ALREADY_EXISTS: The file already exists.                              *
 *   -UFS_DIRECTORY_DOES_NOT_EXIST: The specified directory does not exist.     *
+*   -UFS_ILLEGAL_STORAGE_NAME: An illegal file name (e.g ROOT) was provided.   *
 *   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
 *                                                                              *
 * Parameters                                                                   *
@@ -473,6 +481,8 @@ ufsStatusType ufsProbeMapping( ufsType ufs,
 *   -UFS_DOES_NOT_EXIST: The directory does not exist in ufs.                  *
 *   -UFS_DIRECTORY_IS_NOT_EMPTY: The directory is not empty and can't be       *
 *                                removed.                                      *
+*   -UFS_ILLEGAL_STORAGE_NAME: An illegal directory name (e.g ROOT) was provi- *
+*                              ded.                                            *
 *   -UFS_EXISTS_IN_EXPLICIT_MAPPING: The directory is referenced in an explic- *
 *                                    it mapping and cannot be removed.         *
 *   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
@@ -500,6 +510,7 @@ ufsStatusType ufsRemoveDirectory( ufsType ufs,
 *   -UFS_DOES_NOT_EXIST: The file does not exist in ufs.                       *
 *   -UFS_EXISTS_IN_EXPLICIT_MAPPING: The file is referenced in an explicit ma- *
 *                                    pping and cannot be removed.              *
+*   -UFS_ILLEGAL_STORAGE_NAME: An illegal file name (e.g ROOT) was provided.   *
 *   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
 *                                                                              *
 * Parameters                                                                   *
@@ -525,6 +536,7 @@ ufsStatusType ufsRemoveFile( ufsType ufs,
 *   -UFS_DOES_NOT_EXIST: The area does not exist in ufs.                       *
 *   -UFS_EXISTS_IN_EXPLICIT_MAPPING: The area is referenced in an explicit ma- *
 *                                    pping and cannot be removed.              *
+*   -UFS_ILLEGAL_AREA_NAME: An illegal area name (e.e "BASE") was provided.    *
 *   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
 *                                                                              *
 * Parameters                                                                   *
