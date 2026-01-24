@@ -17,7 +17,7 @@
 /* its internal data, in other words: this is the core of ufs.                */
 /* Definitions:                                                               */
 /*                                                                            */
-/* Storage: An entuty represnted by a name.                                   */
+/* Storage: An entity represented by a name.                                   */
 /*                                                                            */
 /* Directory: Storage that can contain other storage.                         */
 /*                                                                            */
@@ -220,7 +220,7 @@ extern ufsStatusType ufsErrno;
 * ufsInit                                                                      *
 *                                                                              *
 *  Initialise a ufs and return it.                                             *
-*  The function will initialize both ROOT and BASE and get them to a state wh- *
+*  The function will initialise both ROOT and BASE and get them to a state wh- *
 *  ere users can use them.                                                     *
 *  Meaning, after ufsInit, both ROOT and BASE can be referenced as intended.   *
 *                                                                              *
