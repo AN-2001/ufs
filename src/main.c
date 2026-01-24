@@ -1,4 +1,4 @@
-#include "ufs.h"
+#include "ufs_core.h"
 #include <stdlib.h>
 
 int main()

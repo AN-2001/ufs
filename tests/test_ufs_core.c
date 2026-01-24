@@ -12,20 +12,13 @@
 
 #ifndef UFS_TEST_DISABLE
 
-#include <fcntl.h>
 #include <memory.h>
 #include <setjmp.h>
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/file.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include "ufs.h"
-#include <unistd.h>
+#include "ufs_core.h"
 #include "utils.h"
 
 #include <cmocka.h>

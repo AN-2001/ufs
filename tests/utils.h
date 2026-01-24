@@ -16,7 +16,7 @@
 #define UFS_TEST_UTILS_H
 
 #include <stdbool.h>
-#include "ufs.h"
+#include "ufs_core.h"
 
 #define ASSERT_UFS_ERROR( returnVal, err ) \
     do { \

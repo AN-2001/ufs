@@ -7,7 +7,7 @@
 *                                                                              *
 \******************************************************************************/
 
-#include "ufs.h"
+#include "ufs_core.h"
 #include <unistd.h>
 #define UFS_TESTING
 
