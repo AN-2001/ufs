@@ -160,7 +160,7 @@
 /* * a file F depends on explicit mapping M if M = (A, F) for some area A.    */
 /* * an area A depends on explicit mapping M if M = (A, S) for some storage   */
 /*  S.                                                                        */
-/* * a directory D depends on expilcit mapping M if M = (A, D) for some area  */
+/* * a directory D depends on explicit mapping M if M = (A, D) for some area  */
 /*   A.                                                                       */
 /*                                                                            */
 /* Note: Implicit mappings do not place removal constraints, as they are log- */
