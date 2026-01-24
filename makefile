@@ -27,7 +27,7 @@ PROJ := ufs
 ARCHIVE := $(BUILD_DIR)/libufs.a
 
 # Place compilation targets here.
-OBJECTS := $(BUILD_DIR)/$(SRC_DIR)/ufs_core.o
+OBJECTS := $(BUILD_DIR)/$(SRC_DIR)/ufs_core.o $(BUILD_DIR)/$(SRC_DIR)/ufs_core_sqlite.o
 
 GLOBAL_HEADERS := $(INCLUDE_DIR)/ufs_core.h
 
