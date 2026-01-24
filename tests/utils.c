@@ -30,7 +30,7 @@ int ufsGetInstance( void **state )
 
     ufsStruct -> ufs = ufsInit();
     if ( !ufsStruct -> ufs ) {
-        printf("Encountered ufs error: %s", ufsStatusStrings[ ufsErrno ] );
+        printf("Encountered ufs error: %s\n", ufsStatusStrings[ ufsErrno ] );
         return -1;
     }
 
@@ -47,7 +47,7 @@ int ufsCleanup( void **state )
     if ( ufsStruct -> ufs ) {
         ufsDestroy( ufsStruct -> ufs );
         if (ufsErrno) {
-            printf("Encountered ufs error: %s", ufsStatusStrings[ ufsErrno ] );
+            printf("Encountered ufs error: %s\n", ufsStatusStrings[ ufsErrno ] );
             return -1;
         }
     }
