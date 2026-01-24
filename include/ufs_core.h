@@ -21,8 +21,8 @@
 /*                                                                            */
 /* Directory: Storage that can contain other storage.                         */
 /*                                                                            */
-/* ROOT: The root directory of ufs, internally it has the unique name UFS_RO- */
-/*       OT_DIR_NAME, no other directory can be given this name.              */
+/* ROOT: The root directory of ufs, internally it has the unique name UFS_ST- */
+/*       ORAGE_ROOT_NAME, no other directory can be given this name.          */
 /*                                                                            */
 /* File: Storage that cannot contain other storage.                           */
 /*                                                                            */
@@ -173,6 +173,9 @@
 #define UFS_VIEW_TERMINATOR (-1)
 #define UFS_AREA_BASE_NAME ("BASE") 
 #define UFS_AREA_BASE_IDENTIFIER (0)
+#define UFS_STORAGE_ROOT_NAME ("ROOT") 
+#define UFS_STORAGE_ROOT_IDENTIFIER (0)
+#define UFS_NAME
 
 #include <stdint.h>
 #include <sys/types.h>
