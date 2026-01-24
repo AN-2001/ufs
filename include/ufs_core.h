@@ -1,15 +1,15 @@
 /******************************************************************************\
-*  ufs.h                                                                       *
+*  ufs_core.h                                                                  *
 *                                                                              *
-*  Contains the spec for ufs.                                                  *
+*  Contains the spec for ufs core.                                             *
 *  Different implementations are valid as long as they implement this.         *
 *                                                                              *
 *              Written by A.N.                                  17-01-2026     *
 *                                                                              *
 \******************************************************************************/
 
-#ifndef UFS_H
-#define UFS_H
+#ifndef UFS_CORE_H
+#define UFS_CORE_H
 
 /*                                                                            */
 /* This is the spec for the ufs "union file system" storage back-end.         */
@@ -658,4 +658,4 @@ ufsStatusType ufsIterateDirInView( ufsType ufs,
 ufsStatusType ufsCollapse( ufsType ufs,
                            ufsViewType view );
 
-#endif /* UFS_H */
+#endif /* UFS_CORE_H */

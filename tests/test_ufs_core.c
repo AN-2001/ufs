@@ -1,7 +1,9 @@
 /******************************************************************************\
-*  test_ufs.c                                                                  *
+*  test_ufs_core.c                                                             *
 *                                                                              *
-*  Test suite for ufs implementation.                                          *
+*  Test suite for ufs core implementations.                                    *
+*  Implementations that pass this are considered valid implementations of the  *
+*  ufs core spec.                                                              *
 *                                                                              *
 *              Written by A.N.                                  18-01-2026     *
 *                                                                              *
