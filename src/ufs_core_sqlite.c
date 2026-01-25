@@ -17,10 +17,13 @@
 enum ufsSqliteStatementType {
     UFS_STATMENT_INSERT_INTO_STORAGE,
     UFS_STATMENT_QUERY_STORAGE_BY_NAME_TYPE,
+    UFS_STATMENT_QUERY_STORAGE_BY_ID,
     UFS_STATMENT_QUERY_STORAGE_BY_ID_TYPE,
     UFS_STATMENT_INSERT_INTO_AREAS,
     UFS_STATMENT_QUERY_AREAS_BY_NAME,
     UFS_STATMENT_QUERY_AREAS_BY_ID,
+    UFS_STATMENT_INSERT_INTO_MAPPINGS,
+    UFS_STATMENT_QUERY_MAPPINGS_BY_IDS,
     NUM_UFS_STATEMENTS,
 };
 
@@ -40,6 +43,11 @@ static const char *UFS_SQL_TEXT[ NUM_UFS_STATEMENTS + 2 ] = {
                                           "type INTEGER );"
     "CREATE TABLE IF NOT EXISTS ufsAreas(id INTEGER PRIMARY KEY,"
                                          "name TEXT NOT NULL );"
+    "CREATE TABLE IF NOT EXISTS ufsMappings(id INTEGER PRIMARY KEY,"
+                                           "areaId INTEGER,"
+                                           "storageId INTEGER,"
+                                           "FOREIGN KEY (areaId) REFERENCES ufsAreas(id),"
+                                           "FOREIGN KEY (storageId) REFERENCES ufsStorage(id) );"
     ,
 
     /* Insert into the storage table:                                         */
@@ -47,6 +55,9 @@ static const char *UFS_SQL_TEXT[ NUM_UFS_STATEMENTS + 2 ] = {
 
     /* Query storage by name, parent, type:                                   */
     "SELECT id from ufsStorage where name = ? and parent = ? and type = ?;",
+
+    /* Query storage by id:                                                   */
+    "SELECT id from ufsStorage where id = ?;",
 
     /* Query storage by id, type:                                             */
     "SELECT id from ufsStorage where id = ? and type = ?;",
@@ -59,6 +70,12 @@ static const char *UFS_SQL_TEXT[ NUM_UFS_STATEMENTS + 2 ] = {
 
     /* Query areas by id:                                                     */
     "SELECT id from ufsAreas where id = ?;",
+
+    /* Insert into mappings:                                                  */
+    "INSERT INTO ufsMappings (areaId, storageId) VALUES (?, ?);",
+
+    /* Query mappings by IDs:                                                 */
+    "SELECT id from ufsMappings where areaId = ? and storageId = ?;",
 
     NULL
 };
@@ -377,8 +394,89 @@ ufsStatusType ufsAddMapping( ufsType ufs,
                              ufsIdentifierType area,
                              ufsIdentifierType storage )
 {
+    int res;
+    ufsSqliteStruct *ufsSqlite;
+    if ( !ufs || area <= 0 || storage < 0 ) {
+        ufsErrno = UFS_BAD_CALL;
+        return ufsErrno;
+    }
+
+    ufsSqlite = ufs;
+
+    /* First verify that area exists.                                         */
+    sqlite3_reset(
+            ufsSqlite -> statements[ UFS_STATMENT_QUERY_AREAS_BY_ID ] );
+    sqlite3_clear_bindings(
+            ufsSqlite -> statements[ UFS_STATMENT_QUERY_AREAS_BY_ID ] );
+    sqlite3_bind_int( 
+            ufsSqlite -> statements[ UFS_STATMENT_QUERY_AREAS_BY_ID ],
+            1, area );
+    res = sqlite3_step( 
+            ufsSqlite -> statements[ UFS_STATMENT_QUERY_AREAS_BY_ID ] );
+    if ( res != SQLITE_ROW ) {
+        ufsErrno = UFS_DOES_NOT_EXIST;
+        return ufsErrno;
+    }
+
+    /* Then verify that the storage exists.                                   */
+    sqlite3_reset(
+            ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_ID ] );
+    sqlite3_clear_bindings(
+            ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_ID ] );
+    sqlite3_bind_int( 
+            ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_ID ],
+            1, storage );
+    res = sqlite3_step( 
+            ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_ID ] );
+    if ( res != SQLITE_ROW ) {
+        ufsErrno = UFS_DOES_NOT_EXIST;
+        return ufsErrno;
+    }
+
+    /* verify that the mapping doesn't exist.                                 */
+    sqlite3_reset(
+            ufsSqlite -> statements[ UFS_STATMENT_QUERY_MAPPINGS_BY_IDS ] );
+    sqlite3_clear_bindings(
+            ufsSqlite -> statements[ UFS_STATMENT_QUERY_MAPPINGS_BY_IDS ] );
+    sqlite3_bind_int( 
+            ufsSqlite -> statements[ UFS_STATMENT_QUERY_MAPPINGS_BY_IDS ],
+            1, area );
+    sqlite3_bind_int( 
+            ufsSqlite -> statements[ UFS_STATMENT_QUERY_MAPPINGS_BY_IDS ],
+            2, storage );
+    res = sqlite3_step( 
+            ufsSqlite -> statements[ UFS_STATMENT_QUERY_MAPPINGS_BY_IDS ] );
+    if ( res == SQLITE_ROW ) {
+        ufsErrno = UFS_ALREADY_EXISTS;
+        return ufsErrno;
+    }
+
+    if ( res != SQLITE_DONE ) {
+        ufsErrno = UFS_UNKNOWN_ERROR;
+        return ufsErrno;
+    }
+
+    /* Finally, insert the area into the db.                                  */
+    sqlite3_reset(
+            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_MAPPINGS ] );
+    sqlite3_clear_bindings(
+            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_MAPPINGS ] );
+    sqlite3_bind_int(
+            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_MAPPINGS ],
+            1, area );
+    sqlite3_bind_int(
+            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_MAPPINGS ],
+            2, storage );
+    res = sqlite3_step(
+            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_MAPPINGS ] );
+    if ( res != SQLITE_DONE ) {
+        ufsErrno = UFS_UNKNOWN_ERROR;
+        return ufsErrno;
+    }
+
+
     ufsErrno = UFS_NO_ERROR;
-	return 0;
+	return ufsErrno;
 }
 
 ufsIdentifierType ufsGetDirectory( ufsType ufs,
