@@ -516,7 +516,7 @@ ufsIdentifierType ufsGetDirectory( ufsType ufs,
 
     ufsErrno = UFS_NO_ERROR;
 	return sqlite3_column_int( ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_NAME_TYPE ],
-                               0 );
+                               0 );;
 }
 
 ufsIdentifierType ufsGetFile( ufsType ufs,
@@ -601,8 +601,36 @@ ufsStatusType ufsProbeMapping( ufsType ufs,
                                ufsIdentifierType area,
                                ufsIdentifierType storage )
 {
+    int res;
+    ufsSqliteStruct *ufsSqlite;
+    if ( !ufs || area < 0 || storage < 0 ) {
+        ufsErrno = UFS_BAD_CALL;
+        return ufsErrno;
+    }
+
+    ufsSqlite = ufs;
+
+    /* Query the db and get the identifier.                                   */
+    sqlite3_reset(
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_MAPPINGS_BY_IDS ] );
+    sqlite3_clear_bindings(
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_MAPPINGS_BY_IDS ] );
+    sqlite3_bind_int(
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_MAPPINGS_BY_IDS ],
+            1, area );
+    sqlite3_bind_int(
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_MAPPINGS_BY_IDS ],
+            2, storage );
+    res = sqlite3_step(
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_MAPPINGS_BY_IDS ] );
+
+    if ( res != SQLITE_ROW ) {
+        ufsErrno = UFS_DOES_NOT_EXIST;
+        return ufsErrno;
+    }
+
     ufsErrno = UFS_NO_ERROR;
-	return 0;
+	return ufsErrno;
 }
 
 ufsStatusType ufsRemoveDirectory( ufsType ufs,
