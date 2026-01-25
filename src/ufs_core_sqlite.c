@@ -523,15 +523,78 @@ ufsIdentifierType ufsGetFile( ufsType ufs,
                               ufsIdentifierType parent,
                               const char *name )
 {
+    int res;
+    ufsSqliteStruct *ufsSqlite;
+    if ( !ufs || parent < 0 || !name ) {
+        ufsErrno = UFS_BAD_CALL;
+        return -1;
+    }
+
+    ufsSqlite = ufs;
+
+    /* Query the db and get the identifier.                                   */
+    sqlite3_reset(
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_NAME_TYPE ] );
+    sqlite3_clear_bindings(
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_NAME_TYPE ] );
+    sqlite3_bind_text(
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_NAME_TYPE ],
+            1, name, -1, SQLITE_TRANSIENT );
+    sqlite3_bind_int(
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_NAME_TYPE ],
+            2, parent );
+    sqlite3_bind_int(
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_NAME_TYPE ],
+            3, UFS_STORAGE_TYPE_FILE );
+    res = sqlite3_step(
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_NAME_TYPE ] );
+
+    if ( res != SQLITE_ROW ) {
+        ufsErrno = UFS_DOES_NOT_EXIST;
+        return -1;
+    }
+
     ufsErrno = UFS_NO_ERROR;
-	return 0;
+	return sqlite3_column_int( ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_NAME_TYPE ],
+                               0 );
 }
 
 ufsIdentifierType ufsGetArea( ufsType ufs,
                               const char *name )
 {
+    int res;
+    ufsSqliteStruct *ufsSqlite;
+    if ( !ufs || !name ) {
+        ufsErrno = UFS_BAD_CALL;
+        return -1;
+    }
+
+    if (strncmp( name, UFS_AREA_BASE_NAME, sizeof( UFS_AREA_BASE_NAME )) == 0) {
+        ufsErrno = UFS_ILLEGAL_NAME;
+        return -1;
+    }
+
+    ufsSqlite = ufs;
+
+    /* Query the db and get the identifier.                                   */
+    sqlite3_reset(
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_AREAS_BY_NAME ] );
+    sqlite3_clear_bindings(
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_AREAS_BY_NAME ] );
+    sqlite3_bind_text(
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_AREAS_BY_NAME ],
+            1, name, -1, SQLITE_TRANSIENT );
+    res = sqlite3_step(
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_AREAS_BY_NAME ] );
+
+    if ( res != SQLITE_ROW ) {
+        ufsErrno = UFS_DOES_NOT_EXIST;
+        return -1;
+    }
+
     ufsErrno = UFS_NO_ERROR;
-	return 0;
+	return sqlite3_column_int( ufsSqlite -> statements[ UFS_STATEMENT_QUERY_AREAS_BY_NAME ],
+                               0 );
 }
 
 ufsStatusType ufsProbeMapping( ufsType ufs,
