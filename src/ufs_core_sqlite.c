@@ -143,234 +143,26 @@ void ufsDestroy( ufsType ufs )
 }
 
 ufsIdentifierType ufsAddDirectory( ufsType ufs,
+                                   ufsIdentifierType parent,
                                    const char *name )
 {
-    ufsSqliteStruct *ufsSqlite;
-    int res;
-    if (!ufs || !name) {
-        ufsErrno = UFS_BAD_CALL;
-        return -1;
-    }
-
-    ufsSqlite = ufs;
-
-    /* First check if the directory exists.                                   */
-
-    sqlite3_reset(
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_NAME_TYPE ] );
-    sqlite3_bind_text(
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_NAME_TYPE ],
-            1, name, -1, SQLITE_TRANSIENT );
-    sqlite3_bind_int(
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_NAME_TYPE ],
-            2, 1 );
-    res = sqlite3_step(
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_NAME_TYPE ]
-            );
-
-    if ( res == SQLITE_ROW ) {
-        ufsErrno = UFS_ALREADY_EXISTS;
-        return -1;
-    }
-
-    if ( res != SQLITE_DONE ) {
-        ufsErrno = UFS_UNKNOWN_ERROR;
-        return -1;
-    }
-
-    /* Then insert the direcotry into the table.                              */
-    sqlite3_reset(
-            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_STORAGE ] );
-    sqlite3_bind_text(
-            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_STORAGE ],
-            1, name, -1, SQLITE_TRANSIENT );
-    sqlite3_bind_int(
-            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_STORAGE ],
-            2, 1);
-
-    res = sqlite3_step(
-            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_STORAGE ] );
-
-    if ( res != SQLITE_DONE ) {
-        ufsErrno = UFS_UNKNOWN_ERROR;
-        return -1;
-    }
-
     ufsErrno = UFS_NO_ERROR;
-    return sqlite3_last_insert_rowid( ufsSqlite -> db );
+    return 0;
 }
 
 ufsIdentifierType ufsAddFile( ufsType ufs,
-                              ufsIdentifierType directory,     
+                              ufsIdentifierType parent,     
                               const char *name )
 {
-    ufsSqliteStruct *ufsSqlite;
-    ufsIdentifierType storageId;
-    int res;
-    if ( !ufs || directory <= 0 || !name ) {
-        ufsErrno = UFS_BAD_CALL;
-        return -1;
-    }
-
-    ufsSqlite = ufs;
-
-    /* First check if the directory exists.                                    */
-
-    sqlite3_reset(
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_ID ] );
-    sqlite3_bind_int(
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_ID ],
-            1, directory );
-    res = sqlite3_step(
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_ID ]
-            );
-    if ( res != SQLITE_ROW ) {
-        ufsErrno = UFS_DIRECTORY_DOES_NOT_EXIST;
-        return -1;
-    }
-
-    /* Next see if the file name already exists in the storage table          */
-    sqlite3_reset(
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_NAME_TYPE ] );
-    sqlite3_bind_text(
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_NAME_TYPE ],
-            1, name, -1, SQLITE_TRANSIENT );
-    sqlite3_bind_int(
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_NAME_TYPE ],
-            2, 0);
-    res = sqlite3_step(
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_NAME_TYPE ]
-            );
-
-    if ( res == SQLITE_ROW ) {
-        storageId = sqlite3_column_int(
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_NAME_TYPE ],
-            0 );
-
-        /* Now check if this file already exists.                             */
-        sqlite3_reset(
-                ufsSqlite -> statements[ UFS_STATMENT_QUERY_FILES_BY_IDS ] );
-        sqlite3_bind_int(
-                ufsSqlite -> statements[ UFS_STATMENT_QUERY_FILES_BY_IDS ],
-                1, directory);
-        sqlite3_bind_int(
-                ufsSqlite -> statements[ UFS_STATMENT_QUERY_FILES_BY_IDS ],
-                2, storageId);
-
-        res = sqlite3_step(
-                ufsSqlite -> statements[ UFS_STATMENT_QUERY_FILES_BY_IDS ]
-                );
-
-        if ( res == SQLITE_ROW ) {
-            ufsErrno = UFS_ALREADY_EXISTS;
-            return -1;
-        }
-
-        if ( res != SQLITE_DONE ) {
-            ufsErrno = UFS_UNKNOWN_ERROR;
-            return -1;
-        }
-
-    } else if ( res == SQLITE_DONE ) {
-
-        /* Insert the file name into the storage table.                       */
-        sqlite3_reset(
-                ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_STORAGE ] );
-        sqlite3_bind_text(
-                ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_STORAGE ],
-                1, name, -1, SQLITE_TRANSIENT );
-        sqlite3_bind_int(
-                ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_STORAGE ],
-                2, 0);
-        res = sqlite3_step(
-                ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_STORAGE ] );
-
-        if ( res != SQLITE_DONE ) {
-            ufsErrno = UFS_UNKNOWN_ERROR;
-            return -1;
-        }
-
-        storageId = sqlite3_last_insert_rowid( ufsSqlite -> db );
-    } else {
-        ufsErrno = UFS_UNKNOWN_ERROR;
-        return -1;
-    }
-
-
-    /* Finally insert the file itself into the files table.                   */
-    sqlite3_reset(
-            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_FILES ] );
-    sqlite3_bind_int(
-            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_FILES ],
-            1, directory );
-    sqlite3_bind_int(
-            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_FILES ],
-            2, storageId );
-    res = sqlite3_step(
-            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_FILES ] );
-
-    if ( res != SQLITE_DONE ) {
-        ufsErrno = UFS_UNKNOWN_ERROR;
-        return -1;
-    }
-
     ufsErrno = UFS_NO_ERROR;
-	return sqlite3_last_insert_rowid( ufsSqlite -> db );
+    return 0;
 }
 
 ufsIdentifierType ufsAddArea( ufsType ufs,
                               const char *name )
 {
-    ufsSqliteStruct *ufsSqlite;
-    int res;
-    if ( !ufs || !name ) {
-        ufsErrno = UFS_BAD_CALL;
-        return -1;
-    }
-
-    if ( strcmp( name, UFS_AREA_BASE_NAME ) == 0 )  {
-        ufsErrno = UFS_ILLEGAL_AREA_NAME;
-        return -1;
-    }
-
-    ufsSqlite = ufs;
-
-    /* First check if it already exists.                                      */
-
-    sqlite3_reset(
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_AREAS_BY_NAME ] );
-    sqlite3_bind_text(
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_AREAS_BY_NAME ],
-            1, name, -1, SQLITE_TRANSIENT );
-    res = sqlite3_step(
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_AREAS_BY_NAME ]
-            );
-
-    if ( res == SQLITE_ROW ) {
-        ufsErrno = UFS_ALREADY_EXISTS;
-        return -1;
-    }
-
-    if ( res != SQLITE_DONE ) {
-        ufsErrno = UFS_UNKNOWN_ERROR;
-        return -1;
-    }
-
-    /* Then insert the direcotry into the table.                              */
-    sqlite3_reset(
-            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_AREAS ] );
-    sqlite3_bind_text(
-            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_AREAS ],
-            1, name, -1, SQLITE_TRANSIENT );
-    res = sqlite3_step(
-            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_AREAS ] );
-    if ( res != SQLITE_DONE ) {
-        ufsErrno = UFS_UNKNOWN_ERROR;
-        return -1;
-    }
-
     ufsErrno = UFS_NO_ERROR;
-    return sqlite3_last_insert_rowid( ufsSqlite -> db );
+    return 0;
 }
 
 ufsStatusType ufsAddMapping( ufsType ufs,
@@ -382,6 +174,7 @@ ufsStatusType ufsAddMapping( ufsType ufs,
 }
 
 ufsIdentifierType ufsGetDirectory( ufsType ufs,
+                                   ufsIdentifierType parent,
                                    const char *name )
 {
     ufsErrno = UFS_NO_ERROR;
@@ -389,7 +182,7 @@ ufsIdentifierType ufsGetDirectory( ufsType ufs,
 }
 
 ufsIdentifierType ufsGetFile( ufsType ufs,
-                              ufsIdentifierType directory,
+                              ufsIdentifierType parent,
                               const char *name )
 {
     ufsErrno = UFS_NO_ERROR;
