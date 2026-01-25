@@ -17,9 +17,13 @@
 /* its internal data, in other words: this is the core of ufs.                */
 /* Definitions:                                                               */
 /*                                                                            */
-/* Storage: An entity represented by a name.                                   */
+/* Storage: An entity represented by a name.                                  */
 /*                                                                            */
 /* Directory: Storage that can contain other storage.                         */
+/*                                                                            */
+/* Note: Directory is sometimes referred to as "parent" in add/get functions. */
+/*       In which case it means that the directory will contain the result of */
+/*       the add/get.                                                         */
 /*                                                                            */
 /* ROOT: The root directory of ufs, internally it has the unique name UFS_ST- */
 /*       ORAGE_ROOT_NAME, no other directory can be given this name.          */
@@ -185,17 +189,17 @@
     UFS_X( UFS_ALREADY_EXISTS,             1ULL << 0 )                         \
     UFS_X( UFS_BAD_CALL,                   1ULL << 1 )                         \
     UFS_X( UFS_CANNOT_RESOLVE_STORAGE,     1ULL << 2 )                         \
-    UFS_X( UFS_DIRECTORY_DOES_NOT_EXIST,   1ULL << 3 )                         \
+    UFS_X( UFS_PARENT_DOES_NOT_EXIST,      1ULL << 3 )                         \
     UFS_X( UFS_DIRECTORY_IS_NOT_EMPTY,     1ULL << 4 )                         \
     UFS_X( UFS_DOES_NOT_EXIST,             1ULL << 5 )                         \
     UFS_X( UFS_EXISTS_IN_EXPLICIT_MAPPING, 1ULL << 6 )                         \
-    UFS_X( UFS_ILLEGAL_AREA_NAME,          1ULL << 7 )                         \
+    UFS_X( UFS_ILLEGAL_NAME,               1ULL << 7 )                         \
     UFS_X( UFS_INVALID_AREA_IN_VIEW,       1ULL << 8 )                         \
     UFS_X( UFS_MAPPING_DOES_NOT_EXIST,     1ULL << 9 )                         \
     UFS_X( UFS_OUT_OF_MEMORY,              1ULL << 10 )                        \
     UFS_X( UFS_UNKNOWN_ERROR,              1ULL << 11 )                        \
     UFS_X( UFS_VIEW_CONTAINS_DUPLICATES,   1ULL << 12 )                        \
-    UFS_X( UFS_ILLEGAL_STORAGE_NAME,       1ULL << 13 )                        \
+    UFS_X( UFS_PARENT_CANT_BE_FILE,        1ULL << 13 )                        \
     UFS_X( UFS_BASE_IS_NOT_LAST_AREA,      1ULL << 14 ) 
 
 enum {
@@ -265,8 +269,8 @@ void ufsDestroy( ufsType ufs );
 *                                                                              *
 *  Possible errors:                                                            *
 *   -UFS_BAD_CALL: The function received bad arguments.                        *
-*   -UFS_ILLEGAL_STORAGE_NAME: An illegal directory name (e.g ROOT) was provi- *
-*                              ded.                                            *
+*   -UFS_ILLEGAL_NAME: An illegal directory name (e.g ROOT) was provided.      *
+*   -UFS_PARENT_CANT_BE_FILE: Parent represents a file instead of a directory. *
 *   -UFS_ALREADY_EXISTS: The directory already exists.                         *
 *   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
 *                                                                              *
@@ -298,8 +302,9 @@ ufsIdentifierType ufsAddDirectory( ufsType ufs,
 *  Possible errors:                                                            *
 *   -UFS_BAD_CALL: The function received bad arguments.                        *
 *   -UFS_ALREADY_EXISTS: The file already exists.                              *
-*   -UFS_DIRECTORY_DOES_NOT_EXIST: The specified directory does not exist.     *
-*   -UFS_ILLEGAL_STORAGE_NAME: An illegal file name (e.g ROOT) was provided.   *
+*   -UFS_PARENT_DOES_NOT_EXIST: The specified directory does not exist.        *
+*   -UFS_ILLEGAL_NAME: An illegal file name (e.g ROOT) was provided.           *
+*   -UFS_PARENT_CANT_BE_FILE: Parent represents a file instead of a directory. *
 *   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
 *                                                                              *
 * Parameters                                                                   *
@@ -326,7 +331,7 @@ ufsIdentifierType ufsAddFile( ufsType ufs,
 *  Possible errors:                                                            *
 *   -UFS_BAD_CALL: The function received bad arguments.                        *
 *   -UFS_ALREADY_EXISTS: The area already exists.                              *
-*   -UFS_ILLEGAL_AREA_NAME: An illegal area name (e.e "BASE") was provided.    *
+*   -UFS_ILLEGAL_NAME: An illegal area name (e.e "BASE") was provided.         *
 *   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
 *                                                                              *
 * Parameters                                                                   *
@@ -403,7 +408,7 @@ ufsIdentifierType ufsGetDirectory( ufsType ufs,
 *  Possible errors:                                                            *
 *   -UFS_BAD_CALL: The function received bad arguments.                        *
 *   -UFS_DOES_NOT_EXIST: The specified file does not exist.                    *
-*   -UFS_DIRECTORY_DOES_NOT_EXIST: The specified directory does not exist.     *
+*   -UFS_PARENT_DOES_NOT_EXIST: The specified parent does not exist.           *
 *   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
 *                                                                              *
 * Parameters                                                                   *
@@ -488,8 +493,7 @@ ufsStatusType ufsProbeMapping( ufsType ufs,
 *   -UFS_DOES_NOT_EXIST: The directory does not exist in ufs.                  *
 *   -UFS_DIRECTORY_IS_NOT_EMPTY: The directory is not empty and can't be       *
 *                                removed.                                      *
-*   -UFS_ILLEGAL_STORAGE_NAME: An illegal directory name (e.g ROOT) was provi- *
-*                              ded.                                            *
+*   -UFS_ILLEGAL_NAME: An illegal directory name (e.g ROOT) was provided.      *
 *   -UFS_EXISTS_IN_EXPLICIT_MAPPING: The directory is referenced in an explic- *
 *                                    it mapping and cannot be removed.         *
 *   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
@@ -518,7 +522,7 @@ ufsStatusType ufsRemoveDirectory( ufsType ufs,
 *   -UFS_DOES_NOT_EXIST: The file does not exist in ufs.                       *
 *   -UFS_EXISTS_IN_EXPLICIT_MAPPING: The file is referenced in an explicit ma- *
 *                                    pping and cannot be removed.              *
-*   -UFS_ILLEGAL_STORAGE_NAME: An illegal file name (e.g ROOT) was provided.   *
+*   -UFS_ILLEGAL_NAME: An illegal file name (e.g ROOT) was provided.           *
 *   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
 *                                                                              *
 * Parameters                                                                   *
@@ -544,7 +548,7 @@ ufsStatusType ufsRemoveFile( ufsType ufs,
 *   -UFS_DOES_NOT_EXIST: The area does not exist in ufs.                       *
 *   -UFS_EXISTS_IN_EXPLICIT_MAPPING: The area is referenced in an explicit ma- *
 *                                    pping and cannot be removed.              *
-*   -UFS_ILLEGAL_AREA_NAME: An illegal area name (e.e "BASE") was provided.    *
+*   -UFS_ILLEGAL_NAME: An illegal area name (e.e "BASE") was provided.         *
 *   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
 *                                                                              *
 * Parameters                                                                   *
