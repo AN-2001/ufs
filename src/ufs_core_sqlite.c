@@ -15,15 +15,15 @@
 #include <string.h>
 
 enum ufsSqliteStatementType {
-    UFS_STATMENT_INSERT_INTO_STORAGE,
-    UFS_STATMENT_QUERY_STORAGE_BY_NAME_TYPE,
-    UFS_STATMENT_QUERY_STORAGE_BY_ID,
-    UFS_STATMENT_QUERY_STORAGE_BY_ID_TYPE,
-    UFS_STATMENT_INSERT_INTO_AREAS,
-    UFS_STATMENT_QUERY_AREAS_BY_NAME,
-    UFS_STATMENT_QUERY_AREAS_BY_ID,
-    UFS_STATMENT_INSERT_INTO_MAPPINGS,
-    UFS_STATMENT_QUERY_MAPPINGS_BY_IDS,
+    UFS_STATEMENT_INSERT_INTO_STORAGE,
+    UFS_STATEMENT_QUERY_STORAGE_BY_NAME_TYPE,
+    UFS_STATEMENT_QUERY_STORAGE_BY_ID,
+    UFS_STATEMENT_QUERY_STORAGE_BY_ID_TYPE,
+    UFS_STATEMENT_INSERT_INTO_AREAS,
+    UFS_STATEMENT_QUERY_AREAS_BY_NAME,
+    UFS_STATEMENT_QUERY_AREAS_BY_ID,
+    UFS_STATEMENT_INSERT_INTO_MAPPINGS,
+    UFS_STATEMENT_QUERY_MAPPINGS_BY_IDS,
     NUM_UFS_STATEMENTS,
 };
 
@@ -179,17 +179,17 @@ ufsIdentifierType ufsAddDirectory( ufsType ufs,
     /* Make sure parent is a directory if it's not ROOT.                      */
     if ( parent > 0 ) {
         sqlite3_reset(
-                ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_ID_TYPE ] );
+                ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_ID_TYPE ] );
         sqlite3_clear_bindings(
-                ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_ID_TYPE ] );
+                ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_ID_TYPE ] );
         sqlite3_bind_int(
-                ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_ID_TYPE ],
+                ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_ID_TYPE ],
                 1, parent );
         sqlite3_bind_int(
-                ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_ID_TYPE ],
+                ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_ID_TYPE ],
                 2, UFS_STORAGE_TYPE_DIRECTORY );
         res = sqlite3_step(
-                ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_ID_TYPE ] );
+                ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_ID_TYPE ] );
         if ( res != SQLITE_ROW ) {
             ufsErrno = UFS_PARENT_DOES_NOT_EXIST;
             return -1;
@@ -198,20 +198,20 @@ ufsIdentifierType ufsAddDirectory( ufsType ufs,
 
     /* Make sure it doesn't exist.                                            */
     sqlite3_reset(
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_NAME_TYPE ] );
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_NAME_TYPE ] );
     sqlite3_clear_bindings(
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_NAME_TYPE ] );
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_NAME_TYPE ] );
     sqlite3_bind_text(
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_NAME_TYPE ],
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_NAME_TYPE ],
             1, name, -1, SQLITE_TRANSIENT );
     sqlite3_bind_int(
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_NAME_TYPE ],
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_NAME_TYPE ],
             2, parent );
     sqlite3_bind_int(
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_NAME_TYPE ],
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_NAME_TYPE ],
             3, UFS_STORAGE_TYPE_DIRECTORY );
     res = sqlite3_step(
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_NAME_TYPE ] );
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_NAME_TYPE ] );
     if ( res == SQLITE_ROW ) {
         ufsErrno = UFS_ALREADY_EXISTS;
         return -1;
@@ -224,20 +224,20 @@ ufsIdentifierType ufsAddDirectory( ufsType ufs,
 
     /* Finally, insert the directory into the db.                             */
     sqlite3_reset(
-            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_STORAGE ] );
+            ufsSqlite -> statements[ UFS_STATEMENT_INSERT_INTO_STORAGE ] );
     sqlite3_clear_bindings(
-            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_STORAGE ] );
+            ufsSqlite -> statements[ UFS_STATEMENT_INSERT_INTO_STORAGE ] );
     sqlite3_bind_text(
-            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_STORAGE ],
+            ufsSqlite -> statements[ UFS_STATEMENT_INSERT_INTO_STORAGE ],
             1, name, -1, SQLITE_TRANSIENT );
     sqlite3_bind_int(
-            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_STORAGE ],
+            ufsSqlite -> statements[ UFS_STATEMENT_INSERT_INTO_STORAGE ],
             2, parent );
     sqlite3_bind_int(
-            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_STORAGE ],
+            ufsSqlite -> statements[ UFS_STATEMENT_INSERT_INTO_STORAGE ],
             3, UFS_STORAGE_TYPE_DIRECTORY );
     res = sqlite3_step(
-            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_STORAGE ] );
+            ufsSqlite -> statements[ UFS_STATEMENT_INSERT_INTO_STORAGE ] );
     if ( res != SQLITE_DONE ) {
         ufsErrno = UFS_UNKNOWN_ERROR;
         return -1;
@@ -263,17 +263,17 @@ ufsIdentifierType ufsAddFile( ufsType ufs,
     /* Make sure parent is a directory if it's not ROOT.                      */
     if ( parent > 0 ) {
         sqlite3_reset(
-                ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_ID_TYPE ] );
+                ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_ID_TYPE ] );
         sqlite3_clear_bindings(
-                ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_ID_TYPE ] );
+                ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_ID_TYPE ] );
         sqlite3_bind_int(
-                ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_ID_TYPE ],
+                ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_ID_TYPE ],
                 1, parent );
         sqlite3_bind_int(
-                ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_ID_TYPE ],
+                ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_ID_TYPE ],
                 2, UFS_STORAGE_TYPE_DIRECTORY );
         res = sqlite3_step(
-                ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_ID_TYPE ] );
+                ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_ID_TYPE ] );
         if ( res != SQLITE_ROW ) {
             ufsErrno = UFS_PARENT_DOES_NOT_EXIST;
             return -1;
@@ -282,20 +282,20 @@ ufsIdentifierType ufsAddFile( ufsType ufs,
 
     /* Make sure it doesn't exist.                                            */
     sqlite3_reset(
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_NAME_TYPE ] );
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_NAME_TYPE ] );
     sqlite3_clear_bindings(
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_NAME_TYPE ] );
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_NAME_TYPE ] );
     sqlite3_bind_text(
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_NAME_TYPE ],
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_NAME_TYPE ],
             1, name, -1, SQLITE_TRANSIENT );
     sqlite3_bind_int(
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_NAME_TYPE ],
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_NAME_TYPE ],
             2, parent );
     sqlite3_bind_int(
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_NAME_TYPE ],
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_NAME_TYPE ],
             3, UFS_STORAGE_TYPE_FILE );
     res = sqlite3_step(
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_NAME_TYPE ] );
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_NAME_TYPE ] );
     if ( res == SQLITE_ROW ) {
         ufsErrno = UFS_ALREADY_EXISTS;
         return -1;
@@ -308,20 +308,20 @@ ufsIdentifierType ufsAddFile( ufsType ufs,
 
     /* Finally, insert the file into the db.                                  */
     sqlite3_reset(
-            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_STORAGE ] );
+            ufsSqlite -> statements[ UFS_STATEMENT_INSERT_INTO_STORAGE ] );
     sqlite3_clear_bindings(
-            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_STORAGE ] );
+            ufsSqlite -> statements[ UFS_STATEMENT_INSERT_INTO_STORAGE ] );
     sqlite3_bind_text(
-            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_STORAGE ],
+            ufsSqlite -> statements[ UFS_STATEMENT_INSERT_INTO_STORAGE ],
             1, name, -1, SQLITE_TRANSIENT );
     sqlite3_bind_int(
-            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_STORAGE ],
+            ufsSqlite -> statements[ UFS_STATEMENT_INSERT_INTO_STORAGE ],
             2, parent );
     sqlite3_bind_int(
-            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_STORAGE ],
+            ufsSqlite -> statements[ UFS_STATEMENT_INSERT_INTO_STORAGE ],
             3, UFS_STORAGE_TYPE_FILE );
     res = sqlite3_step(
-            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_STORAGE ] );
+            ufsSqlite -> statements[ UFS_STATEMENT_INSERT_INTO_STORAGE ] );
     if ( res != SQLITE_DONE ) {
         ufsErrno = UFS_UNKNOWN_ERROR;
         return -1;
@@ -353,14 +353,14 @@ ufsIdentifierType ufsAddArea( ufsType ufs,
 
     /* First verify that the area doesn't exist.                              */
     sqlite3_reset(
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_AREAS_BY_NAME ] );
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_AREAS_BY_NAME ] );
     sqlite3_clear_bindings(
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_AREAS_BY_NAME ] );
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_AREAS_BY_NAME ] );
     sqlite3_bind_text( 
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_AREAS_BY_NAME ],
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_AREAS_BY_NAME ],
             1, name, -1, SQLITE_TRANSIENT );
     res = sqlite3_step( 
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_AREAS_BY_NAME ] );
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_AREAS_BY_NAME ] );
     if ( res == SQLITE_ROW ) {
         ufsErrno = UFS_ALREADY_EXISTS;
         return -1;
@@ -373,14 +373,14 @@ ufsIdentifierType ufsAddArea( ufsType ufs,
 
     /* Finally, insert the area into the db.                                  */
     sqlite3_reset(
-            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_AREAS ] );
+            ufsSqlite -> statements[ UFS_STATEMENT_INSERT_INTO_AREAS ] );
     sqlite3_clear_bindings(
-            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_AREAS ] );
+            ufsSqlite -> statements[ UFS_STATEMENT_INSERT_INTO_AREAS ] );
     sqlite3_bind_text(
-            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_AREAS ],
+            ufsSqlite -> statements[ UFS_STATEMENT_INSERT_INTO_AREAS ],
             1, name, -1, SQLITE_TRANSIENT );
     res = sqlite3_step(
-            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_AREAS ] );
+            ufsSqlite -> statements[ UFS_STATEMENT_INSERT_INTO_AREAS ] );
     if ( res != SQLITE_DONE ) {
         ufsErrno = UFS_UNKNOWN_ERROR;
         return -1;
@@ -405,14 +405,14 @@ ufsStatusType ufsAddMapping( ufsType ufs,
 
     /* First verify that area exists.                                         */
     sqlite3_reset(
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_AREAS_BY_ID ] );
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_AREAS_BY_ID ] );
     sqlite3_clear_bindings(
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_AREAS_BY_ID ] );
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_AREAS_BY_ID ] );
     sqlite3_bind_int( 
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_AREAS_BY_ID ],
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_AREAS_BY_ID ],
             1, area );
     res = sqlite3_step( 
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_AREAS_BY_ID ] );
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_AREAS_BY_ID ] );
     if ( res != SQLITE_ROW ) {
         ufsErrno = UFS_DOES_NOT_EXIST;
         return ufsErrno;
@@ -420,14 +420,14 @@ ufsStatusType ufsAddMapping( ufsType ufs,
 
     /* Then verify that the storage exists.                                   */
     sqlite3_reset(
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_ID ] );
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_ID ] );
     sqlite3_clear_bindings(
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_ID ] );
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_ID ] );
     sqlite3_bind_int( 
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_ID ],
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_ID ],
             1, storage );
     res = sqlite3_step( 
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_STORAGE_BY_ID ] );
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_ID ] );
     if ( res != SQLITE_ROW ) {
         ufsErrno = UFS_DOES_NOT_EXIST;
         return ufsErrno;
@@ -435,17 +435,17 @@ ufsStatusType ufsAddMapping( ufsType ufs,
 
     /* verify that the mapping doesn't exist.                                 */
     sqlite3_reset(
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_MAPPINGS_BY_IDS ] );
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_MAPPINGS_BY_IDS ] );
     sqlite3_clear_bindings(
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_MAPPINGS_BY_IDS ] );
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_MAPPINGS_BY_IDS ] );
     sqlite3_bind_int( 
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_MAPPINGS_BY_IDS ],
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_MAPPINGS_BY_IDS ],
             1, area );
     sqlite3_bind_int( 
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_MAPPINGS_BY_IDS ],
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_MAPPINGS_BY_IDS ],
             2, storage );
     res = sqlite3_step( 
-            ufsSqlite -> statements[ UFS_STATMENT_QUERY_MAPPINGS_BY_IDS ] );
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_MAPPINGS_BY_IDS ] );
     if ( res == SQLITE_ROW ) {
         ufsErrno = UFS_ALREADY_EXISTS;
         return ufsErrno;
@@ -458,17 +458,17 @@ ufsStatusType ufsAddMapping( ufsType ufs,
 
     /* Finally, insert the area into the db.                                  */
     sqlite3_reset(
-            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_MAPPINGS ] );
+            ufsSqlite -> statements[ UFS_STATEMENT_INSERT_INTO_MAPPINGS ] );
     sqlite3_clear_bindings(
-            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_MAPPINGS ] );
+            ufsSqlite -> statements[ UFS_STATEMENT_INSERT_INTO_MAPPINGS ] );
     sqlite3_bind_int(
-            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_MAPPINGS ],
+            ufsSqlite -> statements[ UFS_STATEMENT_INSERT_INTO_MAPPINGS ],
             1, area );
     sqlite3_bind_int(
-            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_MAPPINGS ],
+            ufsSqlite -> statements[ UFS_STATEMENT_INSERT_INTO_MAPPINGS ],
             2, storage );
     res = sqlite3_step(
-            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_MAPPINGS ] );
+            ufsSqlite -> statements[ UFS_STATEMENT_INSERT_INTO_MAPPINGS ] );
     if ( res != SQLITE_DONE ) {
         ufsErrno = UFS_UNKNOWN_ERROR;
         return ufsErrno;
@@ -483,8 +483,40 @@ ufsIdentifierType ufsGetDirectory( ufsType ufs,
                                    ufsIdentifierType parent,
                                    const char *name )
 {
+    int res;
+    ufsSqliteStruct *ufsSqlite;
+    if ( !ufs || parent < 0 || !name ) {
+        ufsErrno = UFS_BAD_CALL;
+        return -1;
+    }
+
+    ufsSqlite = ufs;
+
+    /* Query the db and get the identifier.                                   */
+    sqlite3_reset(
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_NAME_TYPE ] );
+    sqlite3_clear_bindings(
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_NAME_TYPE ] );
+    sqlite3_bind_text(
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_NAME_TYPE ],
+            1, name, -1, SQLITE_TRANSIENT );
+    sqlite3_bind_int(
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_NAME_TYPE ],
+            2, parent );
+    sqlite3_bind_int(
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_NAME_TYPE ],
+            3, UFS_STORAGE_TYPE_DIRECTORY );
+    res = sqlite3_step(
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_NAME_TYPE ] );
+
+    if ( res != SQLITE_ROW ) {
+        ufsErrno = UFS_DOES_NOT_EXIST;
+        return -1;
+    }
+
     ufsErrno = UFS_NO_ERROR;
-	return 0;
+	return sqlite3_column_int( ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_NAME_TYPE ],
+                               0 );
 }
 
 ufsIdentifierType ufsGetFile( ufsType ufs,
