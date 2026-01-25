@@ -180,6 +180,8 @@
 #define UFS_AREA_BASE_IDENTIFIER (0)
 #define UFS_STORAGE_ROOT_NAME ("ROOT") 
 #define UFS_STORAGE_ROOT_IDENTIFIER (0)
+#define UFS_STORAGE_TYPE_FILE (0)
+#define UFS_STORAGE_TYPE_DIRECTORY (0)
 #define UFS_NAME
 
 #include <stdint.h>
