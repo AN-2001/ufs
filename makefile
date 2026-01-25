@@ -27,16 +27,24 @@ PROJ := ufs
 ARCHIVE := $(BUILD_DIR)/libufs.a
 
 # Place compilation targets here.
-OBJECTS := $(BUILD_DIR)/$(SRC_DIR)/ufs_core.o   \
-		   $(BUILD_DIR)/$(SQLITE_DIR)/sqlite3.o \
-		   $(BUILD_DIR)/$(SRC_DIR)/ufs_core_sqlite.o 
+
+SOURCES := $(filter-out $(SRC_DIR)/main.c, $(wildcard $(SRC_DIR)/*.c)) $(SQLITE_DIR)/sqlite3.c
+
+OBJECTS := $(patsubst %.c, $(BUILD_DIR)/%.o, $(SOURCES)) 
 
 GLOBAL_HEADERS := $(INCLUDE_DIR)/ufs_core.h
 
 # Entry point to each executable target.
 MAIN_ENTRY := $(BUILD_DIR)/$(SRC_DIR)/main.o
 
-all: $(PROJ) test
+all: $(PROJ) depend test
+
+depend: .depend
+
+.depend: $(SOURCES)
+	$(CC) $(CFLAGS) -MM $^ > "$@"
+
+include .depend
 
 $(PROJ): $(ARCHIVE) $(MAIN_ENTRY)
 	@mkdir -p $(BUILD_DIR)

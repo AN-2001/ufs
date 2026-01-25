@@ -27,17 +27,23 @@ LDLIBS := -lcmocka -lfuse3 -lufs -lpthread -ldl
 TESTS := test_ufs_core
 
 # Place compilation targets here.
+SOURCES = $(wildcard *.c)
 OBJECTS := $(BUILD_DIR)/tests/utils.o
 
-GLOBAL_HEADERS := $(INCLUDE_DIR)/ufs_core.h
+all: $(TESTS) depend $(BUILD_DIR)/ufs_tests.sh 
 
-all: $(TESTS) $(BUILD_DIR)/ufs_tests.sh
+depend: .depend
+
+.depend: $(SOURCES)
+	$(CC) $(CFLAGS) -MM $^ > "$@"
+
+include .depend
 
 test_ufs_core: $(BUILD_DIR)/tests/test_ufs_core.o $(OBJECTS) 
 	@mkdir -p $(BUILD_DIR)/tests
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $(BUILD_DIR)/tests/$@
 
-$(BUILD_DIR)/tests/%.o: %.c $(wildcard %.h) $(GLOBAL_HEADERS)
+$(BUILD_DIR)/tests/%.o: %.c 
 	@mkdir -p $(dir $@)
 	$(CC) -c $(CFLAGS) $< -o $@
 

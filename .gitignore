@@ -7,3 +7,5 @@ build/*
 unionfs
 TODO
 *.sw?
+tests/.depend
+.depend
