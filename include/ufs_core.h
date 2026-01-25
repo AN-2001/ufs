@@ -382,8 +382,8 @@ ufsStatusType ufsAddMapping( ufsType ufs,
 * Parameters                                                                   *
 *                                                                              *
 *  -ufs: The ufs instance, must not be NULL.                                   *
-*  -name: The name of the directory, must not be NULL.                         *
 *  -parent: The directory that contains this directory, must be non-negative.  *
+*  -name: The name of the directory, must not be NULL.                         *
 *                                                                              *
 * Return                                                                       *
 *                                                                              *
@@ -392,6 +392,7 @@ ufsStatusType ufsAddMapping( ufsType ufs,
 *                                                                              *
 \******************************************************************************/
 ufsIdentifierType ufsGetDirectory( ufsType ufs,
+                                   ufsIdentifierType parent,
                                    const char *name );
 
 /******************************************************************************\
