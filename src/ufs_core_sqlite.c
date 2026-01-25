@@ -18,6 +18,9 @@ enum ufsSqliteStatementType {
     UFS_STATMENT_INSERT_INTO_STORAGE,
     UFS_STATMENT_QUERY_STORAGE_BY_NAME_TYPE,
     UFS_STATMENT_QUERY_STORAGE_BY_ID_TYPE,
+    UFS_STATMENT_INSERT_INTO_AREAS,
+    UFS_STATMENT_QUERY_AREAS_BY_NAME,
+    UFS_STATMENT_QUERY_AREAS_BY_ID,
     NUM_UFS_STATEMENTS,
 };
 
@@ -35,7 +38,10 @@ static const char *UFS_SQL_TEXT[ NUM_UFS_STATEMENTS + 2 ] = {
                                           "name TEXT NOT NULL,"
                                           "parent INTEGER,"
                                           "type INTEGER );"
+    "CREATE TABLE IF NOT EXISTS ufsAreas(id INTEGER PRIMARY KEY,"
+                                         "name TEXT NOT NULL );"
     ,
+
     /* Insert into the storage table:                                         */
     "INSERT INTO ufsStorage (name, parent, type) VALUES (?, ?, ?);",
 
@@ -44,6 +50,15 @@ static const char *UFS_SQL_TEXT[ NUM_UFS_STATEMENTS + 2 ] = {
 
     /* Query storage by id, type:                                             */
     "SELECT id from ufsStorage where id = ? and type = ?;",
+
+    /* Insert into the area table:                                            */
+    "INSERT INTO ufsAreas (name) VALUES (?);",
+
+    /* Query areas by name:                                                   */
+    "SELECT id from ufsAreas where name = ?;",
+
+    /* Query areas by id:                                                     */
+    "SELECT id from ufsAreas where id = ?;",
 
     NULL
 };
@@ -208,6 +223,7 @@ ufsIdentifierType ufsAddDirectory( ufsType ufs,
             ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_STORAGE ] );
     if ( res != SQLITE_DONE ) {
         ufsErrno = UFS_UNKNOWN_ERROR;
+        return -1;
     }
 
     ufsErrno = UFS_NO_ERROR;
@@ -291,6 +307,7 @@ ufsIdentifierType ufsAddFile( ufsType ufs,
             ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_STORAGE ] );
     if ( res != SQLITE_DONE ) {
         ufsErrno = UFS_UNKNOWN_ERROR;
+        return -1;
     }
 
     ufsErrno = UFS_NO_ERROR;
@@ -300,8 +317,60 @@ ufsIdentifierType ufsAddFile( ufsType ufs,
 ufsIdentifierType ufsAddArea( ufsType ufs,
                               const char *name )
 {
+    ufsSqliteStruct *ufsSqlite;
+    int res;
+    if ( !ufs || !name ) {
+        ufsErrno = UFS_BAD_CALL;
+        return -1;
+    }
+
+    if (strncmp( name,
+                UFS_AREA_BASE_NAME,
+                sizeof( UFS_AREA_BASE_NAME ) /
+                sizeof( char )) == 0 ) {
+        ufsErrno = UFS_ILLEGAL_NAME;
+        return -1;
+    }
+
+    ufsSqlite = ufs;
+
+    /* First verify that the area doesn't exist.                              */
+    sqlite3_reset(
+            ufsSqlite -> statements[ UFS_STATMENT_QUERY_AREAS_BY_NAME ] );
+    sqlite3_clear_bindings(
+            ufsSqlite -> statements[ UFS_STATMENT_QUERY_AREAS_BY_NAME ] );
+    sqlite3_bind_text( 
+            ufsSqlite -> statements[ UFS_STATMENT_QUERY_AREAS_BY_NAME ],
+            1, name, -1, SQLITE_TRANSIENT );
+    res = sqlite3_step( 
+            ufsSqlite -> statements[ UFS_STATMENT_QUERY_AREAS_BY_NAME ] );
+    if ( res == SQLITE_ROW ) {
+        ufsErrno = UFS_ALREADY_EXISTS;
+        return -1;
+    }
+
+    if ( res != SQLITE_DONE ) {
+        ufsErrno = UFS_UNKNOWN_ERROR;
+        return -1;
+    }
+
+    /* Finally, insert the area into the db.                                  */
+    sqlite3_reset(
+            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_AREAS ] );
+    sqlite3_clear_bindings(
+            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_AREAS ] );
+    sqlite3_bind_text(
+            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_AREAS ],
+            1, name, -1, SQLITE_TRANSIENT );
+    res = sqlite3_step(
+            ufsSqlite -> statements[ UFS_STATMENT_INSERT_INTO_AREAS ] );
+    if ( res != SQLITE_DONE ) {
+        ufsErrno = UFS_UNKNOWN_ERROR;
+        return -1;
+    }
+
     ufsErrno = UFS_NO_ERROR;
-    return 0;
+    return sqlite3_last_insert_rowid( ufsSqlite -> db );
 }
 
 ufsStatusType ufsAddMapping( ufsType ufs,
