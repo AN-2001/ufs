@@ -170,7 +170,8 @@
 /* Note: Implicit mappings do not place removal constraints, as they are log- */
 /* ical and aren't stored as state.                                           */
 /*                                                                            */
-/* Note: both ROOT and BASE cannot be removed.                                */
+/* Note: both ROOT and BASE cannot be removed, if they're given as arguments  */
+/*       a UFS_BAD_CALL is emitted.                                           */
 /*                                                                            */
 
 #define UFS_VIEW_MAX_SIZE (4096)
@@ -362,8 +363,8 @@ ufsIdentifierType ufsAddArea( ufsType ufs,
 * Parameters                                                                   *
 *                                                                              *
 *  -ufs: The ufs instance, must not be NULL.                                   *
-*  -area: the area's unique identifier, must be greater than 0.                *
-*  -storage: the storage's unique identifier, must be greater than 0.          *
+*  -area: the area's unique identifier, must non-negative.                     *
+*  -storage: the storage's unique identifier, must non-negative.               *
 *                                                                              *
 * Return                                                                       *
 *                                                                              *
@@ -501,7 +502,6 @@ ufsStatusType ufsProbeMapping( ufsType ufs,
 * Parameters                                                                   *
 *                                                                              *
 *  -ufs: The ufs instance, must not be NULL.                                   *
-*  -parent: The directory that contains this directory, must be non-negative.  *
 *  -directory: the directory's unique identifier, must be greater than 0.      *
 *                                                                              *
 * Return                                                                       *
@@ -577,8 +577,8 @@ ufsStatusType ufsRemoveArea( ufsType ufs,
 * Parameters                                                                   *
 *                                                                              *
 *  -ufs: The ufs instance, must not be NULL.                                   *
-*  -area: the area's unique identifier, must be greater than 0.                *
-*  -storage: the storage's unique identifier, must be greater than 0.          *
+*  -area: the area's unique identifier, must be non-negative.                  *
+*  -storage: the storage's unique identifier, must be non-negative.            *
 *                                                                              *
 * Return                                                                       *
 *                                                                              *
