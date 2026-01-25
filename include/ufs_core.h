@@ -273,6 +273,7 @@ void ufsDestroy( ufsType ufs );
 * Parameters                                                                   *
 *                                                                              *
 *  -ufs: The ufs instance, must not be NULL.                                   *
+*  -parent: The directory that contains this directory, must be non-negative.  *
 *  -name: The name of the directory, must not be NULL.                         *
 *                                                                              *
 * Return                                                                       *
@@ -282,6 +283,7 @@ void ufsDestroy( ufsType ufs );
 *                                                                              *
 \******************************************************************************/
 ufsIdentifierType ufsAddDirectory( ufsType ufs,
+                                   ufsIdentifierType parent,
                                    const char *name );
 
 /******************************************************************************\
@@ -303,7 +305,7 @@ ufsIdentifierType ufsAddDirectory( ufsType ufs,
 * Parameters                                                                   *
 *                                                                              *
 *  -ufs: The ufs instance, must not be NULL.                                   *
-*  -directory: The directory that contains this file, must be greater than 0.  *
+*  -parent: The directory that contains this file, must be non-negative.       *
 *  -name: The name of the file, must not be NULL.                              *
 *                                                                              *
 * Return                                                                       *
@@ -313,7 +315,7 @@ ufsIdentifierType ufsAddDirectory( ufsType ufs,
 *                                                                              *
 \******************************************************************************/
 ufsIdentifierType ufsAddFile( ufsType ufs,
-                              ufsIdentifierType directory,     
+                              ufsIdentifierType parent,     
                               const char *name );
 
 /******************************************************************************\
@@ -381,6 +383,7 @@ ufsStatusType ufsAddMapping( ufsType ufs,
 *                                                                              *
 *  -ufs: The ufs instance, must not be NULL.                                   *
 *  -name: The name of the directory, must not be NULL.                         *
+*  -parent: The directory that contains this directory, must be non-negative.  *
 *                                                                              *
 * Return                                                                       *
 *                                                                              *
@@ -405,7 +408,7 @@ ufsIdentifierType ufsGetDirectory( ufsType ufs,
 * Parameters                                                                   *
 *                                                                              *
 *  -ufs: The ufs instance, must not be NULL.                                   *
-*  -directory: The directory that contains this file, must be greater than 0.  *
+*  -parent: The directory that contains this file, must be non-negative.       *
 *  -name: The name of the file, must not be NULL.                              *
 *                                                                              *
 * Return                                                                       *
@@ -415,7 +418,7 @@ ufsIdentifierType ufsGetDirectory( ufsType ufs,
 *                                                                              *
 \******************************************************************************/
 ufsIdentifierType ufsGetFile( ufsType ufs,
-                              ufsIdentifierType directory,
+                              ufsIdentifierType parent,
                               const char *name );
 
 /******************************************************************************\
@@ -493,6 +496,7 @@ ufsStatusType ufsProbeMapping( ufsType ufs,
 * Parameters                                                                   *
 *                                                                              *
 *  -ufs: The ufs instance, must not be NULL.                                   *
+*  -parent: The directory that contains this directory, must be non-negative.  *
 *  -directory: the directory's unique identifier, must be greater than 0.      *
 *                                                                              *
 * Return                                                                       *
