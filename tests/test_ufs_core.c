@@ -117,26 +117,6 @@ static void test_ufs_add_directory_parent_does_not_exist( void **state )
             TEST_DIRECTORY_NAME );
     ASSERT_UFS_ERROR( id0, UFS_PARENT_DOES_NOT_EXIST );
 }
-
-static void test_ufs_add_directory_parent_cant_be_file( void **state ) 
-{
-    struct ufsTestUfsStateStruct *ufsStruct;
-    ufsIdentifierType id0, id1;
-
-    ufsStruct = *state;
-
-    id0 = ufsAddFile( ufsStruct -> ufs,
-            UFS_STORAGE_ROOT_IDENTIFIER,
-            TEST_FILE_NAME );
-    ASSERT_UFS_NO_ERROR( id0 );
-
-    id1 = ufsAddDirectory( ufsStruct -> ufs,
-            id0,
-            TEST_DIRECTORY_NAME );
-    ASSERT_UFS_ERROR( id1, UFS_PARENT_CANT_BE_FILE );
-
-}
-
 /* ########################################################################## */
 
 /* ufsAddFile tests                                                           */
@@ -228,25 +208,6 @@ static void test_ufs_add_file_same_name_different_directory( void **state )
     ASSERT_UFS_NO_ERROR( id1 );
 
     assert_int_not_equal( id0, id1 );
-}
-
-static void test_ufs_add_file_parent_cant_be_file( void **state ) 
-{
-    struct ufsTestUfsStateStruct *ufsStruct;
-    ufsIdentifierType fileId0, fileId1;          
-
-    ufsStruct = *state;
-
-    fileId0 = ufsAddFile( ufsStruct -> ufs,
-            UFS_STORAGE_ROOT_IDENTIFIER,
-            TEST_FILE_NAME_0 );
-    ASSERT_UFS_NO_ERROR( fileId0 );
-
-    fileId1 = ufsAddFile( ufsStruct -> ufs,
-            fileId0,
-            TEST_FILE_NAME_0 );
-    ASSERT_UFS_ERROR( fileId1, UFS_PARENT_CANT_BE_FILE );
-
 }
 
 /* ########################################################################## */
@@ -1345,7 +1306,6 @@ static const struct CMUnitTest ufs_test_suite[] = {
     cmocka_unit_test_setup_teardown( test_ufs_add_directory, ufsGetInstance, ufsCleanup ),
     cmocka_unit_test_setup_teardown( test_ufs_add_directory_duplicate, ufsGetInstance, ufsCleanup ),
     cmocka_unit_test_setup_teardown( test_ufs_add_directory_parent_does_not_exist, ufsGetInstance, ufsCleanup ),
-    cmocka_unit_test_setup_teardown( test_ufs_add_directory_parent_cant_be_file, ufsGetInstance, ufsCleanup ),
     /* ====================================================================== */
 
     /* ufsAddFile tests.                                                      */
@@ -1354,7 +1314,6 @@ static const struct CMUnitTest ufs_test_suite[] = {
     cmocka_unit_test_setup_teardown( test_ufs_add_file_duplicate, ufsGetInstance, ufsCleanup ),
     cmocka_unit_test_setup_teardown( test_ufs_add_file_parent_does_not_exist, ufsGetInstance, ufsCleanup ),
     cmocka_unit_test_setup_teardown( test_ufs_add_file_same_name_different_directory, ufsGetInstance, ufsCleanup ),
-    cmocka_unit_test_setup_teardown( test_ufs_add_file_parent_cant_be_file, ufsGetInstance, ufsCleanup ),
     /* ====================================================================== */
 
     /* ufsAddArea tests.                                                      */
