@@ -200,8 +200,7 @@
     UFS_X( UFS_OUT_OF_MEMORY,              1ULL << 10 )                        \
     UFS_X( UFS_UNKNOWN_ERROR,              1ULL << 11 )                        \
     UFS_X( UFS_VIEW_CONTAINS_DUPLICATES,   1ULL << 12 )                        \
-    UFS_X( UFS_PARENT_CANT_BE_FILE,        1ULL << 13 )                        \
-    UFS_X( UFS_BASE_IS_NOT_LAST_AREA,      1ULL << 14 ) 
+    UFS_X( UFS_BASE_IS_NOT_LAST_AREA,      1ULL << 13 ) 
 
 enum {
 #define UFS_X( name, val ) name = val,
@@ -270,8 +269,7 @@ void ufsDestroy( ufsType ufs );
 *                                                                              *
 *  Possible errors:                                                            *
 *   -UFS_BAD_CALL: The function received bad arguments.                        *
-*   -UFS_ILLEGAL_NAME: An illegal directory name (e.g ROOT) was provided.      *
-*   -UFS_PARENT_CANT_BE_FILE: Parent represents a file instead of a directory. *
+*   -UFS_PARENT_DOES_NOT_EXIST: The parent directory does not exist.           *
 *   -UFS_ALREADY_EXISTS: The directory already exists.                         *
 *   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
 *                                                                              *
@@ -303,9 +301,7 @@ ufsIdentifierType ufsAddDirectory( ufsType ufs,
 *  Possible errors:                                                            *
 *   -UFS_BAD_CALL: The function received bad arguments.                        *
 *   -UFS_ALREADY_EXISTS: The file already exists.                              *
-*   -UFS_PARENT_DOES_NOT_EXIST: The specified directory does not exist.        *
-*   -UFS_ILLEGAL_NAME: An illegal file name (e.g ROOT) was provided.           *
-*   -UFS_PARENT_CANT_BE_FILE: Parent represents a file instead of a directory. *
+*   -UFS_PARENT_DOES_NOT_EXIST: The parent directory does not exist.           *
 *   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
 *                                                                              *
 * Parameters                                                                   *
