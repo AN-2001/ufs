@@ -569,9 +569,9 @@ ufsIdentifierType ufsGetArea( ufsType ufs,
         return -1;
     }
 
+    /* BASE is defined to have identifier 0.                                  */
     if (strncmp( name, UFS_AREA_BASE_NAME, sizeof( UFS_AREA_BASE_NAME )) == 0) {
-        ufsErrno = UFS_ILLEGAL_NAME;
-        return -1;
+        return 0;
     }
 
     ufsSqlite = ufs;
