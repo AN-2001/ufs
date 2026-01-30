@@ -219,6 +219,7 @@ enum {
 typedef enum {
     UFS_STORAGE_TYPE_FILE,
     UFS_STORAGE_TYPE_DIRECTORY,
+    UFS_STORAGE_TOTAL_TYPES,   
 } ufsStorageTypeEnum;
 
 extern const char *ufsStatusStrings[ UFS_NUM_ERRORS ];
