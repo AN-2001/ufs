@@ -1,8 +1,7 @@
 /******************************************************************************\
 *  ufs_core.h                                                                  *
 *                                                                              *
-*  Contains the spec for ufs core.                                             *
-*  Different implementations are valid as long as they implement this.         *
+*  The spec and APIs of ufs core.                                              *
 *                                                                              *
 *              Written by A.N.                                  17-01-2026     *
 *                                                                              *
@@ -13,9 +12,10 @@
 
 /*                                                                            */
 /* This is the spec for the ufs "union file system" storage back-end.         */
-/* The goal of this spec is to define the semantics of how ufs represents     */
-/* its internal data, in other words: this is the core of ufs.                */
-/* Definitions:                                                               */
+/* The goal of this spec is to define the semantics of ufs core, and also de- */
+/* fine some common terminology.                                              */
+/*                                                                            */
+/* DEFINITIONS:                                                               */
 /*                                                                            */
 /* Storage: An entity represented by a name.                                  */
 /*                                                                            */
@@ -63,8 +63,8 @@
 /*   * An implicit mapping, if a file does not appear in an explicit mapping  */
 /*     then it is implicitly mapped to BASE.                                  */
 /*     Note, that the implicit mapping is "logical" in the sense that its a   */
-/*     system-wide system assumption that does not need to be stored as state */
-/*                                                                            */
+/*     system-wide system assumption that does not need to be stored as       */
+/*     state.                                                                 */
 /*                                                                            */
 /* Area containing storage: we say that an area A contains storage S if the   */
 /*                          implicit or explicit mapping (A, s) exists in     */
@@ -76,11 +76,11 @@
 /*          Assume we're attempting to resolve some storage s in V            */
 /*          If n == 0: Fail, V definitely does not contain s.                 */
 /*          Inductive step:                                                   */
-/*          Attempt to resolve s in Ak, if it contains it halt.               */
+/*          Attempt to resolve s in Ak, if it contains it, halt and return.   */
 /*          Otherwise continue to k + 1                                       */
-/*          Stop once n = k                                                   */
+/*          Halt once n = k and say it doesn't exist.                         */
 /*       Views are not allowed to contain duplicate areas.                    */
-/*       BASE is only allowed to exist at the end of an area.                 */
+/*       BASE is only allowed to exist at the end of a view.                  */
 /*       Views are to be terminated with a UFS_VIEW_TERMINATOR or they can    */
 /*       extend to UFS_VIEW_MAX_SIZE. Meaning when looking at a view an       */
 /*       observer must stop at the FIRST UFS_VIEW_TERMINATOR or until they    */
@@ -99,7 +99,7 @@
 /* file set F = files_in( A1, d ) union  ... union files_in( An, d )          */
 /*                                                                            */
 /* The directory iterator: The directory iterator is a function that the      */
-/* user supplies and implementer must call. For each iteration it contains    */
+/* user supplies and implementer must call. For each iteration it contains:   */
 /*    * The current identifier of the storage.                                */
 /*    * The entry position in the iteration.                                  */
 /*    * The total number of entries that its iterating over.                  */
@@ -110,7 +110,7 @@
 /* IdentifierType: A numeric unique identifier to ufs type instance.          */
 /*                 ufs areas have their own identifier space while ufs stora- */
 /*                 ge shares their space.                                     */
-/*                 The identifier must be strictly greater than 0.            */
+/*                 Except for BASE and ROOT, identifiers must be positive.    */
 /*                 Note: it is up to the implementer to deduce the ufs type   */
 /*                       of a ufs type, IdentifierType doesn't define a tagg- */
 /*                       ing mechanism.                                       */
@@ -121,15 +121,18 @@
 /* StatusType: A status that ufs stores in ufsErrno, shows the current status */
 /*             of ufs, its set as a side effect of all ufs functions.         */
 /*                                                                            */
-/* Applying mapping to an area: Applying mappings to an area A, means that if */
-/*                              a view V = [ a, UFS_VIEW_TERMINATOR ] is used */
-/*                              for resolution/iteration then those changes   */
-/*                              should be observed.                           */
+/* Applying mapping to an area: Given an area A and mapping M=(A1, S) where   */
+/*                              A1 != A, applying the mapping M to A means    */
+/*                              that a new mapping M1 = (A, S) should be cre- */
+/*                              ated if it doesn't already exist.             */
+/* Applying mapping to BASE: BASE has special semantics in the context of ma- */
+/*                           pping application, applying a mapping M to BASE  */
+/*                           means that the storage S should be created on t- */
+/*                           he external file-system.                         */
 /*                                                                            */
 /* collapse semantics: A ufs collapse on a view should take all mappings in   */
 /*                     the view and apply them on the last area.              */
-/*                     If the last area happens to be BASE the changes are    */
-/*                     applied to the external filesystem.                    */
+/*                     If the last area.                                      */
 /*                                                                            */
 /* About removal semantics: Once a storage or area or explicit mapping is re- */
 /* moved in ufs, then the ufs state should be as if that storage or area or   */
@@ -174,15 +177,17 @@
 /*       a UFS_BAD_CALL is emitted.                                           */
 /*                                                                            */
 
+
+/* Increment this for each spec change.                                       */
+#define UFS_CORE_VERSION (2)
+
 #define UFS_VIEW_MAX_SIZE (4096)
 #define UFS_VIEW_TERMINATOR (-1)
 #define UFS_AREA_BASE_NAME ("BASE") 
 #define UFS_AREA_BASE_IDENTIFIER (0)
 #define UFS_STORAGE_ROOT_NAME ("ROOT") 
 #define UFS_STORAGE_ROOT_IDENTIFIER (0)
-#define UFS_STORAGE_TYPE_FILE (0)
-#define UFS_STORAGE_TYPE_DIRECTORY (1)
-#define UFS_NAME
+
 
 #include <stdint.h>
 #include <sys/types.h>
@@ -210,6 +215,11 @@ enum {
 #undef UFS_X
     UFS_NUM_ERRORS
 };
+
+typedef enum {
+    UFS_STORAGE_TYPE_FILE,
+    UFS_STORAGE_TYPE_DIRECTORY,
+} ufsStorageTypeEnum;
 
 extern const char *ufsStatusStrings[ UFS_NUM_ERRORS ];
 
@@ -265,62 +275,33 @@ ufsType ufsInit();
 void ufsDestroy( ufsType ufs );
 
 /******************************************************************************\
-* ufsAddDirectory                                                              *
+* ufsAddStorage                                                                *
 *                                                                              *
-*  Adds a directory to ufs.                                                    *
+*  Adds storage to ufs.                                                        *
 *                                                                              *
 *  Possible errors:                                                            *
 *   -UFS_BAD_CALL: The function received bad arguments.                        *
 *   -UFS_PARENT_DOES_NOT_EXIST: The parent directory does not exist.           *
-*   -UFS_ALREADY_EXISTS: The directory already exists.                         *
+*   -UFS_ALREADY_EXISTS: The storage already exists.                           *
 *   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
 *                                                                              *
 * Parameters                                                                   *
 *                                                                              *
 *  -ufs: The ufs instance, must not be NULL.                                   *
 *  -parent: The directory that contains this directory, must be non-negative.  *
-*  -name: The name of the directory, must not be NULL.                         *
+*  -type: The type of the storage.                                             *
+*  -name: The name of the storage, must not be NULL.                           *
 *                                                                              *
 * Return                                                                       *
 *                                                                              *
-*  -ufsIdentifierType: The unique identifier of the new directory.             *
+*  -ufsIdentifierType: The unique identifier of the new storage.               *
 *                      If a negative value is returned, check ufsErrno.        *
 *                                                                              *
 \******************************************************************************/
-ufsIdentifierType ufsAddDirectory( ufsType ufs,
-                                   ufsIdentifierType parent,
-                                   const char *name );
-
-/******************************************************************************\
-* ufsAddFile                                                                   *
-*                                                                              *
-*  Adds a file to ufs.                                                         *
-*                                                                              *
-*  Note that file names are not global, a directory asks as the scope for      *
-*  the name. Meaning that the same name may be reused under different directo- *
-*  ies.                                                                        *
-*                                                                              *
-*  Possible errors:                                                            *
-*   -UFS_BAD_CALL: The function received bad arguments.                        *
-*   -UFS_ALREADY_EXISTS: The file already exists.                              *
-*   -UFS_PARENT_DOES_NOT_EXIST: The parent directory does not exist.           *
-*   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
-*                                                                              *
-* Parameters                                                                   *
-*                                                                              *
-*  -ufs: The ufs instance, must not be NULL.                                   *
-*  -parent: The directory that contains this file, must be non-negative.       *
-*  -name: The name of the file, must not be NULL.                              *
-*                                                                              *
-* Return                                                                       *
-*                                                                              *
-*  -ufsIdentifierType: The unique identifier of the new file.                  *
-*                      If a negative value is returned, check ufsErrno.        *
-*                                                                              *
-\******************************************************************************/
-ufsIdentifierType ufsAddFile( ufsType ufs,
-                              ufsIdentifierType parent,     
-                              const char *name );
+ufsIdentifierType ufsAddStorage( ufsType ufs,
+                                 ufsIdentifierType parent,
+                                 ufsStorageTypeEnum type,
+                                 const char *name );
 
 /******************************************************************************\
 * ufsAddArea                                                                   *
@@ -376,7 +357,7 @@ ufsStatusType ufsAddMapping( ufsType ufs,
 /******************************************************************************\
 * ufsGetDirectory                                                              *
 *                                                                              *
-*  Retrieves a directory's unique identifier from ufs.                         *
+*  Retrieves a storage's unique identifier from ufs.                           *
 *                                                                              *
 *  Possible errors:                                                            *
 *   -UFS_BAD_CALL: The function received bad arguments.                        *
@@ -386,8 +367,9 @@ ufsStatusType ufsAddMapping( ufsType ufs,
 * Parameters                                                                   *
 *                                                                              *
 *  -ufs: The ufs instance, must not be NULL.                                   *
-*  -parent: The directory that contains this directory, must be non-negative.  *
-*  -name: The name of the directory, must not be NULL.                         *
+*  -parent: The directory that contains this storage, must be non-negative.    *
+*  -type: The type of the storage.                                             *
+*  -name: The name of the storage, must not be NULL.                           *
 *                                                                              *
 * Return                                                                       *
 *                                                                              *
@@ -395,36 +377,10 @@ ufsStatusType ufsAddMapping( ufsType ufs,
 *                      If a negative value is returned, check ufsErrno.        *
 *                                                                              *
 \******************************************************************************/
-ufsIdentifierType ufsGetDirectory( ufsType ufs,
-                                   ufsIdentifierType parent,
-                                   const char *name );
-
-/******************************************************************************\
-* ufsGetFile                                                                   *
-*                                                                              *
-*  Retrieves a file's unique identifier from ufs.                              *
-*                                                                              *
-*  Possible errors:                                                            *
-*   -UFS_BAD_CALL: The function received bad arguments.                        *
-*   -UFS_DOES_NOT_EXIST: The specified file does not exist.                    *
-*   -UFS_PARENT_DOES_NOT_EXIST: The specified parent does not exist.           *
-*   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
-*                                                                              *
-* Parameters                                                                   *
-*                                                                              *
-*  -ufs: The ufs instance, must not be NULL.                                   *
-*  -parent: The directory that contains this file, must be non-negative.       *
-*  -name: The name of the file, must not be NULL.                              *
-*                                                                              *
-* Return                                                                       *
-*                                                                              *
-*  -ufsIdentifierType: The unique identifier of the existing file.             *
-*                      If a negative value is returned, check ufsErrno.        *
-*                                                                              *
-\******************************************************************************/
-ufsIdentifierType ufsGetFile( ufsType ufs,
-                              ufsIdentifierType parent,
-                              const char *name );
+ufsIdentifierType ufsGetStorage( ufsType ufs,
+                                 ufsIdentifierType parent,
+                                 ufsStorageTypeEnum type,
+                                 const char *name );
 
 /******************************************************************************\
 * ufsGetArea                                                                   *
@@ -481,60 +437,31 @@ ufsStatusType ufsProbeMapping( ufsType ufs,
                                ufsIdentifierType storage );
 
 /******************************************************************************\
-* ufsRemoveDirectory                                                           *
+* ufsRemoveStorage                                                             *
 *                                                                              *
-*  Removes a directory from ufs.                                               *
-*  A directory must be empty before being removed, an empty directory is a     *
-*  directory that does not contain any files globally across ufs.              *
+*  Removes storage from ufs.                                                   *
 *                                                                              *
 *  Possible errors:                                                            *
 *   -UFS_BAD_CALL: The function received bad arguments.                        *
 *   -UFS_DOES_NOT_EXIST: The directory does not exist in ufs.                  *
-*   -UFS_DIRECTORY_IS_NOT_EMPTY: The directory is not empty and can't be       *
-*                                removed.                                      *
+*   -UFS_DIRECTORY_IS_NOT_EMPTY: The storage is a directory and its not empty. *
 *   -UFS_ILLEGAL_NAME: An illegal directory name (e.g ROOT) was provided.      *
-*   -UFS_EXISTS_IN_EXPLICIT_MAPPING: The directory is referenced in an explic- *
-*                                    it mapping and cannot be removed.         *
+*   -UFS_EXISTS_IN_EXPLICIT_MAPPING: The storage is referenced in an explicit  *
+*                                     mapping and cannot be removed.           *
 *   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
 *                                                                              *
 * Parameters                                                                   *
 *                                                                              *
 *  -ufs: The ufs instance, must not be NULL.                                   *
-*  -directory: the directory's unique identifier, must be greater than 0.      *
+*  -directory: the storage's unique identifier, must be greater than 0.        *
 *                                                                              *
 * Return                                                                       *
 *                                                                              *
 *  -ufsStatusType: The status of this call, ufsErrno is also set.              *
 *                                                                              *
 \******************************************************************************/
-ufsStatusType ufsRemoveDirectory( ufsType ufs,
-                                  ufsIdentifierType directory );
-
-/******************************************************************************\
-* ufsRemoveFile                                                                *
-*                                                                              *
-*  Removes a file from ufs.                                                    *
-*                                                                              *
-*  Possible errors:                                                            *
-*   -UFS_BAD_CALL: The function received bad arguments.                        *
-*   -UFS_DOES_NOT_EXIST: The file does not exist in ufs.                       *
-*   -UFS_EXISTS_IN_EXPLICIT_MAPPING: The file is referenced in an explicit ma- *
-*                                    pping and cannot be removed.              *
-*   -UFS_ILLEGAL_NAME: An illegal file name (e.g ROOT) was provided.           *
-*   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
-*                                                                              *
-* Parameters                                                                   *
-*                                                                              *
-*  -ufs: The ufs instance, must not be NULL.                                   *
-*  -file: the file's unique identifier, must be greater than 0.                *
-*                                                                              *
-* Return                                                                       *
-*                                                                              *
-*  -ufsStatusType: The status of this call, ufsErrno is also set.              *
-*                                                                              *
-\******************************************************************************/
-ufsStatusType ufsRemoveFile( ufsType ufs,
-                             ufsIdentifierType file );
+ufsStatusType ufsRemoveStorage( ufsType ufs,
+                                ufsIdentifierType storage );
 
 /******************************************************************************\
 * ufsRemoveArea                                                                *
