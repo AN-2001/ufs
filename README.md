@@ -2,7 +2,7 @@
 **ufs** (union file system) is a userspace filesystem that can be used
 via a CLI. 
 
-Instead of being a union on filesystem, ufs opts to unionize ufs "areas".
+Instead of being a union on filesystems, ufs opts to unionize ufs "areas".
 
 An area is a first class citizen in ufs, users may create/remove them, and
 they may add files from the via COW.
