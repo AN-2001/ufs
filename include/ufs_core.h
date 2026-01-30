@@ -355,7 +355,7 @@ ufsStatusType ufsAddMapping( ufsType ufs,
                              ufsIdentifierType storage );
 
 /******************************************************************************\
-* ufsGetDirectory                                                              *
+* ufsGetStorage                                                                *
 *                                                                              *
 *  Retrieves a storage's unique identifier from ufs.                           *
 *                                                                              *
