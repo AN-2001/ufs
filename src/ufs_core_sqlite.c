@@ -171,7 +171,7 @@ ufsIdentifierType ufsAddStorage( ufsType ufs,
     ufsSqliteStruct *ufsSqlite;
     int res;
     if ( !ufs || parent < 0 || !name ||
-         type < 0 || type > UFS_STORAGE_TYPE_FILE ) {
+         type < 0 || type >= UFS_STORAGE_TOTAL_TYPES ) {
         ufsErrno = UFS_BAD_CALL;
         return -1;
     }
@@ -405,7 +405,7 @@ ufsIdentifierType ufsGetStorage( ufsType ufs,
     int res;
     ufsSqliteStruct *ufsSqlite;
     if ( !ufs || parent < 0 ||
-         !name || type < 0 || type > UFS_STORAGE_TYPE_FILE ) {
+         !name || type < 0 || type >= UFS_STORAGE_TOTAL_TYPES ) {
         ufsErrno = UFS_BAD_CALL;
         return -1;
     }
