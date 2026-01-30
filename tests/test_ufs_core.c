@@ -1274,7 +1274,7 @@ static void test_ufs_remove_mapping( void **state )
     areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    status = ufsAddMapping( ufsStruct -> ufs, dirId, areaId );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
 
@@ -1311,7 +1311,7 @@ static void test_ufs_remove_mapping_no_side_effects( void **state )
     areaId0 = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
     ASSERT_UFS_NO_ERROR( areaId0 );
 
-    status = ufsAddMapping( ufsStruct -> ufs, dirId0, areaId0 );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId0, dirId0 );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
 
@@ -1347,7 +1347,7 @@ static void test_ufs_remove_mapping_double_remove( void **state )
     areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    status = ufsAddMapping( ufsStruct -> ufs, dirId, areaId );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
 
@@ -1376,14 +1376,14 @@ static void test_ufs_remove_mapping_remove_then_add( void **state )
     areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    status = ufsAddMapping( ufsStruct -> ufs, dirId, areaId );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
 
     status = ufsRemoveMapping( ufsStruct -> ufs, areaId, dirId);
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
-    status = ufsAddMapping( ufsStruct -> ufs, dirId, areaId );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
 }
@@ -1405,7 +1405,7 @@ static void test_ufs_remove_mapping_remove_then_probe( void **state )
     areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    status = ufsAddMapping( ufsStruct -> ufs, dirId, areaId );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
 
