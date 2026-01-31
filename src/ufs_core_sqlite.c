@@ -25,9 +25,11 @@ enum ufsSqliteStatementType {
     UFS_STATEMENT_INSERT_INTO_AREAS,
     UFS_STATEMENT_QUERY_AREAS_BY_NAME,
     UFS_STATEMENT_QUERY_AREAS_BY_ID,
+    UFS_STATEMENT_REMOVE_AREA_BY_ID,   
     UFS_STATEMENT_INSERT_INTO_MAPPINGS,
     UFS_STATEMENT_QUERY_MAPPINGS_BY_IDS,
     UFS_STATEMENT_QUERY_MAPPINGS_BY_STORAGE_ID,
+    UFS_STATEMENT_QUERY_MAPPINGS_BY_AREA_ID,
     NUM_UFS_STATEMENTS,
 };
 
@@ -87,6 +89,9 @@ static const char *UFS_SQL_TEXT[ NUM_UFS_STATEMENTS + 2 ] = {
     /* Query areas by id:                                                     */
     "SELECT id from ufsAreas where id = ?;",
 
+    /* Remove area by id:                                                     */
+    "DELETE from ufsAreas where id = ?;",
+
     /* MAPPING STATEMENTS:                                                    */
     /* Insert into mappings:                                                  */
     "INSERT INTO ufsMappings (areaId, storageId) VALUES (?, ?);",
@@ -96,6 +101,9 @@ static const char *UFS_SQL_TEXT[ NUM_UFS_STATEMENTS + 2 ] = {
 
     /* Query mappings by storage ID:                                          */
     "SELECT id from ufsMappings where storageId = ?;",
+
+    /* Query mappings by area ID:                                             */
+    "SELECT id from ufsMappings where areaId = ?;",
 
     NULL
 };
@@ -626,8 +634,65 @@ ufsStatusType ufsRemoveStorage( ufsType ufs,
 ufsStatusType ufsRemoveArea( ufsType ufs,
                              ufsIdentifierType area )
 {
+    int res;
+    ufsSqliteStruct *ufsSqlite;
+    if ( !ufs || area <= 0 ) {
+        ufsErrno = UFS_BAD_CALL;
+        return ufsErrno;
+
+    }
+    ufsSqlite = ufs;
+
+    /* First query the storage make sure it exists.                           */
+    sqlite3_reset(
+        ufsSqlite -> statements[ UFS_STATEMENT_QUERY_AREAS_BY_ID ] );
+    sqlite3_clear_bindings(
+        ufsSqlite -> statements[ UFS_STATEMENT_QUERY_AREAS_BY_ID ] );
+    sqlite3_bind_int(
+        ufsSqlite -> statements[ UFS_STATEMENT_QUERY_AREAS_BY_ID ],
+        1, area );
+    res = sqlite3_step(
+         ufsSqlite -> statements[ UFS_STATEMENT_QUERY_AREAS_BY_ID ] );
+
+    if ( res != SQLITE_ROW ) {
+        ufsErrno = UFS_DOES_NOT_EXIST;
+        return ufsErrno;
+    }
+
+    /* Now make sure this area does not exist in a mapping.                   */
+    sqlite3_reset(
+        ufsSqlite -> statements[ UFS_STATEMENT_QUERY_MAPPINGS_BY_AREA_ID ] );
+    sqlite3_clear_bindings(
+        ufsSqlite -> statements[ UFS_STATEMENT_QUERY_MAPPINGS_BY_AREA_ID ] );
+    sqlite3_bind_int(
+        ufsSqlite -> statements[ UFS_STATEMENT_QUERY_MAPPINGS_BY_AREA_ID ],
+        1, area );
+    res = sqlite3_step(
+         ufsSqlite -> statements[ UFS_STATEMENT_QUERY_MAPPINGS_BY_AREA_ID ] );
+
+    if ( res != SQLITE_DONE ) {
+        ufsErrno = UFS_EXISTS_IN_EXPLICIT_MAPPING;
+        return ufsErrno;
+    }
+
+    /* We can now safely remove this area.                                    */
+    sqlite3_reset(
+        ufsSqlite -> statements[ UFS_STATEMENT_REMOVE_AREA_BY_ID ] );
+    sqlite3_clear_bindings(
+        ufsSqlite -> statements[ UFS_STATEMENT_REMOVE_AREA_BY_ID ] );
+    sqlite3_bind_int(
+        ufsSqlite -> statements[ UFS_STATEMENT_REMOVE_AREA_BY_ID ],
+        1, area );
+    res = sqlite3_step(
+         ufsSqlite -> statements[ UFS_STATEMENT_REMOVE_AREA_BY_ID ] );
+
+    if ( res != SQLITE_DONE ) {
+        ufsErrno = UFS_UNKNOWN_ERROR;
+        return ufsErrno;
+    }
+
     ufsErrno = UFS_NO_ERROR;
-	return 0;
+	return ufsErrno;
 }
 
 ufsStatusType ufsRemoveMapping( ufsType ufs,
