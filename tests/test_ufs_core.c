@@ -773,7 +773,7 @@ static void test_ufs_probe_mapping_mapping_does_not_exist( void **state )
     ufsStruct = *state;
 
     status = ufsProbeMapping( ufsStruct -> ufs, 1, 1 );
-    ASSERT_UFS_STATUS( status, UFS_MAPPING_DOES_NOT_EXIST );
+    ASSERT_UFS_STATUS( status, UFS_DOES_NOT_EXIST );
 }
 /* ########################################################################## */
 
@@ -1413,7 +1413,7 @@ static void test_ufs_remove_mapping_remove_then_probe( void **state )
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
     status = ufsProbeMapping( ufsStruct -> ufs, areaId, dirId );
-    ASSERT_UFS_STATUS( status, UFS_MAPPING_DOES_NOT_EXIST );
+    ASSERT_UFS_STATUS( status, UFS_DOES_NOT_EXIST );
 
 }
 /* ########################################################################## */
