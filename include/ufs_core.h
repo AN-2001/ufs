@@ -203,7 +203,6 @@
     UFS_X( UFS_EXISTS_IN_EXPLICIT_MAPPING, 1ULL << 6 )                         \
     UFS_X( UFS_ILLEGAL_NAME,               1ULL << 7 )                         \
     UFS_X( UFS_INVALID_AREA_IN_VIEW,       1ULL << 8 )                         \
-    UFS_X( UFS_MAPPING_DOES_NOT_EXIST,     1ULL << 9 )                         \
     UFS_X( UFS_OUT_OF_MEMORY,              1ULL << 10 )                        \
     UFS_X( UFS_UNKNOWN_ERROR,              1ULL << 11 )                        \
     UFS_X( UFS_VIEW_CONTAINS_DUPLICATES,   1ULL << 12 )                        \
@@ -414,8 +413,7 @@ ufsIdentifierType ufsGetArea( ufsType ufs,
 *                                                                              *
 *  Possible errors:                                                            *
 *   -UFS_BAD_CALL: The function received bad arguments.                        *
-*   -UFS_DOES_NOT_EXIST: The area or the storage do not exist in ufs.          *
-*   -UFS_MAPPING_DOES_NOT_EXIST: The mapping does not exist.                   *
+*   -UFS_DOES_NOT_EXIST: The mapping does not exist.                           *
 *   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
 *                                                                              *
 * Parameters                                                                   *
@@ -427,9 +425,9 @@ ufsIdentifierType ufsGetArea( ufsType ufs,
 * Return                                                                       *
 *                                                                              *
 *  -ufsStatusType: The status of this call, ufsErrno is also set.              *
-*  Note, if the mapping does not exist UFS_MAPPING_DOES_NOT_EXIST is returned  *
-*  and is set in ufsErrno, this is not a traditional error as it's the result  *
-*  of the query.                                                               *
+*  Note, if the mapping does not exist UFS_DOES_NOT_EXIST is returned and is   *
+*  set in ufsErrno, this is not a traditional error as it's the result of the  *
+*  query.                                                                      *
 *  If the mapping exists UFS_NO_ERROR is returned and set in ufsErrno.         *
 *                                                                              *
 \******************************************************************************/
