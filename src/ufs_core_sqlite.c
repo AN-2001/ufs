@@ -19,11 +19,15 @@ enum ufsSqliteStatementType {
     UFS_STATEMENT_QUERY_STORAGE_BY_NAME_TYPE,
     UFS_STATEMENT_QUERY_STORAGE_BY_ID,
     UFS_STATEMENT_QUERY_STORAGE_BY_ID_TYPE,
+    UFS_STATEMENT_QUERY_STORAGE_ID_TYPE_BY_ID,
+    UFS_STATEMENT_QUERY_STORAGE_BY_PARENT,
+    UFS_STATEMENT_REMOVE_STORAGE_BY_ID,   
     UFS_STATEMENT_INSERT_INTO_AREAS,
     UFS_STATEMENT_QUERY_AREAS_BY_NAME,
     UFS_STATEMENT_QUERY_AREAS_BY_ID,
     UFS_STATEMENT_INSERT_INTO_MAPPINGS,
     UFS_STATEMENT_QUERY_MAPPINGS_BY_IDS,
+    UFS_STATEMENT_QUERY_MAPPINGS_BY_STORAGE_ID,
     NUM_UFS_STATEMENTS,
 };
 
@@ -50,6 +54,8 @@ static const char *UFS_SQL_TEXT[ NUM_UFS_STATEMENTS + 2 ] = {
                                            "FOREIGN KEY (storageId) REFERENCES ufsStorage(id) );"
     ,
 
+
+    /* STORAGE STATEMENTS:                                                    */
     /* Insert into the storage table:                                         */
     "INSERT INTO ufsStorage (name, parent, type) VALUES (?, ?, ?);",
 
@@ -62,6 +68,16 @@ static const char *UFS_SQL_TEXT[ NUM_UFS_STATEMENTS + 2 ] = {
     /* Query storage by id, type:                                             */
     "SELECT id from ufsStorage where id = ? and type = ?;",
 
+    /* Query storage id, type by id:                                          */
+    "SELECT id, type from ufsStorage where id = ?;",
+
+    /* Query storage by parent:                                               */
+    "SELECT id from ufsStorage where parent = ?;",
+
+    /* Remove storage by id:                                                  */
+    "DELETE from ufsStorage where id = ?;",
+
+    /* AREA STATEMENTS:                                                       */
     /* Insert into the area table:                                            */
     "INSERT INTO ufsAreas (name) VALUES (?);",
 
@@ -71,11 +87,15 @@ static const char *UFS_SQL_TEXT[ NUM_UFS_STATEMENTS + 2 ] = {
     /* Query areas by id:                                                     */
     "SELECT id from ufsAreas where id = ?;",
 
+    /* MAPPING STATEMENTS:                                                    */
     /* Insert into mappings:                                                  */
     "INSERT INTO ufsMappings (areaId, storageId) VALUES (?, ?);",
 
     /* Query mappings by IDs:                                                 */
     "SELECT id from ufsMappings where areaId = ? and storageId = ?;",
+
+    /* Query mappings by storage ID:                                          */
+    "SELECT id from ufsMappings where storageId = ?;",
 
     NULL
 };
@@ -102,7 +122,7 @@ struct ufsSqliteStruct *prepareSqliteDb( sqlite3 *db )
         return NULL;
     }
 
-    for ( i = 1; UFS_SQL_TEXT[ i ]; i++ ) {
+    for ( i = 1; UFS_SQL_TEXT[ i ]; ++i ) {
         res = sqlite3_prepare_v2( db,
                                   UFS_SQL_TEXT[ i ],
                                   -1,
@@ -519,8 +539,88 @@ ufsStatusType ufsProbeMapping( ufsType ufs,
 ufsStatusType ufsRemoveStorage( ufsType ufs,
                                 ufsIdentifierType identifier )
 {
+    int res, type;
+    ufsSqliteStruct *ufsSqlite;
+    if ( !ufs || identifier <= 0 ) {
+        ufsErrno = UFS_BAD_CALL;
+        return ufsErrno;
+    }
+
+    ufsSqlite = ufs;
+
+    /* First query the storage make sure it exists, and fetch its type.       */
+    sqlite3_reset(
+        ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_ID_TYPE_BY_ID ] );
+    sqlite3_clear_bindings(
+        ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_ID_TYPE_BY_ID ] );
+    sqlite3_bind_int(
+        ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_ID_TYPE_BY_ID ],
+        1, identifier );
+    res = sqlite3_step(
+         ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_ID_TYPE_BY_ID ] );
+
+    if ( res != SQLITE_ROW ) {
+        ufsErrno = UFS_DOES_NOT_EXIST;
+        return ufsErrno;
+    }
+
+    type = sqlite3_column_int( 
+         ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_ID_TYPE_BY_ID ],
+         1 );
+
+    /* If it's a directory, make sure it doesn't contain anything.            */
+    if ( type == UFS_STORAGE_TYPE_DIRECTORY ) {
+
+        sqlite3_reset(
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_PARENT ] );
+        sqlite3_clear_bindings(
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_PARENT ] );
+        sqlite3_bind_int(
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_PARENT ],
+            1, identifier );
+        res = sqlite3_step(
+             ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_PARENT ] );
+
+        if ( res != SQLITE_DONE ) {
+            ufsErrno = UFS_DIRECTORY_IS_NOT_EMPTY;
+            return ufsErrno;
+        }
+    }
+
+    /* Now make sure this storage does not exist in a mapping.                */
+    sqlite3_reset(
+        ufsSqlite -> statements[ UFS_STATEMENT_QUERY_MAPPINGS_BY_STORAGE_ID ] );
+    sqlite3_clear_bindings(
+        ufsSqlite -> statements[ UFS_STATEMENT_QUERY_MAPPINGS_BY_STORAGE_ID ] );
+    sqlite3_bind_int(
+        ufsSqlite -> statements[ UFS_STATEMENT_QUERY_MAPPINGS_BY_STORAGE_ID ],
+        1, identifier );
+    res = sqlite3_step(
+         ufsSqlite -> statements[ UFS_STATEMENT_QUERY_MAPPINGS_BY_STORAGE_ID ] );
+
+    if ( res != SQLITE_DONE ) {
+        ufsErrno = UFS_EXISTS_IN_EXPLICIT_MAPPING;
+        return ufsErrno;
+    }
+
+    /* We can now safely remove this storage.                                 */
+    sqlite3_reset(
+        ufsSqlite -> statements[ UFS_STATEMENT_REMOVE_STORAGE_BY_ID ] );
+    sqlite3_clear_bindings(
+        ufsSqlite -> statements[ UFS_STATEMENT_REMOVE_STORAGE_BY_ID ] );
+    sqlite3_bind_int(
+        ufsSqlite -> statements[ UFS_STATEMENT_REMOVE_STORAGE_BY_ID ],
+        1, identifier );
+    res = sqlite3_step(
+         ufsSqlite -> statements[ UFS_STATEMENT_REMOVE_STORAGE_BY_ID ] );
+
+    if ( res != SQLITE_DONE ) {
+        ufsErrno = UFS_UNKNOWN_ERROR;
+        return ufsErrno;
+    }
+
     ufsErrno = UFS_NO_ERROR;
-	return 0;
+	return ufsErrno;
 }
 
 ufsStatusType ufsRemoveArea( ufsType ufs,
