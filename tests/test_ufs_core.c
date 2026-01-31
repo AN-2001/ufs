@@ -517,7 +517,7 @@ static void test_ufs_get_directory_parent_does_not_exist( void **state )
             UFS_STORAGE_TYPE_DIRECTORY,
             TEST_DIRECTORY_NAME );
 
-    ASSERT_UFS_ERROR( id, UFS_PARENT_DOES_NOT_EXIST );
+    ASSERT_UFS_ERROR( id, UFS_DOES_NOT_EXIST );
 }
 
 static void test_ufs_get_directory_does_not_exist( void **state )
@@ -593,7 +593,7 @@ static void test_ufs_get_file_parent_does_not_exist( void **state )
             1,
             UFS_STORAGE_TYPE_FILE,
             TEST_FILE_NAME );
-    ASSERT_UFS_ERROR( id, UFS_PARENT_DOES_NOT_EXIST );
+    ASSERT_UFS_ERROR( id, UFS_DOES_NOT_EXIST );
 }
 
 static void test_ufs_get_file_exists_in_different_directory( void **state )
