@@ -203,10 +203,10 @@
     UFS_X( UFS_EXISTS_IN_EXPLICIT_MAPPING, 1ULL << 6 )                         \
     UFS_X( UFS_ILLEGAL_NAME,               1ULL << 7 )                         \
     UFS_X( UFS_INVALID_AREA_IN_VIEW,       1ULL << 8 )                         \
-    UFS_X( UFS_OUT_OF_MEMORY,              1ULL << 10 )                        \
-    UFS_X( UFS_UNKNOWN_ERROR,              1ULL << 11 )                        \
-    UFS_X( UFS_VIEW_CONTAINS_DUPLICATES,   1ULL << 12 )                        \
-    UFS_X( UFS_BASE_IS_NOT_LAST_AREA,      1ULL << 13 ) 
+    UFS_X( UFS_OUT_OF_MEMORY,              1ULL << 9 )                         \
+    UFS_X( UFS_UNKNOWN_ERROR,              1ULL << 10 )                        \
+    UFS_X( UFS_VIEW_CONTAINS_DUPLICATES,   1ULL << 11 )                        \
+    UFS_X( UFS_BASE_IS_NOT_LAST_AREA,      1ULL << 12 ) 
 
 enum {
 #define UFS_X( name, val ) name = val,
