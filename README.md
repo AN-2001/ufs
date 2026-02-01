@@ -12,7 +12,7 @@ they may add files from the via COW.
 This repository contains the spec and sqlite implementation of
 ufs (union file system). 
 
-The first POC of ufs should behave as follows:
+The first CLI POC of ufs should behave as follows:
 
 ```
 ufs init # Mount ufs on the current directory
@@ -28,9 +28,11 @@ ufs collapse # Collapse all the modifications onto teh BASE filesystem.
 - [ x ] Write the ufs core spec.
 - [ x ] Write the ufs core test suite.
 - [   ] Write the in-memory sqlite implementation.
+- [   ] Write the first FUSE proof of concept( non CLI ).
 - [   ] Write the ufs protocol spec.
 - [   ] Write the ufs protocol test suite.
 - [   ] Write the FUSE daemon.             
-- [   ] Implement the CLI.       
+- [   ] Write the CLI proof of concept.    
+- [   ] Implement the full CLI.  
 
 By A.N.
