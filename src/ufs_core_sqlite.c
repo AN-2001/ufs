@@ -10,9 +10,11 @@
 
 #include "sqlite3.h"
 #include "ufs_core.h"
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 enum ufsSqliteStatementType {
     UFS_STATEMENT_INSERT_INTO_STORAGE,
@@ -114,6 +116,77 @@ static const char *UFS_SQL_TEXT[ NUM_UFS_STATEMENTS + 2 ] = {
 
 static inline ufsSqliteStruct *prepareSqliteDb( sqlite3 *db );
 
+
+static inline bool validateViewStructure( ufsViewType view, uint64_t *viewSize );
+static inline bool validateViewSemantics( ufsSqliteStruct *ufsSqlite,
+                                          ufsViewType view,
+                                          uint64_t viewSize );
+
+static inline int identifierComparator( const void *a, const void *b )
+{
+    const ufsIdentifierType 
+        *n1 = a,
+        *n2 = b;
+    return ( *n1 > *n2 )  - ( *n2 > *n1 );
+}
+
+/* Makes sure that this view is in correct syntax.                            */
+bool validateViewStructure( ufsViewType view, uint64_t *viewSize )
+{
+    ufsViewType copyView;
+    uint64_t i;
+
+    for ( *viewSize = 0;
+          view[ *viewSize ] != UFS_VIEW_TERMINATOR &&
+          *viewSize < UFS_VIEW_MAX_SIZE;
+          ++(*viewSize) );
+    if ( !*viewSize )
+        return true;
+
+    /* First validate that if BASE exists it's at the end. */
+    for (i = 0; i < *viewSize; i++ )
+        if ( view[ i ] == UFS_AREA_BASE_IDENTIFIER && i != ( *viewSize - 1 ))
+            return false;
+
+    /* Now check for duplicates, we'll do it in O( n log n ) for now.         */
+    memcpy( copyView, view, sizeof( view[ 0 ] ) * *viewSize );
+
+    qsort( copyView, *viewSize, sizeof( copyView[0] ), identifierComparator );
+
+    for ( i = 0; i < *viewSize - 1; i++ )
+        if ( copyView[ i ] == copyView[ i + 1 ] )
+            return false;
+
+    return true;
+}
+
+
+/* Note: this function that view is in correct syntax.                        */
+bool validateViewSemantics( ufsSqliteStruct *ufsSqlite,
+                            ufsViewType view,
+                            uint64_t viewSize )
+{
+    int res;
+    uint64_t i;
+    if (!viewSize)
+        return true;
+    /* Validate that all areas inside the view exist inside ufs.              */
+    for ( i = 0; i < viewSize; i++ ) {
+        sqlite3_reset(
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_AREAS_BY_ID ] );
+        sqlite3_clear_bindings(
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_AREAS_BY_ID ] );
+        sqlite3_bind_int(
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_AREAS_BY_ID ],
+            1, view[ i ] );
+        res = sqlite3_step(
+                ufsSqlite -> statements[ UFS_STATEMENT_QUERY_AREAS_BY_ID ] );
+        if ( res != SQLITE_ROW ) 
+            return false;
+    }
+
+    return true;
+}
 
 struct ufsSqliteStruct *prepareSqliteDb( sqlite3 *db )
 {
