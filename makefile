@@ -7,8 +7,8 @@ PROJECT_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 
 DEPS_DIR := $(PROJECT_DIR)deps
 FUSE_DIR := $(DEPS_DIR)/fuse
-SQLITE_DIR := $(DEPS_DIR)/sqlite
 
+SQLITE_DIR := deps/sqlite
 SRC_DIR := src
 INCLUDE_DIR := $(PROJECT_DIR)include
 BUILD_DIR := $(PROJECT_DIR)build
@@ -57,7 +57,7 @@ $(ARCHIVE): $(OBJECTS)
 	@mkdir -p $(BUILD_DIR)
 	$(AR) rcs $@ $^
 
-$(BUILD_DIR)/%.o: %.c $(wildcard %.h) $(GLOBAL_HEADERS)
+$(BUILD_DIR)/%.o: %.c
 	@mkdir -p $(dir $@)
 	$(CC) -c $(CFLAGS) $< -o $@
 
