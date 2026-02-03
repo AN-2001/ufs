@@ -176,6 +176,26 @@
 /* Note: both ROOT and BASE cannot be removed, if they're given as arguments  */
 /*       a UFS_BAD_CALL is emitted.                                           */
 /*                                                                            */
+/*                                                                            */
+/* On offloading to BASE:                                                     */
+/* on many occasions, this document talks about offloading to BASE, that ope- */
+/* ration was never defined.                                                  */
+/* ufs core should not worry itself with offloading to the base filesystem,   */
+/* what it should do is tell the user that BASE needs to be used.             */
+/* For example:                                                               */
+/*   * During object resoltuion, if a view ends with BASE and it wasn't found */
+/*     in any of the areas before BASE, ufs should return UFS_CHECK_BASE      */
+/*     in which case it is the responsibility of the user to interrogate the  */
+/*     external file system.                                                  */
+/*   * During view collapse, if a view ends with BASE, ufs wouldn't have the  */
+/*     means of applying operations on BASE. ufs collapse takes a callback    */
+/*     that it would invoke if modifying BASE is needed, the callback would   */
+/*     communicate which modifications need to be made to the end user, and   */
+/*     it's their responsibility to commit them.                              */
+/*   * During iteration over directoires, the agreement is implicit, the user */
+/*     should be aware that after ufs finishes iterating they should iterate  */
+/*     over the relevant directory in base as well (if it exists).            */
+/*                                                                            */
 
 
 /* Increment this for each spec change.                                       */
