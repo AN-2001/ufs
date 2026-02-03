@@ -245,6 +245,33 @@ static void test_ufs_add_file_same_name_different_directory( void **state )
     assert_int_not_equal( id0, id1 );
 }
 
+static void test_ufs_add_storage_use_file_as_parent( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType fileId0, fileId1, dirId0;
+
+    ufsStruct = *state;
+
+    fileId0 = ufsAddStorage( ufsStruct -> ufs,
+              UFS_STORAGE_ROOT_IDENTIFIER,
+              UFS_STORAGE_TYPE_FILE,
+              TEST_FILE_NAME_0);
+    ASSERT_UFS_NO_ERROR( fileId0 );
+
+    fileId1 = ufsAddStorage( ufsStruct -> ufs,
+              fileId0,
+              UFS_STORAGE_TYPE_FILE,
+              TEST_FILE_NAME_1);
+    ASSERT_UFS_ERROR( fileId1, UFS_PARENT_DOES_NOT_EXIST );
+
+    dirId0 = ufsAddStorage( ufsStruct -> ufs,
+              fileId0,
+              UFS_STORAGE_TYPE_FILE,
+              TEST_DIRECTORY_NAME);
+    ASSERT_UFS_ERROR( dirId0, UFS_PARENT_DOES_NOT_EXIST );
+
+}
+
 /* ########################################################################## */
 
 /* ufsAddArea tests                                                           */
@@ -1422,7 +1449,7 @@ static const struct CMUnitTest ufs_test_suite[] = {
 
     cmocka_unit_test( test_ufs_init ),
 
-    /* ufsAddStore tests.                                                     */
+    /* ufsAddStorage tests.                                                     */
     cmocka_unit_test_setup_teardown( test_ufs_add_storage_bad_args, ufsGetInstance, ufsCleanup ),
     cmocka_unit_test_setup_teardown( test_ufs_add_directory, ufsGetInstance, ufsCleanup ),
     cmocka_unit_test_setup_teardown( test_ufs_add_directory_duplicate, ufsGetInstance, ufsCleanup ),
@@ -1431,6 +1458,7 @@ static const struct CMUnitTest ufs_test_suite[] = {
     cmocka_unit_test_setup_teardown( test_ufs_add_file_duplicate, ufsGetInstance, ufsCleanup ),
     cmocka_unit_test_setup_teardown( test_ufs_add_file_parent_does_not_exist, ufsGetInstance, ufsCleanup ),
     cmocka_unit_test_setup_teardown( test_ufs_add_file_same_name_different_directory, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_add_storage_use_file_as_parent, ufsGetInstance, ufsCleanup ),
     /* ====================================================================== */
 
     /* ufsAddArea tests.                                                      */
