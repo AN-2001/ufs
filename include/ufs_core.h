@@ -214,19 +214,20 @@
 
 #define UFS_STATUS_LIST                                                        \
     UFS_X( UFS_NO_ERROR,                   0 )                                 \
-    UFS_X( UFS_ALREADY_EXISTS,             1ULL << 0 )                         \
-    UFS_X( UFS_BAD_CALL,                   1ULL << 1 )                         \
-    UFS_X( UFS_CANNOT_RESOLVE_STORAGE,     1ULL << 2 )                         \
-    UFS_X( UFS_PARENT_DOES_NOT_EXIST,      1ULL << 3 )                         \
-    UFS_X( UFS_DIRECTORY_IS_NOT_EMPTY,     1ULL << 4 )                         \
-    UFS_X( UFS_DOES_NOT_EXIST,             1ULL << 5 )                         \
-    UFS_X( UFS_EXISTS_IN_EXPLICIT_MAPPING, 1ULL << 6 )                         \
-    UFS_X( UFS_ILLEGAL_NAME,               1ULL << 7 )                         \
-    UFS_X( UFS_INVALID_AREA_IN_VIEW,       1ULL << 8 )                         \
-    UFS_X( UFS_OUT_OF_MEMORY,              1ULL << 9 )                         \
-    UFS_X( UFS_UNKNOWN_ERROR,              1ULL << 10 )                        \
-    UFS_X( UFS_VIEW_CONTAINS_DUPLICATES,   1ULL << 11 )                        \
-    UFS_X( UFS_BASE_IS_NOT_LAST_AREA,      1ULL << 12 ) 
+    UFS_X( UFS_ALREADY_EXISTS,             1 )                                 \
+    UFS_X( UFS_BAD_CALL,                   2 )                                 \
+    UFS_X( UFS_CANNOT_RESOLVE_STORAGE,     3 )                                 \
+    UFS_X( UFS_PARENT_DOES_NOT_EXIST,      4 )                                 \
+    UFS_X( UFS_DIRECTORY_IS_NOT_EMPTY,     5 )                                 \
+    UFS_X( UFS_DOES_NOT_EXIST,             6 )                                 \
+    UFS_X( UFS_EXISTS_IN_EXPLICIT_MAPPING, 7 )                                 \
+    UFS_X( UFS_ILLEGAL_NAME,               8 )                                 \
+    UFS_X( UFS_INVALID_AREA_IN_VIEW,       9 )                                 \
+    UFS_X( UFS_OUT_OF_MEMORY,              10 )                                \
+    UFS_X( UFS_UNKNOWN_ERROR,              11 )                                \
+    UFS_X( UFS_VIEW_CONTAINS_DUPLICATES,   12 )                                \
+    UFS_X( UFS_BASE_IS_NOT_LAST_AREA,      13 )                                \
+    UFS_X( UFS_CHECK_BASE,                 14 )                                \
 
 enum {
 #define UFS_X( name, val ) name = val,
@@ -540,19 +541,21 @@ ufsStatusType ufsRemoveMapping( ufsType ufs,
 *                                                                              *
 *  Possible errors:                                                            *
 *   -UFS_BAD_CALL: The function received bad arguments.                        *
-*   -UFS_DOES_NOT_EXIST: The storage does not exist in ufs.                    *
+*   -UFS_DOES_NOT_EXIST: The storage does not exist in this view.              *
 *   -UFS_CANNOT_RESOLVE_STORAGE: Could not resolve storage in the view.        *
 *   -UFS_VIEW_CONTAINS_DUPLICATES: The view contains duplicate areas.          *
 *   -UFS_INVALID_AREA_IN_VIEW: The view contains a non-existent area.          *
 *   -UFS_BASE_IS_NOT_LAST_AREA: BASE was used but was not the last area in th- *
 *                               e view.                                        *
+*   -UFS_CHECK_BASE: Not an error, used to signal that the search should cont- *
+*                    inue in BASE.                                             *
 *   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
 *                                                                              *
 * Parameters                                                                   *
 *                                                                              *
 *  -ufs: The ufs instance, must not be NULL.                                   *
 *  -view: The view to use.                                                     *
-*  -storage: the storage's unique identifier, must be greater than 0.          *
+*  -storage: the storage's unique identifier, must be non-negative.            *
 *                                                                              *
 * Return                                                                       *
 *                                                                              *
