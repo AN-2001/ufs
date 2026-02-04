@@ -900,8 +900,6 @@ ufsIdentifierType ufsResolveStorageInView( ufsType ufs,
                               &statement,
                               NULL );
     if (res != SQLITE_OK) {
-        const char *errStr = sqlite3_errmsg( ufsSqlite -> db );
-        printf("SQLite prepare failed: %s\n", errStr);
         ufsErrno = UFS_UNKNOWN_ERROR;
         return -1;
     }
