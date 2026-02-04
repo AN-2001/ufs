@@ -891,6 +891,11 @@ ufsIdentifierType ufsResolveStorageInView( ufsType ufs,
         return -1;
     }
 
+    if ( storage == UFS_STORAGE_ROOT_IDENTIFIER ) {
+        ufsErrno = UFS_NO_ERROR;
+        return view[ 0 ];
+    }
+
     buildViewString( view, viewSize, areaList );
     sprintf( query, VIEW_RESOLVER_QUERY, areaList );
 
@@ -903,6 +908,7 @@ ufsIdentifierType ufsResolveStorageInView( ufsType ufs,
         ufsErrno = UFS_UNKNOWN_ERROR;
         return -1;
     }
+        
 
     sqlite3_bind_int( statement, 1, storage );
 
