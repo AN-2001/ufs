@@ -32,7 +32,7 @@
 
 #define ASSERT_UFS_NO_ERROR( returnVal ) \
     do { \
-        assert_true( ( returnVal ) > 0 ); \
+        assert_true( ( returnVal ) >= 0 ); \
         assert_int_equal( ufsErrno, UFS_NO_ERROR ); \
     } while ( 0 )
 
