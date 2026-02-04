@@ -1445,6 +1445,223 @@ static void test_ufs_remove_mapping_remove_then_probe( void **state )
 }
 /* ########################################################################## */
 
+
+/* ufsResolveStorageInView                                                    */
+
+static void test_ufs_resolve_storage_in_view_bad_args( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType id, area0, file0;
+    ufsStatusType status;
+
+    ufsStruct = *state;
+
+    file0 = ufsAddStorage( ufsStruct -> ufs,
+            UFS_STORAGE_ROOT_IDENTIFIER,
+            UFS_STORAGE_TYPE_FILE,
+            TEST_FILE_NAME );
+    ASSERT_UFS_NO_ERROR( file0 );
+
+    area0 = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    ASSERT_UFS_NO_ERROR( area0 );
+
+    status = ufsAddMapping( ufsStruct -> ufs, area0, file0 );
+    ASSERT_UFS_STATUS_NO_ERROR( status );
+
+    ufsViewType view0 = { area0, UFS_VIEW_TERMINATOR };
+    id = ufsResolveStorageInView( NULL, view0, file0 );
+    ASSERT_UFS_ERROR( id, UFS_BAD_CALL );
+
+    ufsViewType view1 = { area0, area0, UFS_VIEW_TERMINATOR };
+    id = ufsResolveStorageInView( ufsStruct -> ufs, view1, file0 );
+    ASSERT_UFS_ERROR( id, UFS_BAD_CALL );
+
+    ufsViewType view2 = { UFS_AREA_BASE_IDENTIFIER, area0, UFS_VIEW_TERMINATOR };
+    id = ufsResolveStorageInView( ufsStruct -> ufs, view2, file0 );
+    ASSERT_UFS_ERROR( id, UFS_BAD_CALL );
+
+    ufsViewType view3 = { -10, UFS_VIEW_TERMINATOR };
+    id = ufsResolveStorageInView( ufsStruct -> ufs, view3, file0 );
+    ASSERT_UFS_ERROR( id, UFS_BAD_CALL );
+
+    id = ufsResolveStorageInView( ufsStruct -> ufs, view0, -1 );
+    ASSERT_UFS_ERROR( id, UFS_BAD_CALL );
+}
+
+static void test_ufs_resolve_storage_in_view_area_does_not_exist( void **state ) 
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType id;
+    ufsViewType view = { 1, UFS_VIEW_TERMINATOR };
+
+    ufsStruct = *state;
+
+    id = ufsResolveStorageInView( ufsStruct -> ufs, view, 1 );
+    ASSERT_UFS_ERROR( id, UFS_INVALID_AREA_IN_VIEW );
+}
+
+static void test_ufs_resolve_storage_in_view( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType fileId, areaId, ret;
+    ufsStatusType status;
+
+    ufsStruct = *state;
+
+    fileId = ufsAddStorage( ufsStruct -> ufs,
+                UFS_STORAGE_ROOT_IDENTIFIER,
+                UFS_STORAGE_TYPE_FILE,
+                TEST_FILE_NAME );
+    ASSERT_UFS_NO_ERROR( fileId );
+
+    areaId = ufsAddArea( ufsStruct -> ufs,
+                    TEST_AREA_NAME );
+    ASSERT_UFS_NO_ERROR( areaId );
+
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId );
+    ASSERT_UFS_STATUS_NO_ERROR( status );
+
+    ufsViewType view = { areaId, UFS_VIEW_TERMINATOR };
+    ret = ufsResolveStorageInView( ufsStruct -> ufs, view, fileId );
+    ASSERT_UFS_NO_ERROR( ret );
+
+    assert_int_equal( ret, areaId );
+}
+
+static void test_ufs_resolve_storage_in_view_base_fallback( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType areaId, ret;
+
+    ufsStruct = *state;
+
+    areaId = ufsAddArea( ufsStruct -> ufs,
+                    TEST_AREA_NAME );
+    ASSERT_UFS_NO_ERROR( areaId );
+
+    ufsViewType view = { areaId, UFS_AREA_BASE_IDENTIFIER, UFS_VIEW_TERMINATOR };
+    ret = ufsResolveStorageInView( ufsStruct -> ufs, view, 1 );
+    ASSERT_UFS_ERROR( ret, UFS_CHECK_BASE );
+}
+
+static void test_ufs_resolve_storage_in_view_two_areas( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType fileId, areaId0, areaId1, ret;
+    ufsStatusType status;
+
+    ufsStruct = *state;
+
+    fileId = ufsAddStorage( ufsStruct -> ufs,
+                UFS_STORAGE_ROOT_IDENTIFIER,
+                UFS_STORAGE_TYPE_FILE,
+                TEST_FILE_NAME );
+    ASSERT_UFS_NO_ERROR( fileId );
+
+    areaId0 = ufsAddArea( ufsStruct -> ufs,
+                    TEST_AREA_NAME_0 );
+    ASSERT_UFS_NO_ERROR( areaId0 );
+
+    areaId1 = ufsAddArea( ufsStruct -> ufs,
+                    TEST_AREA_NAME_1 );
+    ASSERT_UFS_NO_ERROR( areaId1 );
+
+    status = ufsAddMapping( ufsStruct -> ufs, areaId0, fileId );
+    ASSERT_UFS_STATUS_NO_ERROR( status );
+
+    ufsViewType view0 = { areaId0, areaId1, UFS_VIEW_TERMINATOR };
+    ret = ufsResolveStorageInView( ufsStruct -> ufs, view0, fileId );
+    ASSERT_UFS_NO_ERROR( ret );
+    assert_int_equal( ret, areaId0 );
+
+    ufsViewType view1 = { areaId1, areaId0, UFS_VIEW_TERMINATOR };
+    ret = ufsResolveStorageInView( ufsStruct -> ufs, view1, fileId );
+    ASSERT_UFS_NO_ERROR( ret );
+    assert_int_equal( ret, areaId0 );
+}
+
+static void test_ufs_resolve_storage_in_view_file_does_not_exist( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType areaId, ret;
+
+    ufsStruct = *state;
+
+    areaId = ufsAddArea( ufsStruct -> ufs,
+                    TEST_AREA_NAME );
+    ASSERT_UFS_NO_ERROR( areaId );
+
+    ufsViewType view = { areaId, UFS_VIEW_TERMINATOR };
+    ret = ufsResolveStorageInView( ufsStruct -> ufs, view, 1 );
+    ASSERT_UFS_ERROR( ret, UFS_DOES_NOT_EXIST );
+
+}
+
+static void test_ufs_resolve_storage_in_view_view_order( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType fileId, areaId0, areaId1, ret;
+    ufsStatusType status;
+
+    ufsStruct = *state;
+
+    fileId = ufsAddStorage( ufsStruct -> ufs,
+                UFS_STORAGE_ROOT_IDENTIFIER,
+                UFS_STORAGE_TYPE_FILE,
+                TEST_FILE_NAME );
+    ASSERT_UFS_NO_ERROR( fileId );
+
+    areaId0 = ufsAddArea( ufsStruct -> ufs,
+                    TEST_AREA_NAME_0 );
+    ASSERT_UFS_NO_ERROR( areaId0 );
+
+    areaId1 = ufsAddArea( ufsStruct -> ufs,
+                    TEST_AREA_NAME_1 );
+    ASSERT_UFS_NO_ERROR( areaId1 );
+
+    status = ufsAddMapping( ufsStruct -> ufs, areaId0, fileId );
+    ASSERT_UFS_STATUS_NO_ERROR( status );
+
+    status = ufsAddMapping( ufsStruct -> ufs, areaId1, fileId );
+    ASSERT_UFS_STATUS_NO_ERROR( status );
+
+    ufsViewType view0 = { areaId0, areaId1, UFS_VIEW_TERMINATOR };
+    ret = ufsResolveStorageInView( ufsStruct -> ufs, view0, fileId );
+    ASSERT_UFS_NO_ERROR( ret );
+    assert_int_equal( ret, areaId0 );
+
+    ufsViewType view1 = { areaId1, areaId0, UFS_VIEW_TERMINATOR };
+    ret = ufsResolveStorageInView( ufsStruct -> ufs, view1, fileId );
+    ASSERT_UFS_NO_ERROR( ret );
+    assert_int_equal( ret, areaId1 );
+}
+
+static void test_ufs_resolve_storage_in_view_empty_view( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType id;
+
+    ufsStruct = *state;
+    ufsViewType view = { UFS_VIEW_TERMINATOR };
+
+    id = ufsResolveStorageInView( ufsStruct -> ufs, view, 1 );
+    ASSERT_UFS_ERROR( id, UFS_DOES_NOT_EXIST );
+}
+
+static void test_ufs_resolve_storage_in_view_only_base( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType id;
+
+    ufsStruct = *state;
+    ufsViewType view = { UFS_AREA_BASE_IDENTIFIER, UFS_VIEW_TERMINATOR };
+
+    id = ufsResolveStorageInView( ufsStruct -> ufs, view, 1 );
+    ASSERT_UFS_ERROR( id, UFS_CHECK_BASE );
+}
+
+/* ########################################################################## */
+
 static const struct CMUnitTest ufs_test_suite[] = {
 
     cmocka_unit_test( test_ufs_init ),
@@ -1537,6 +1754,31 @@ static const struct CMUnitTest ufs_test_suite[] = {
     cmocka_unit_test_setup_teardown( test_ufs_remove_mapping_double_remove, ufsGetInstance, ufsCleanup ),
     cmocka_unit_test_setup_teardown( test_ufs_remove_mapping_remove_then_add, ufsGetInstance, ufsCleanup ),
     cmocka_unit_test_setup_teardown( test_ufs_remove_mapping_remove_then_probe, ufsGetInstance, ufsCleanup ),
+    /* ====================================================================== */
+
+
+    /* ufsRemoveMapping tests.                                                */
+    cmocka_unit_test_setup_teardown( test_ufs_remove_mapping_bad_args, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_remove_mapping, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_remove_mapping_does_not_exist, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_remove_mapping_no_side_effects, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_remove_mapping_double_remove, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_remove_mapping_remove_then_add, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_remove_mapping_remove_then_probe, ufsGetInstance, ufsCleanup ),
+    /* ====================================================================== */
+
+    /* ufsResolveStorageInView                                                */
+
+    cmocka_unit_test_setup_teardown( test_ufs_resolve_storage_in_view_bad_args, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_resolve_storage_in_view_area_does_not_exist, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_resolve_storage_in_view, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_resolve_storage_in_view_base_fallback, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_resolve_storage_in_view_two_areas, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_resolve_storage_in_view_file_does_not_exist, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_resolve_storage_in_view_view_order, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_resolve_storage_in_view_empty_view, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_resolve_storage_in_view_only_base, ufsGetInstance, ufsCleanup ),
+
     /* ====================================================================== */
 };
 
