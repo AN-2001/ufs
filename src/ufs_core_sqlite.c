@@ -16,6 +16,9 @@
 #include <string.h>
 #include <stdbool.h>
 
+#define UFS_SQLITE_BUFF_SIZE (4096)
+#define UFS_SQLITE_BUFF_SIZE_BIG (4096 * 2)
+
 enum ufsSqliteStatementType {
     UFS_STATEMENT_INSERT_INTO_STORAGE,
     UFS_STATEMENT_QUERY_STORAGE_BY_NAME_TYPE,
@@ -114,6 +117,15 @@ static const char *UFS_SQL_TEXT[ NUM_UFS_STATEMENTS + 2 ] = {
     NULL
 };
 
+static const char * const VIEW_RESOLVER_QUERY = 
+    "WITH viewData(areaId, viewOrder) AS ( VALUES %s ) "
+    "SELECT ufsMappings.areaId "
+    "FROM ufsMappings "
+    "JOIN viewData ON viewData.areaId = ufsMappings.areaId "
+    "WHERE ufsMappings.storageId = ? "
+    "ORDER BY viewData.viewOrder "
+    "LIMIT 1;";
+
 static inline ufsSqliteStruct *prepareSqliteDb( sqlite3 *db );
 
 
@@ -121,6 +133,9 @@ static inline bool validateViewStructure( ufsViewType view, uint64_t *viewSize )
 static inline bool validateViewSemantics( ufsSqliteStruct *ufsSqlite,
                                           ufsViewType view,
                                           uint64_t viewSize );
+static inline void buildViewString( ufsViewType view,
+                                    uint64_t viewSize,
+                                    char buff[ UFS_SQLITE_BUFF_SIZE ] );
 
 static inline int identifierComparator( const void *a, const void *b )
 {
@@ -143,10 +158,15 @@ bool validateViewStructure( ufsViewType view, uint64_t *viewSize )
     if ( !*viewSize )
         return true;
 
-    /* First validate that if BASE exists it's at the end. */
-    for (i = 0; i < *viewSize; i++ )
+    /* Validate two things:                                                   */
+    /* * If BASE exists it must be at the end.                                */
+    /* * All areas are greater or equal than 0.                               */
+    for (i = 0; i < *viewSize; i++ ) {
+        if ( view[ i ] < 0 )
+            return false;
         if ( view[ i ] == UFS_AREA_BASE_IDENTIFIER && i != ( *viewSize - 1 ))
             return false;
+    }
 
     /* Now check for duplicates, we'll do it in O( n log n ) for now.         */
     memcpy( copyView, view, sizeof( view[ 0 ] ) * *viewSize );
@@ -158,6 +178,20 @@ bool validateViewStructure( ufsViewType view, uint64_t *viewSize )
             return false;
 
     return true;
+}
+
+static inline void buildViewString( ufsViewType view,
+                                    uint64_t viewSize,
+                                    char buff[ UFS_SQLITE_BUFF_SIZE ] )
+{
+    uint64_t i;
+    char *ptr;
+
+    ptr = buff;
+
+    for (i = 0; i < viewSize - 1; i++)
+        ptr += sprintf( ptr, "( %ld, %ld ),", view[ i ], i + 1 );
+    ptr += sprintf( ptr, "( %ld, %ld )", view[ i ], i + 1 );
 }
 
 
@@ -172,6 +206,9 @@ bool validateViewSemantics( ufsSqliteStruct *ufsSqlite,
         return true;
     /* Validate that all areas inside the view exist inside ufs.              */
     for ( i = 0; i < viewSize; i++ ) {
+        if ( view[ i ] == UFS_AREA_BASE_IDENTIFIER )
+            break; /* We know BASE would be at the end.                       */
+
         sqlite3_reset(
             ufsSqlite -> statements[ UFS_STATEMENT_QUERY_AREAS_BY_ID ] );
         sqlite3_clear_bindings(
@@ -181,8 +218,9 @@ bool validateViewSemantics( ufsSqliteStruct *ufsSqlite,
             1, view[ i ] );
         res = sqlite3_step(
                 ufsSqlite -> statements[ UFS_STATEMENT_QUERY_AREAS_BY_ID ] );
-        if ( res != SQLITE_ROW ) 
+        if ( res != SQLITE_ROW ) {
             return false;
+        }
     }
 
     return true;
@@ -831,8 +869,62 @@ ufsIdentifierType ufsResolveStorageInView( ufsType ufs,
                                            ufsViewType view,
                                            ufsIdentifierType storage )
 {
+    char areaList[ UFS_SQLITE_BUFF_SIZE ], query[ UFS_SQLITE_BUFF_SIZE_BIG ];
+    int res;
+    sqlite3_stmt *statement;
+    ufsSqliteStruct *ufsSqlite;
+    uint64_t viewSize;
+    if ( !ufs || !validateViewStructure( view, &viewSize ) || storage < 0 ) {
+        ufsErrno = UFS_BAD_CALL;
+        return -1;
+    }
+
+    ufsSqlite = ufs;
+
+    if ( !validateViewSemantics( ufsSqlite, view, viewSize ) ) {
+        ufsErrno = UFS_INVALID_AREA_IN_VIEW;
+        return -1;
+    }
+
+    if ( !viewSize ) {
+        ufsErrno = UFS_DOES_NOT_EXIST;
+        return -1;
+    }
+
+    buildViewString( view, viewSize, areaList );
+    sprintf( query, VIEW_RESOLVER_QUERY, areaList );
+
+    res = sqlite3_prepare_v2( ufsSqlite -> db,
+                              query,
+                              -1,
+                              &statement,
+                              NULL );
+    if (res != SQLITE_OK) {
+        const char *errStr = sqlite3_errmsg( ufsSqlite -> db );
+        printf("SQLite prepare failed: %s\n", errStr);
+        ufsErrno = UFS_UNKNOWN_ERROR;
+        return -1;
+    }
+
+    sqlite3_bind_int( statement, 1, storage );
+
+    res = sqlite3_step( statement );
+
+    if ( res != SQLITE_ROW ) {
+        sqlite3_finalize( statement );
+
+        if ( view[ viewSize - 1 ] == UFS_AREA_BASE_IDENTIFIER ) {
+            ufsErrno = UFS_CHECK_BASE;
+            return -1;
+        }
+        ufsErrno = UFS_DOES_NOT_EXIST;
+        return -1;
+    }
+
     ufsErrno = UFS_NO_ERROR;
-	return 0;
+    res = sqlite3_column_int( statement, 0 );
+    sqlite3_finalize( statement );
+	return res;
 }
 
 ufsStatusType ufsIterateDirInView( ufsType ufs,
