@@ -201,7 +201,7 @@
 /* Increment this for each spec change.                                       */
 #define UFS_CORE_VERSION (2)
 
-#define UFS_VIEW_MAX_SIZE (4096)
+#define UFS_VIEW_MAX_SIZE (64)
 #define UFS_VIEW_TERMINATOR (-1)
 #define UFS_AREA_BASE_NAME ("BASE") 
 #define UFS_AREA_BASE_IDENTIFIER (0)
