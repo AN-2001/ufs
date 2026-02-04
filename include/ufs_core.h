@@ -53,9 +53,8 @@
 /*       filesystem. BASE is guaranteed to be valid after a ufsInit.          */
 /*       BASE cannot appear in a mapping, the filesystem semantics of search  */
 /*       are that of the external fs, meaning if ufs encounters BASE it shou- */
-/*       ld dispatch queries to the external fs.                              */
-/*       the external fs references by BASE should be immutable except when   */
-/*       calling ufsCollapse on a view that ends with BASE.                   */
+/*       ld dispatch queries to the external fs (see the note on offloading   */
+/*       to base).                                                            */
 /*                                                                            */
 /* About storage and mappings: Storage should always exist in a mapping, to   */
 /* satisfy this constraint we define two types of mappings:                   */
@@ -121,19 +120,6 @@
 /* StatusType: A status that ufs stores in ufsErrno, shows the current status */
 /*             of ufs, its set as a side effect of all ufs functions.         */
 /*                                                                            */
-/* Applying mapping to an area: Given an area A and mapping M=(A1, S) where   */
-/*                              A1 != A, applying the mapping M to A means    */
-/*                              that a new mapping M1 = (A, S) should be cre- */
-/*                              ated if it doesn't already exist.             */
-/* Applying mapping to BASE: BASE has special semantics in the context of ma- */
-/*                           pping application, applying a mapping M to BASE  */
-/*                           means that the storage S should be created on t- */
-/*                           he external file-system.                         */
-/*                                                                            */
-/* collapse semantics: A ufs collapse on a view should take all mappings in   */
-/*                     the view and apply them on the last area.              */
-/*                     If the last area.                                      */
-/*                                                                            */
 /* About removal semantics: Once a storage or area or explicit mapping is re- */
 /* moved in ufs, then the ufs state should be as if that storage or area or   */
 /* explicit mapping don't exist.                                              */
@@ -183,16 +169,11 @@
 /* ufs core should not worry itself with offloading to the base filesystem,   */
 /* what it should do is tell the user that BASE needs to be used.             */
 /* For example:                                                               */
-/*   * During object resoltuion, if a view ends with BASE and it wasn't found */
+/*   * During object resolution, if a view ends with BASE and it wasn't found */
 /*     in any of the areas before BASE, ufs should return UFS_CHECK_BASE      */
 /*     in which case it is the responsibility of the user to interrogate the  */
 /*     external file system.                                                  */
-/*   * During view collapse, if a view ends with BASE, ufs wouldn't have the  */
-/*     means of applying operations on BASE. ufs collapse takes a callback    */
-/*     that it would invoke if modifying BASE is needed, the callback would   */
-/*     communicate which modifications need to be made to the end user, and   */
-/*     it's their responsibility to commit them.                              */
-/*   * During iteration over directoires, the agreement is implicit, the user */
+/*   * During iteration over directories, the agreement is implicit, the user */
 /*     should be aware that after ufs finishes iterating they should iterate  */
 /*     over the relevant directory in base as well (if it exists).            */
 /*                                                                            */
@@ -601,32 +582,5 @@ ufsStatusType ufsIterateDirInView( ufsType ufs,
                                    ufsIdentifierType directory,
                                    ufsDirIter iterator,
                                    void *userData );
-
-/******************************************************************************\
-* ufsCollapse                                                                  *
-*                                                                              *
-*  Collapses all mappings in a ufs view into the last area in the view.        *
-*                                                                              *
-*  Possible errors:                                                            *
-*   -UFS_BAD_CALL: The function received bad arguments.                        *
-*   -UFS_DOES_NOT_EXIST: The directory does not exist in ufs.                  *
-*   -UFS_VIEW_CONTAINS_DUPLICATES: The view contains duplicate areas.          *
-*   -UFS_INVALID_AREA_IN_VIEW: The view contains a non-existent area.          *
-*   -UFS_BASE_IS_NOT_LAST_AREA: BASE was used but was not the last area in th- *
-*                               e view.                                        *
-*   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
-*                                                                              *
-* Parameters                                                                   *
-*                                                                              *
-*  -ufs: The ufs instance, must not be NULL.                                   *
-*  -view: The view to use.                                                     *
-*                                                                              *
-* Return                                                                       *
-*                                                                              *
-*  -ufsStatusType: The status of this call, ufsErrno is also set.              *
-*                                                                              *
-\******************************************************************************/
-ufsStatusType ufsCollapse( ufsType ufs,
-                           ufsViewType view );
 
 #endif /* UFS_CORE_H */
