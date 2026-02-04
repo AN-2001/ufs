@@ -10,6 +10,7 @@
 \******************************************************************************/
 
 
+#include <stdint.h>
 #define UFS_TESTING
 
 #ifndef UFS_TEST_DISABLE
@@ -1687,6 +1688,102 @@ static void test_ufs_resolve_storage_in_view_root( void **state )
 
 /* ########################################################################## */
 
+/* ufsIterDirInView                                                           */
+
+static ufsStatusType iterDummy( ufsIdentifierType storage,
+                                uint64_t currEntry,
+                                uint64_t numEntries,
+                                void *userData )
+{
+    return UFS_NO_ERROR;
+}
+
+static void test_ufs_iter_dir_in_view_bad_args( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType area0, file0;
+    ufsStatusType status;
+
+    ufsStruct = *state;
+
+    file0 = ufsAddStorage( ufsStruct -> ufs,
+            UFS_STORAGE_ROOT_IDENTIFIER,
+            UFS_STORAGE_TYPE_FILE,
+            TEST_FILE_NAME );
+    ASSERT_UFS_NO_ERROR( file0 );
+
+    area0 = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    ASSERT_UFS_NO_ERROR( area0 );
+
+    status = ufsAddMapping( ufsStruct -> ufs, area0, file0 );
+    ASSERT_UFS_STATUS_NO_ERROR( status );
+
+    ufsViewType view0 = { area0, UFS_VIEW_TERMINATOR };
+    status = ufsIterateDirInView( NULL,
+            view0,
+            UFS_STORAGE_ROOT_IDENTIFIER,
+            iterDummy,
+            NULL );
+    ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
+
+    ufsViewType view1 = { area0, area0, UFS_VIEW_TERMINATOR };
+    status = ufsIterateDirInView( ufsStruct -> ufs,
+            view1,
+            UFS_STORAGE_ROOT_IDENTIFIER,
+            iterDummy,
+            NULL );
+    ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
+
+    ufsViewType view2 = { UFS_AREA_BASE_IDENTIFIER, area0, UFS_VIEW_TERMINATOR };
+    status = ufsIterateDirInView( ufsStruct -> ufs,
+            view2,
+            UFS_STORAGE_ROOT_IDENTIFIER,
+            iterDummy,
+            NULL );
+    ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
+
+    ufsViewType view3 = { -10, UFS_VIEW_TERMINATOR };
+    status = ufsIterateDirInView( ufsStruct -> ufs,
+            view3,
+            UFS_STORAGE_ROOT_IDENTIFIER,
+            iterDummy,
+            NULL );
+    ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
+
+    status = ufsIterateDirInView( ufsStruct -> ufs,
+            view0,
+            -1,
+            iterDummy,
+            NULL );
+    ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
+
+    status = ufsIterateDirInView( ufsStruct -> ufs,
+            view0,
+            UFS_STORAGE_ROOT_IDENTIFIER,
+            NULL,
+            NULL );
+    ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
+
+}
+
+static void test_ufs_iter_dir_in_view_area_does_not_exist( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsStatusType status;
+    ufsViewType view = { 1, UFS_VIEW_TERMINATOR };
+
+    ufsStruct = *state;
+
+    status = ufsIterateDirInView( ufsStruct -> ufs,
+            view,
+            1,
+            iterDummy,
+            NULL );
+    ASSERT_UFS_ERROR( status, UFS_INVALID_AREA_IN_VIEW );
+}
+
+/* ########################################################################## */
+
 static const struct CMUnitTest ufs_test_suite[] = {
 
     cmocka_unit_test( test_ufs_init ),
@@ -1793,7 +1890,6 @@ static const struct CMUnitTest ufs_test_suite[] = {
     /* ====================================================================== */
 
     /* ufsResolveStorageInView                                                */
-
     cmocka_unit_test_setup_teardown( test_ufs_resolve_storage_in_view_bad_args, ufsGetInstance, ufsCleanup ),
     cmocka_unit_test_setup_teardown( test_ufs_resolve_storage_in_view_area_does_not_exist, ufsGetInstance, ufsCleanup ),
     cmocka_unit_test_setup_teardown( test_ufs_resolve_storage_in_view, ufsGetInstance, ufsCleanup ),
@@ -1804,8 +1900,13 @@ static const struct CMUnitTest ufs_test_suite[] = {
     cmocka_unit_test_setup_teardown( test_ufs_resolve_storage_in_view_empty_view, ufsGetInstance, ufsCleanup ),
     cmocka_unit_test_setup_teardown( test_ufs_resolve_storage_in_view_only_base, ufsGetInstance, ufsCleanup ),
     cmocka_unit_test_setup_teardown( test_ufs_resolve_storage_in_view_root, ufsGetInstance, ufsCleanup ),
-
     /* ====================================================================== */
+
+    /* ufsIterDirInView                                                       */
+    cmocka_unit_test_setup_teardown( test_ufs_iter_dir_in_view_bad_args, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_iter_dir_in_view_area_does_not_exist, ufsGetInstance, ufsCleanup ),
+    /* ====================================================================== */
+
 };
 
 int main( void ) {
