@@ -1660,6 +1660,31 @@ static void test_ufs_resolve_storage_in_view_only_base( void **state )
     ASSERT_UFS_ERROR( id, UFS_CHECK_BASE );
 }
 
+static void test_ufs_resolve_storage_in_view_root( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType id, areaId;
+
+    ufsStruct = *state;
+    ufsViewType view0 = { UFS_AREA_BASE_IDENTIFIER, UFS_VIEW_TERMINATOR };
+
+    id = ufsResolveStorageInView( ufsStruct -> ufs, view0, UFS_STORAGE_ROOT_IDENTIFIER );
+    ASSERT_UFS_NO_ERROR( id );
+    assert_int_equal( id, UFS_AREA_BASE_IDENTIFIER );
+
+    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    ASSERT_UFS_NO_ERROR( areaId );
+
+    ufsViewType view1 = { areaId, UFS_VIEW_TERMINATOR };
+    id = ufsResolveStorageInView( ufsStruct -> ufs, view1, UFS_STORAGE_ROOT_IDENTIFIER );
+    ASSERT_UFS_NO_ERROR( id );
+    assert_int_equal( id, areaId );
+
+    ufsViewType view2 = { UFS_VIEW_TERMINATOR };
+    id = ufsResolveStorageInView( ufsStruct -> ufs, view2, UFS_STORAGE_ROOT_IDENTIFIER );
+    ASSERT_UFS_ERROR( id, UFS_DOES_NOT_EXIST );
+}
+
 /* ########################################################################## */
 
 static const struct CMUnitTest ufs_test_suite[] = {
@@ -1778,6 +1803,7 @@ static const struct CMUnitTest ufs_test_suite[] = {
     cmocka_unit_test_setup_teardown( test_ufs_resolve_storage_in_view_view_order, ufsGetInstance, ufsCleanup ),
     cmocka_unit_test_setup_teardown( test_ufs_resolve_storage_in_view_empty_view, ufsGetInstance, ufsCleanup ),
     cmocka_unit_test_setup_teardown( test_ufs_resolve_storage_in_view_only_base, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_resolve_storage_in_view_root, ufsGetInstance, ufsCleanup ),
 
     /* ====================================================================== */
 };
