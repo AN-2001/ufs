@@ -36,6 +36,7 @@ enum ufsSqliteStatementType {
     UFS_STATEMENT_QUERY_MAPPINGS_BY_STORAGE_ID,
     UFS_STATEMENT_QUERY_MAPPINGS_BY_AREA_ID,
     UFS_STATEMENT_REMOVE_MAPPINGS_BY_IDS,
+    UFS_STATEMENT_COMPOSITE_FIND_CHILD_MAPPINGS,
     NUM_UFS_STATEMENTS,
 };
 
@@ -49,17 +50,17 @@ typedef struct ufsSqliteStruct {
 static const char *UFS_SQL_TEXT[ NUM_UFS_STATEMENTS + 2 ] = {
 
     /* Schema command:                                                        */
-    "CREATE TABLE IF NOT EXISTS ufsStorage(id INTEGER PRIMARY KEY,"
-                                          "name TEXT NOT NULL,"
-                                          "parent INTEGER,"
-                                          "type INTEGER );"
-    "CREATE TABLE IF NOT EXISTS ufsAreas(id INTEGER PRIMARY KEY,"
-                                         "name TEXT NOT NULL );"
-    "CREATE TABLE IF NOT EXISTS ufsMappings(id INTEGER PRIMARY KEY,"
-                                           "areaId INTEGER,"
-                                           "storageId INTEGER,"
-                                           "FOREIGN KEY (areaId) REFERENCES ufsAreas(id),"
-                                           "FOREIGN KEY (storageId) REFERENCES ufsStorage(id) );"
+    "create table if not exists ufsstorage(id integer primary key,"
+                                          "name text not null,"
+                                          "parent integer,"
+                                          "type integer );"
+    "create table if not exists ufsareas(id integer primary key,"
+                                         "name text not null );"
+    "create table if not exists ufsmappings(id integer primary key,"
+                                           "areaid integer,"
+                                           "storageid integer,"
+                                           "foreign key (areaid) references ufsareas(id),"
+                                           "foreign key (storageid) references ufsstorage(id) );"
     ,
 
 
@@ -113,6 +114,19 @@ static const char *UFS_SQL_TEXT[ NUM_UFS_STATEMENTS + 2 ] = {
 
     /* Query mappings by area ID:                                             */
     "DELETE from ufsMappings where areaId = ? and storageId = ?;",
+
+    /* Given a (area, directory) mapping this query will find all the         */
+    /* (area, storage) mappings where area is the same, and storage is a chi- */
+    /* ld of directory.                                                       */
+    "SELECT M0.areaid, ufsStorage.id "
+    "FROM ufsStorage "
+    "JOIN ufsMappings AS M0 "
+    "ON ufsStorage.parent = M0.storageid "
+    "JOIN ufsMappings AS M1 "
+    "ON ufsStorage.id = M1.storageid "
+    "AND M0.areaid = M1.areaid "
+    "WHERE M0.areaid = ? "
+    "AND ufsStorage.parent = ?;",
 
     NULL
 };
@@ -252,6 +266,9 @@ struct ufsSqliteStruct *prepareSqliteDb( sqlite3 *db )
                                   &ufsSqlite -> statements[ i - 1 ],
                                   NULL );
         if (res != SQLITE_OK) {
+               fprintf(stderr,
+        "sqlite3_prepare_v2 failed: %s\n",
+        sqlite3_errmsg(db) );
             free( ufsSqlite );
             ufsErrno = UFS_UNKNOWN_ERROR;
             return NULL;
@@ -868,6 +885,25 @@ ufsStatusType ufsRemoveMapping( ufsType ufs,
         return ufsErrno;
     }
 
+    /* Check if one of the children of this directory is mapped to this area. */
+    sqlite3_reset(
+        ufsSqlite -> statements[ UFS_STATEMENT_COMPOSITE_FIND_CHILD_MAPPINGS ] );
+    sqlite3_clear_bindings(
+        ufsSqlite -> statements[ UFS_STATEMENT_COMPOSITE_FIND_CHILD_MAPPINGS ] );
+    sqlite3_bind_int(
+        ufsSqlite -> statements[ UFS_STATEMENT_COMPOSITE_FIND_CHILD_MAPPINGS ],
+        1, area );
+    sqlite3_bind_int(
+        ufsSqlite -> statements[ UFS_STATEMENT_COMPOSITE_FIND_CHILD_MAPPINGS ],
+        2, storage );
+    res = sqlite3_step(
+         ufsSqlite -> statements[ UFS_STATEMENT_COMPOSITE_FIND_CHILD_MAPPINGS ] );
+
+    if ( res != SQLITE_DONE ) {
+        ufsErrno = UFS_CHILD_EXISTS_IN_EXPLICIT_MAPPING;
+        return ufsErrno;
+    }
+
     /* We can just remove, no need to perform any more checks.                */
     sqlite3_reset(
         ufsSqlite -> statements[ UFS_STATEMENT_REMOVE_MAPPINGS_BY_IDS ] );
@@ -962,13 +998,6 @@ ufsStatusType ufsIterateDirInView( ufsType ufs,
                                    ufsIdentifierType directory,
                                    ufsDirIter iterator,
                                    void *userData )
-{
-    ufsErrno = UFS_NO_ERROR;
-	return 0;
-}
-
-ufsStatusType ufsCollapse( ufsType ufs,
-                           ufsViewType view )
 {
     ufsErrno = UFS_NO_ERROR;
 	return 0;
