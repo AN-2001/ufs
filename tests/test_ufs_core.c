@@ -349,21 +349,15 @@ static void test_ufs_add_mapping_bad_args( void **state )
 static void test_ufs_add_mapping_area_file( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
-    ufsStatusType status, areaId, dirId, fileId;
+    ufsStatusType status, areaId, fileId;
 
     ufsStruct = *state;
 
     areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    dirId = ufsAddStorage( ufsStruct -> ufs,
-            UFS_STORAGE_ROOT_IDENTIFIER,
-            UFS_STORAGE_TYPE_DIRECTORY,
-            TEST_DIRECTORY_NAME );
-    ASSERT_UFS_NO_ERROR( dirId );
-
     fileId = ufsAddStorage( ufsStruct -> ufs,
-            dirId,
+            UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_FILE,
             TEST_FILE_NAME );
     ASSERT_UFS_NO_ERROR( fileId );
@@ -397,21 +391,15 @@ static void test_ufs_add_mapping_area_directory( void **state )
 static void test_ufs_add_mapping_duplicate( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
-    ufsStatusType status, areaId, dirId, fileId;
+    ufsStatusType status, areaId, fileId;
 
     ufsStruct = *state;
 
     areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    dirId = ufsAddStorage( ufsStruct -> ufs,
-            UFS_STORAGE_ROOT_IDENTIFIER,
-            UFS_STORAGE_TYPE_DIRECTORY,
-            TEST_DIRECTORY_NAME );
-    ASSERT_UFS_NO_ERROR( dirId );
-
     fileId = ufsAddStorage( ufsStruct -> ufs,
-            dirId,
+            UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_FILE,
             TEST_FILE_NAME );
     ASSERT_UFS_NO_ERROR( fileId );
@@ -421,7 +409,6 @@ static void test_ufs_add_mapping_duplicate( void **state )
 
     status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId );
     ASSERT_UFS_STATUS( status, UFS_ALREADY_EXISTS );
-
 }
 
 static void test_ufs_add_mapping_area_does_not_exist( void **state )
@@ -762,7 +749,7 @@ static void test_ufs_probe_mapping_bad_args( void **state )
 static void test_ufs_probe_mapping( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
-    ufsIdentifierType areaId, dirId, fileId;
+    ufsIdentifierType areaId, fileId;
     ufsStatusType status0, status1;
 
     ufsStruct = *state;
@@ -770,14 +757,8 @@ static void test_ufs_probe_mapping( void **state )
     areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    dirId = ufsAddStorage( ufsStruct -> ufs,
-            UFS_STORAGE_ROOT_IDENTIFIER,
-            UFS_STORAGE_TYPE_DIRECTORY,
-            TEST_DIRECTORY_NAME );
-    ASSERT_UFS_NO_ERROR( dirId );
-
     fileId = ufsAddStorage( ufsStruct -> ufs,
-            dirId,
+            UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_FILE,
             TEST_FILE_NAME );
     ASSERT_UFS_NO_ERROR( fileId );
@@ -787,7 +768,6 @@ static void test_ufs_probe_mapping( void **state )
 
     status1 = ufsProbeMapping( ufsStruct -> ufs, areaId, fileId );
     ASSERT_UFS_STATUS_NO_ERROR( status1 );
-
 }
 
 static void test_ufs_probe_mapping_area_does_not_exist( void **state )
@@ -1052,7 +1032,7 @@ static void test_ufs_remove_file_does_not_exist( void **state )
 static void test_ufs_remove_file_exists_in_mapping( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
-    ufsIdentifierType areaId, dirId, fileId;
+    ufsIdentifierType areaId, fileId;
     ufsStatusType status;
 
     ufsStruct = *state;
@@ -1060,14 +1040,8 @@ static void test_ufs_remove_file_exists_in_mapping( void **state )
     areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    dirId = ufsAddStorage( ufsStruct -> ufs,
-            UFS_STORAGE_ROOT_IDENTIFIER,
-            UFS_STORAGE_TYPE_DIRECTORY,
-            TEST_DIRECTORY_NAME );
-    ASSERT_UFS_NO_ERROR( dirId );
-
     fileId = ufsAddStorage( ufsStruct -> ufs,
-            dirId,
+            UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_FILE,
             TEST_FILE_NAME );
     ASSERT_UFS_NO_ERROR( fileId );
@@ -1219,7 +1193,7 @@ static void test_ufs_remove_area_does_not_exist( void **state )
 static void test_ufs_remove_area_exists_in_mapping( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
-    ufsIdentifierType areaId, dirId, fileId;
+    ufsIdentifierType areaId, fileId;
     ufsStatusType status;
 
     ufsStruct = *state;
@@ -1227,14 +1201,8 @@ static void test_ufs_remove_area_exists_in_mapping( void **state )
     areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    dirId = ufsAddStorage( ufsStruct -> ufs,
-            UFS_STORAGE_ROOT_IDENTIFIER,
-            UFS_STORAGE_TYPE_DIRECTORY,
-            TEST_DIRECTORY_NAME );
-    ASSERT_UFS_NO_ERROR( dirId );
-
     fileId = ufsAddStorage( ufsStruct -> ufs,
-            dirId,
+            UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_FILE,
             TEST_FILE_NAME );
     ASSERT_UFS_NO_ERROR( fileId );
