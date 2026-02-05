@@ -461,6 +461,45 @@ static void test_ufs_add_mapping_file_does_not_exist( void **state )
     status = ufsAddMapping( ufsStruct -> ufs, areaId, 1 );
     ASSERT_UFS_STATUS( status, UFS_DOES_NOT_EXIST );
 }
+
+static void test_ufs_add_mapping_parent_is_not_mapped( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsStatusType status, areaId, fileId, dirId0, dirId1;
+
+    ufsStruct = *state;
+
+    dirId0 = ufsAddStorage( ufsStruct -> ufs, 
+            UFS_STORAGE_ROOT_IDENTIFIER,
+            UFS_STORAGE_TYPE_DIRECTORY,
+            TEST_DIRECTORY_NAME );
+
+    ASSERT_UFS_NO_ERROR( dirId0 );
+
+    fileId = ufsAddStorage( ufsStruct -> ufs, 
+            dirId0,
+            UFS_STORAGE_TYPE_FILE,
+            TEST_DIRECTORY_NAME );
+
+    ASSERT_UFS_NO_ERROR( fileId );
+
+    dirId1 = ufsAddStorage( ufsStruct -> ufs, 
+            dirId0,
+            UFS_STORAGE_TYPE_DIRECTORY,
+            TEST_DIRECTORY_NAME );
+
+    ASSERT_UFS_NO_ERROR( dirId1 );
+
+    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
+
+    ASSERT_UFS_NO_ERROR( areaId );
+
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId );
+    ASSERT_UFS_STATUS( status, UFS_PARENT_IS_NOT_MAPPED );
+
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId1 );
+    ASSERT_UFS_STATUS( status, UFS_PARENT_IS_NOT_MAPPED );
+}
 /* ########################################################################## */
 
 /* ufsGetStorage                                                              */
@@ -1444,6 +1483,41 @@ static void test_ufs_remove_mapping_remove_then_probe( void **state )
     ASSERT_UFS_STATUS( status, UFS_DOES_NOT_EXIST );
 
 }
+
+static void test_ufs_remove_mapping_child_is_mapped( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType dirId0, dirId1, areaId;
+    ufsStatusType status;
+
+    ufsStruct = *state;
+
+    dirId0 = ufsAddStorage( ufsStruct -> ufs,
+            UFS_STORAGE_ROOT_IDENTIFIER,
+            UFS_STORAGE_TYPE_DIRECTORY,
+            TEST_DIRECTORY_NAME );
+    ASSERT_UFS_NO_ERROR( dirId0 );
+
+    dirId1 = ufsAddStorage( ufsStruct -> ufs,
+            dirId0,
+            UFS_STORAGE_TYPE_DIRECTORY,
+            TEST_DIRECTORY_NAME );
+    ASSERT_UFS_NO_ERROR( dirId1 );
+
+    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    ASSERT_UFS_NO_ERROR( areaId );
+
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId0 );
+    ASSERT_UFS_STATUS_NO_ERROR( status );
+
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId1 );
+    ASSERT_UFS_STATUS_NO_ERROR( status );
+
+    status = ufsRemoveMapping( ufsStruct -> ufs, areaId, dirId0 );
+
+    ASSERT_UFS_STATUS( status, UFS_CHILD_EXISTS_IN_EXPLICIT_MAPPING );
+}
+
 /* ########################################################################## */
 
 
@@ -1814,6 +1888,7 @@ static const struct CMUnitTest ufs_test_suite[] = {
     cmocka_unit_test_setup_teardown( test_ufs_add_mapping_duplicate, ufsGetInstance, ufsCleanup ),
     cmocka_unit_test_setup_teardown( test_ufs_add_mapping_area_does_not_exist, ufsGetInstance, ufsCleanup ),
     cmocka_unit_test_setup_teardown( test_ufs_add_mapping_file_does_not_exist, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_add_mapping_parent_is_not_mapped, ufsGetInstance, ufsCleanup ),
     /* ====================================================================== */
 
     /* ufsGetStorage tests.                                                   */
@@ -1887,6 +1962,7 @@ static const struct CMUnitTest ufs_test_suite[] = {
     cmocka_unit_test_setup_teardown( test_ufs_remove_mapping_double_remove, ufsGetInstance, ufsCleanup ),
     cmocka_unit_test_setup_teardown( test_ufs_remove_mapping_remove_then_add, ufsGetInstance, ufsCleanup ),
     cmocka_unit_test_setup_teardown( test_ufs_remove_mapping_remove_then_probe, ufsGetInstance, ufsCleanup ),
+    cmocka_unit_test_setup_teardown( test_ufs_remove_mapping_child_is_mapped, ufsGetInstance, ufsCleanup ),
     /* ====================================================================== */
 
     /* ufsResolveStorageInView                                                */
