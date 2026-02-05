@@ -120,6 +120,13 @@
 /* StatusType: A status that ufs stores in ufsErrno, shows the current status */
 /*             of ufs, its set as a side effect of all ufs functions.         */
 /*                                                                            */
+/* About mapping semantics:                                                   */
+/* To add a mapping M = (A, S) into ufs a critical condition needs to be sat- */
+/* isfied. The parent of S must also be mapped to A, meaning that M = (A, S)  */
+/* can only be added if M = (A, D) already exists where D is the parent of S. */
+/* For ergonomics, ufs implicitly includes the mapping (A, ROOT) for each     */
+/* area.                                                                      */
+/*                                                                            */
 /* About removal semantics: Once a storage or area or explicit mapping is re- */
 /* moved in ufs, then the ufs state should be as if that storage or area or   */
 /* explicit mapping don't exist.                                              */
@@ -132,17 +139,18 @@
 /*   an explicit mapping.                                                     */
 /* * A file can't be removed if it's referenced in an explicit mapping.       */
 /* * An area can't be removed if it exists in an explicit mapping.            */
+/* * An explicit mapping M = (A, D) cannot be removed if exists an explicit   */
+/*   mapping M' = (A', S) such that D is the parent of S.                     */
 /*                                                                            */
-/* Explicit mappings can be removed freely as no other ufs entity depends on  */
-/* them.                                                                      */
 /* ufs does not view "views" as state, meaning that if an area referenced in  */
 /* a view is removed, it should treated as a "does not exist" case.           */
 /*                                                                            */
 /* Dependency graph for reference (an edge encodes a "depends" relation ):    */
 /*                                                                            */
-/*                                   area ----                                */
-/*                                            \                               */
-/*                   directory ----> file ----> explicit mapping              */
+/*                                                -----------------           */
+/*                                   area ----   /                 \          */
+/*                                            \ /                  /          */
+/*                   directory ----> file ----> explicit mapping --           */
 /*                             \             /                                */
 /*                              -------------                                 */
 /*                                                                            */
@@ -155,13 +163,16 @@
 /*  S.                                                                        */
 /* * a directory D depends on explicit mapping M if M = (A, D) for some area  */
 /*   A.                                                                       */
+/* * An explicit mapping M = (A, D) depends on an explicit mapping M'=(A, S)  */
+/*   if D is the parent of S.                                                 */
 /*                                                                            */
 /* Note: Implicit mappings do not place removal constraints, as they are log- */
 /* ical and aren't stored as state.                                           */
 /*                                                                            */
 /* Note: both ROOT and BASE cannot be removed, if they're given as arguments  */
 /*       a UFS_BAD_CALL is emitted.                                           */
-/*                                                                            */
+/*       This means that the mapping (A, ROOT) is defined as an implicit map- */
+/*       ping.                                                                */
 /*                                                                            */
 /* On offloading to BASE:                                                     */
 /* on many occasions, this document talks about offloading to BASE, that ope- */
@@ -194,21 +205,22 @@
 #include <sys/types.h>
 
 #define UFS_STATUS_LIST                                                        \
-    UFS_X( UFS_NO_ERROR,                   0 )                                 \
-    UFS_X( UFS_ALREADY_EXISTS,             1 )                                 \
-    UFS_X( UFS_BAD_CALL,                   2 )                                 \
-    UFS_X( UFS_CANNOT_RESOLVE_STORAGE,     3 )                                 \
-    UFS_X( UFS_PARENT_DOES_NOT_EXIST,      4 )                                 \
-    UFS_X( UFS_DIRECTORY_IS_NOT_EMPTY,     5 )                                 \
-    UFS_X( UFS_DOES_NOT_EXIST,             6 )                                 \
-    UFS_X( UFS_EXISTS_IN_EXPLICIT_MAPPING, 7 )                                 \
-    UFS_X( UFS_ILLEGAL_NAME,               8 )                                 \
-    UFS_X( UFS_INVALID_AREA_IN_VIEW,       9 )                                 \
-    UFS_X( UFS_OUT_OF_MEMORY,              10 )                                \
-    UFS_X( UFS_UNKNOWN_ERROR,              11 )                                \
-    UFS_X( UFS_VIEW_CONTAINS_DUPLICATES,   12 )                                \
-    UFS_X( UFS_BASE_IS_NOT_LAST_AREA,      13 )                                \
-    UFS_X( UFS_CHECK_BASE,                 14 )                                \
+    UFS_X( UFS_NO_ERROR,                          0 )                          \
+    UFS_X( UFS_ALREADY_EXISTS,                    1 )                          \
+    UFS_X( UFS_BAD_CALL,                          2 )                          \
+    UFS_X( UFS_PARENT_DOES_NOT_EXIST,             4 )                          \
+    UFS_X( UFS_DIRECTORY_IS_NOT_EMPTY,            5 )                          \
+    UFS_X( UFS_DOES_NOT_EXIST,                    6 )                          \
+    UFS_X( UFS_EXISTS_IN_EXPLICIT_MAPPING,        7 )                          \
+    UFS_X( UFS_PARENT_EXISTS_IN_EXPLICIT_MAPPING, 8 )                          \
+    UFS_X( UFS_ILLEGAL_NAME,                      9 )                          \
+    UFS_X( UFS_INVALID_AREA_IN_VIEW,              10 )                         \
+    UFS_X( UFS_OUT_OF_MEMORY,                     11 )                         \
+    UFS_X( UFS_UNKNOWN_ERROR,                     12 )                         \
+    UFS_X( UFS_VIEW_CONTAINS_DUPLICATES,          13 )                         \
+    UFS_X( UFS_BASE_IS_NOT_LAST_AREA,             14 )                         \
+    UFS_X( UFS_PARENT_IS_NOT_MAPPED,              15 )                         \
+    UFS_X( UFS_CHECK_BASE,                        16 )                                
 
 enum {
 #define UFS_X( name, val ) name = val,
@@ -338,6 +350,8 @@ ufsIdentifierType ufsAddArea( ufsType ufs,
 *  Possible errors:                                                            *
 *   -UFS_BAD_CALL: The function received bad arguments.                        *
 *   -UFS_DOES_NOT_EXIST: The area or the storage do not exist in ufs.          *
+*   -UFS_PARENT_IS_NOT_MAPPED: The parent of storage is not mapped to this ar- *
+*                              ea.                                             *
 *   -UFS_ALREADY_EXISTS: The mapping already exists in ufs.                    *
 *   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
 *                                                                              *
@@ -498,6 +512,8 @@ ufsStatusType ufsRemoveArea( ufsType ufs,
 *  Possible errors:                                                            *
 *   -UFS_BAD_CALL: The function received bad arguments.                        *
 *   -UFS_DOES_NOT_EXIST: The (area, storage) mapping does not exist in ufs.    *
+*   -UFS_PARENT_EXISTS_IN_EXPLICIT_MAPPING: The parent of storage exists in an *
+*                                           explicit mapping.                  *
 *   -UFS_UNKNOWN_ERROR: Any error not specified above.                         *
 *                                                                              *
 * Parameters                                                                   *
