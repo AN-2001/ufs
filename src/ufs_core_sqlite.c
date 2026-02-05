@@ -71,7 +71,7 @@ static const char *UFS_SQL_TEXT[ NUM_UFS_STATEMENTS + 2 ] = {
     "SELECT id from ufsStorage where name = ? and parent = ? and type = ?;",
 
     /* Query storage by id:                                                   */
-    "SELECT id from ufsStorage where id = ?;",
+    "SELECT id, parent from ufsStorage where id = ?;",
 
     /* Query storage by id, type:                                             */
     "SELECT id from ufsStorage where id = ? and type = ?;",
@@ -457,6 +457,7 @@ ufsStatusType ufsAddMapping( ufsType ufs,
 {
     int res;
     ufsSqliteStruct *ufsSqlite;
+    ufsIdentifierType parent;
     if ( !ufs || area <= 0 || storage < 0 ) {
         ufsErrno = UFS_BAD_CALL;
         return ufsErrno;
@@ -493,6 +494,31 @@ ufsStatusType ufsAddMapping( ufsType ufs,
         ufsErrno = UFS_DOES_NOT_EXIST;
         return ufsErrno;
     }
+
+    parent = sqlite3_column_int(
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_ID ],
+            1);
+
+    /* verify that the parent is mapped if it's not root.                     */
+    if ( parent != UFS_STORAGE_ROOT_IDENTIFIER ) {
+        sqlite3_reset(
+                ufsSqlite -> statements[ UFS_STATEMENT_QUERY_MAPPINGS_BY_IDS ] );
+        sqlite3_clear_bindings(
+                ufsSqlite -> statements[ UFS_STATEMENT_QUERY_MAPPINGS_BY_IDS ] );
+        sqlite3_bind_int( 
+                ufsSqlite -> statements[ UFS_STATEMENT_QUERY_MAPPINGS_BY_IDS ],
+                1, area );
+        sqlite3_bind_int( 
+                ufsSqlite -> statements[ UFS_STATEMENT_QUERY_MAPPINGS_BY_IDS ],
+                2, parent );
+        res = sqlite3_step( 
+                ufsSqlite -> statements[ UFS_STATEMENT_QUERY_MAPPINGS_BY_IDS ] );
+        if ( res != SQLITE_ROW ) {
+            ufsErrno = UFS_PARENT_IS_NOT_MAPPED;
+            return ufsErrno;
+        }
+    }
+
 
     /* verify that the mapping doesn't exist.                                 */
     sqlite3_reset(
