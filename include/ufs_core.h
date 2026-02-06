@@ -243,7 +243,7 @@ typedef int64_t ufsIdentifierType;
 
 typedef void *ufsType;
 typedef ufsStatusType (*ufsDirIter)( ufsIdentifierType storageId,
-                                     char *storageName,
+                                     const char *storageName,
                                      uint64_t currEntry,
                                      uint64_t numEntries,
                                      void *userData);
