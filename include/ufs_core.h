@@ -99,9 +99,10 @@
 /*                                                                            */
 /* The directory iterator: The directory iterator is a function that the      */
 /* user supplies and implementer must call. For each iteration it contains:   */
-/*    * The current identifier of the storage.                                */
-/*    * The entry position in the iteration.                                  */
-/*    * The total number of entries that its iterating over.                  */
+/*    * The identifier of the storage in the current iteration.               */
+/*    * The name of the storage in the current iteration.                     */
+/*    * The entry position in the current iteration.                          */
+/*    * The total number of entries.                                          */
 /*    * User provided data.                                                   */
 /* An iterator can return an error status, it'd halt iteration and set ufsEr- */
 /* rno.                                                                       */
@@ -241,7 +242,8 @@ typedef uint64_t ufsStatusType;
 typedef int64_t ufsIdentifierType;
 
 typedef void *ufsType;
-typedef ufsStatusType (*ufsDirIter)( ufsIdentifierType storage,
+typedef ufsStatusType (*ufsDirIter)( ufsIdentifierType storageId,
+                                     char *storageName,
                                      uint64_t currEntry,
                                      uint64_t numEntries,
                                      void *userData);
