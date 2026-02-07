@@ -1008,19 +1008,13 @@ static void test_ufs_probe_mapping( void **state )
 static void test_ufs_probe_mapping_area_does_not_exist( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
-    ufsIdentifierType dirId, fileId;
+    ufsIdentifierType fileId;
     ufsStatusType status;
 
     ufsStruct = *state;
 
-    dirId = ufsAddStorage( ufsStruct -> ufs,
-            UFS_STORAGE_ROOT_IDENTIFIER,
-            UFS_STORAGE_TYPE_DIRECTORY,
-            TEST_DIRECTORY_NAME );
-    ASSERT_UFS_NO_ERROR( dirId );
-
     fileId = ufsAddStorage( ufsStruct -> ufs,
-            dirId,
+            UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_FILE,
             TEST_FILE_NAME );
     ASSERT_UFS_NO_ERROR( fileId );
@@ -1070,7 +1064,7 @@ static void test_ufs_remove_storage_bad_args( void **state )
     status = ufsRemoveStorage( NULL, 1 );
     ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, 0 );
+    status = ufsRemoveStorage( ufsStruct -> ufs, UFS_STORAGE_ROOT_IDENTIFIER );
     ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
 
     status = ufsRemoveStorage( ufsStruct -> ufs, -1 );
@@ -1088,6 +1082,31 @@ static void test_ufs_remove_directory( void **state )
 
     id = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
+            UFS_STORAGE_TYPE_DIRECTORY,
+            TEST_DIRECTORY_NAME );
+    ASSERT_UFS_NO_ERROR( id );
+
+    status = ufsRemoveStorage( ufsStruct -> ufs, id );
+    ASSERT_UFS_STATUS_NO_ERROR( status );
+}
+
+static void test_ufs_remove_directory_non_root( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType id, dirId;
+    ufsStatusType status;
+
+    ufsStruct = *state;
+
+    dirId = ufsAddStorage( ufsStruct -> ufs,
+            UFS_STORAGE_ROOT_IDENTIFIER,
+            UFS_STORAGE_TYPE_DIRECTORY,
+            TEST_DIRECTORY_NAME_0 );
+
+    ASSERT_UFS_NO_ERROR( dirId );
+
+    id = ufsAddStorage( ufsStruct -> ufs,
+            dirId,
             UFS_STORAGE_TYPE_DIRECTORY,
             TEST_DIRECTORY_NAME );
     ASSERT_UFS_NO_ERROR( id );
@@ -1230,6 +1249,24 @@ static void test_ufs_remove_directory_remove_then_get( void **state )
 }
 
 static void test_ufs_remove_file( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType fileId;
+    ufsStatusType status;
+
+    ufsStruct = *state;
+
+    fileId = ufsAddStorage( ufsStruct -> ufs,
+            UFS_STORAGE_ROOT_IDENTIFIER,
+            UFS_STORAGE_TYPE_FILE,
+            TEST_FILE_NAME );
+    ASSERT_UFS_NO_ERROR( fileId );
+
+    status = ufsRemoveStorage( ufsStruct -> ufs, fileId );
+    ASSERT_UFS_STATUS_NO_ERROR( status );
+}
+
+static void test_ufs_remove_file_non_root( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
     ufsIdentifierType dirId, fileId;
@@ -2839,6 +2876,7 @@ static const struct CMUnitTest ufs_test_suite[] = {
     /* ufsRemoveStorage tests.                                                */
     UFS_TEST( test_ufs_remove_storage_bad_args ),
     UFS_TEST( test_ufs_remove_directory ),
+    UFS_TEST( test_ufs_remove_directory_non_root ),
     UFS_TEST( test_ufs_remove_directory_does_not_exist ),
     UFS_TEST( test_ufs_remove_directory_contains_file ),
     UFS_TEST( test_ufs_remove_directory_exists_in_mapping ),
@@ -2846,6 +2884,7 @@ static const struct CMUnitTest ufs_test_suite[] = {
     UFS_TEST( test_ufs_remove_directory_remove_then_add ),
     UFS_TEST( test_ufs_remove_directory_remove_then_get ),
     UFS_TEST( test_ufs_remove_file ),
+    UFS_TEST( test_ufs_remove_file_non_root ),
     UFS_TEST( test_ufs_remove_file_does_not_exist ),
     UFS_TEST( test_ufs_remove_file_exists_in_mapping ),
     UFS_TEST( test_ufs_remove_file_double_remove ),
