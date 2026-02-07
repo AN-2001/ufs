@@ -1066,7 +1066,6 @@ ufsStatusType ufsIterateDirInView( ufsType ufs,
                               &statement,
                               NULL );
     if (res != SQLITE_OK) {
-        fprintf( stdout, "sqlite error: %s\n", sqlite3_errmsg( ufsSqlite -> db ) );
         ufsErrno = UFS_UNKNOWN_ERROR;
         return -1;
     }
@@ -1074,6 +1073,7 @@ ufsStatusType ufsIterateDirInView( ufsType ufs,
     sqlite3_bind_int( statement, 1, directory );
     res = sqlite3_step( statement );
     if ( res != SQLITE_ROW ) {
+        sqlite3_finalize( statement );
         ufsErrno = UFS_NO_ERROR;
         return ufsErrno;
     }
@@ -1086,6 +1086,7 @@ ufsStatusType ufsIterateDirInView( ufsType ufs,
         name = (const char *)sqlite3_column_text( statement, 1 );
 
         if ( ( status = iterator( storage, name, i, total, userData ) ) != UFS_NO_ERROR ) {
+            sqlite3_finalize( statement );
             ufsErrno = status;
             return ufsErrno;
         }
@@ -1094,6 +1095,7 @@ ufsStatusType ufsIterateDirInView( ufsType ufs,
         i++;
     } while ( i < total && res == SQLITE_ROW );
 
+    sqlite3_finalize( statement );
     ufsErrno = UFS_NO_ERROR;
 	return ufsErrno;
 }
