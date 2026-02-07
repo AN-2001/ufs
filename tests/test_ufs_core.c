@@ -1902,6 +1902,22 @@ static void test_ufs_iter_dir_in_view_area_does_not_exist( void **state )
     ASSERT_UFS_ERROR( status, UFS_INVALID_AREA_IN_VIEW );
 }
 
+static void test_ufs_iter_dir_in_view_directory_does_not_exist( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsStatusType status;
+    ufsViewType view = { UFS_VIEW_TERMINATOR };
+
+    ufsStruct = *state;
+
+    status = ufsIterateDirInView( ufsStruct -> ufs,
+            view,
+            1,
+            iterDummy,
+            NULL );
+    ASSERT_UFS_ERROR( status, UFS_DOES_NOT_EXIST );
+}
+
 static void test_ufs_iter_dir_in_view_callback_is_called( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
@@ -2583,6 +2599,7 @@ static const struct CMUnitTest ufs_test_suite[] = {
     /* ufsIterDirInView                                                       */
     UFS_TEST( test_ufs_iter_dir_in_view_bad_args ),
     UFS_TEST( test_ufs_iter_dir_in_view_area_does_not_exist ),
+    UFS_TEST( test_ufs_iter_dir_in_view_directory_does_not_exist ),
     UFS_TEST( test_ufs_iter_dir_in_view_callback_is_called ),
     UFS_TEST( test_ufs_iter_dir_in_view_name_is_not_null ),
     UFS_TEST( test_ufs_iter_dir_in_view_storage_is_valid ),
