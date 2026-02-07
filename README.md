@@ -26,8 +26,8 @@ ufs collapse # Collapse all the modifications onto teh BASE filesystem.
 
 - [ x ] Package dependencies and create the build environment.
 - [ x ] Write the ufs core spec.
-- [ x ] Write the ufs core test suite.
-- [ x ] Write the in-memory sqlite implementation.
+- [ x ] Write the ufs core test suite. ([milestone tag](https://github.com/AN-2001/ufs/tree/spec_and_tests))
+- [ x ] Write the in-memory sqlite implementation. ([milestone tag](https://github.com/AN-2001/ufs/tree/finished_ufs_core_sqlite))
 - [   ] Review ufs spec and test suite.
 - [   ] Write the first FUSE proof of concept( non CLI ).
 - [   ] Write the ufs protocol spec.
