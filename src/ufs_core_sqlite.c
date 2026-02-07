@@ -118,7 +118,7 @@ static const char *UFS_SQL_TEXT[ NUM_UFS_STATEMENTS + 2 ] = {
     /* Given a (area, directory) mapping this query will find all the         */
     /* (area, storage) mappings where area is the same, and storage is a chi- */
     /* ld of directory.                                                       */
-    "SELECT M0.areaid, ufsStorage.id "
+    "SELECT DISTINCT M0.areaid, ufsStorage.id "
     "FROM ufsStorage "
     "JOIN ufsMappings AS M0 "
     "ON ufsStorage.parent = M0.storageid "
@@ -132,13 +132,23 @@ static const char *UFS_SQL_TEXT[ NUM_UFS_STATEMENTS + 2 ] = {
 };
 
 static const char * const VIEW_RESOLVER_QUERY = 
-    "WITH viewData(areaId, viewOrder) AS ( VALUES %s ) "
-    "SELECT ufsMappings.areaId "
+    "WITH viewData(areaid, viewOrder) AS ( VALUES %s ) "
+    "SELECT ufsMappings.areaid "
     "FROM ufsMappings "
-    "JOIN viewData ON viewData.areaId = ufsMappings.areaId "
-    "WHERE ufsMappings.storageId = ? "
+    "JOIN viewData ON viewData.areaid = ufsMappings.areaid "
+    "WHERE ufsMappings.storageid = ? "
     "ORDER BY viewData.viewOrder "
     "LIMIT 1;";
+
+static const char * const DIR_ITERATOR_QUERY = 
+    "WITH viewData(areaid, viewOrder) AS ( VALUES %s ) "
+    "SELECT DISTINCT ufsStorage.id, ufsStorage.name, COUNT(*) OVER() AS total_count "
+    "FROM ufsStorage "
+    "JOIN ufsMappings "
+    "ON ufsMappings.storageid = ufsStorage.id "
+    "JOIN viewData "
+    "ON ufsMappings.areaid = viewData.areaid "
+    "WHERE ufsStorage.parent = ?;";
 
 static inline ufsSqliteStruct *prepareSqliteDb( sqlite3 *db );
 
@@ -999,6 +1009,91 @@ ufsStatusType ufsIterateDirInView( ufsType ufs,
                                    ufsDirIter iterator,
                                    void *userData )
 {
+    char areaList[ UFS_SQLITE_BUFF_SIZE ], query[ UFS_SQLITE_BUFF_SIZE_BIG ];
+    int res;
+    ufsSqliteStruct *ufsSqlite;
+    sqlite3_stmt *statement;
+    const char *name;
+    ufsIdentifierType storage;
+    ufsStatusType status;
+    uint64_t viewSize, total, i;
+    if ( !ufs || !validateViewStructure( view, &viewSize ) ||
+            directory < 0 || !iterator ) {
+        ufsErrno = UFS_BAD_CALL;
+        return ufsErrno;
+    }
+
+    ufsSqlite = ufs;
+
+    if ( !validateViewSemantics( ufsSqlite, view, viewSize ) ){
+        ufsErrno = UFS_INVALID_AREA_IN_VIEW;
+        return ufsErrno;
+    }
+
+    /* First check if the directory exists if it's not root.                  */
+    if ( directory != UFS_STORAGE_ROOT_IDENTIFIER ) {
+        sqlite3_reset(
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_ID_TYPE ] );
+        sqlite3_clear_bindings(
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_ID_TYPE ] );
+        sqlite3_bind_int(
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_ID_TYPE ],
+            1, directory );
+        sqlite3_bind_int(
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_ID_TYPE ],
+            2, UFS_STORAGE_TYPE_DIRECTORY );
+        res = sqlite3_step(
+            ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_ID_TYPE ] );
+        if ( res != SQLITE_ROW ) {
+            ufsErrno = UFS_DOES_NOT_EXIST;
+            return ufsErrno;
+        }
+    }
+
+    /* Next, if the view is only BASE don't query, just return.               */
+    if ( view[ 0 ] == UFS_AREA_BASE_IDENTIFIER ) {
+        ufsErrno = UFS_NO_ERROR;
+        return ufsErrno;
+    }
+
+    /* Next do the actual union query.                                        */
+    buildViewString( view, viewSize, areaList );
+    sprintf( query, DIR_ITERATOR_QUERY, areaList );
+
+    res = sqlite3_prepare_v2( ufsSqlite -> db,
+                              query,
+                              -1,
+                              &statement,
+                              NULL );
+    if (res != SQLITE_OK) {
+        fprintf( stdout, "sqlite error: %s\n", sqlite3_errmsg( ufsSqlite -> db ) );
+        ufsErrno = UFS_UNKNOWN_ERROR;
+        return -1;
+    }
+
+    sqlite3_bind_int( statement, 1, directory );
+    res = sqlite3_step( statement );
+    if ( res != SQLITE_ROW ) {
+        ufsErrno = UFS_NO_ERROR;
+        return ufsErrno;
+    }
+
+    i = 0;
+    total = sqlite3_column_int( statement, 2 );
+
+    do {
+        storage = sqlite3_column_int( statement, 0 );
+        name = (const char *)sqlite3_column_text( statement, 1 );
+
+        if ( ( status = iterator( storage, name, i, total, userData ) ) != UFS_NO_ERROR ) {
+            ufsErrno = status;
+            return ufsErrno;
+        }
+        
+        res = sqlite3_step( statement );
+        i++;
+    } while ( i < total && res == SQLITE_ROW );
+
     ufsErrno = UFS_NO_ERROR;
-	return 0;
+	return ufsErrno;
 }
