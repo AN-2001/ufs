@@ -118,12 +118,13 @@ static const char *UFS_SQL_TEXT[ NUM_UFS_STATEMENTS + 2 ] = {
     /* Given a (area, directory) mapping this query will find all the         */
     /* (area, storage) mappings where area is the same, and storage is a chi- */
     /* ld of directory.                                                       */
-    "SELECT DISTINCT ufsMappings.areaid, ufsStorage.id "
+    "SELECT ufsMappings.areaid, ufsStorage.id "
     "FROM ufsStorage "
     "JOIN ufsMappings "
     "ON ufsStorage.id = ufsMappings.storageid "
     "WHERE ufsMappings.areaid = ? "
-    "AND ufsStorage.parent = ?;",
+    "AND ufsStorage.parent = ? " 
+    "LIMIT 1;",
 
     NULL
 };
