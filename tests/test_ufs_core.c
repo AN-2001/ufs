@@ -744,6 +744,35 @@ static void test_ufs_get_directory( void **state )
     assert_int_equal( id0, id1 );
 }
 
+static void test_ufs_get_directory_non_root( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType id0, id1, dirId;
+
+    ufsStruct = *state;
+
+    dirId = ufsAddStorage( ufsStruct -> ufs,
+                        UFS_STORAGE_ROOT_IDENTIFIER,
+                        UFS_STORAGE_TYPE_DIRECTORY,
+                        TEST_DIRECTORY_NAME_0 );
+    ASSERT_UFS_NO_ERROR( dirId );
+
+
+    id0 = ufsAddStorage( ufsStruct -> ufs,
+            dirId,
+            UFS_STORAGE_TYPE_DIRECTORY,
+            TEST_DIRECTORY_NAME_1 );
+    ASSERT_UFS_NO_ERROR( id0 );
+
+    id1 = ufsGetStorage( ufsStruct -> ufs,
+            dirId,
+            UFS_STORAGE_TYPE_DIRECTORY,
+            TEST_DIRECTORY_NAME_1 );
+    ASSERT_UFS_NO_ERROR( id1 );
+
+    assert_int_equal( id0, id1 );
+}
+
 static void test_ufs_get_directory_parent_does_not_exist( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
@@ -775,7 +804,29 @@ static void test_ufs_get_directory_does_not_exist( void **state )
 static void test_ufs_get_file( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
-    ufsIdentifierType id0, dirId, id1;
+    ufsIdentifierType id0, id1;
+
+    ufsStruct = *state;
+
+    id0 = ufsAddStorage( ufsStruct -> ufs,
+            UFS_STORAGE_ROOT_IDENTIFIER,
+            UFS_STORAGE_TYPE_FILE,
+            TEST_FILE_NAME );
+    ASSERT_UFS_NO_ERROR( id0 );
+
+    id1 = ufsGetStorage( ufsStruct -> ufs,
+            UFS_STORAGE_ROOT_IDENTIFIER,
+            UFS_STORAGE_TYPE_FILE,
+            TEST_FILE_NAME );
+    ASSERT_UFS_NO_ERROR( id1 );
+
+    assert_int_equal( id0, id1 );
+}
+
+static void test_ufs_get_file_non_root( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType id0, id1, dirId;
 
     ufsStruct = *state;
 
@@ -2761,9 +2812,11 @@ static const struct CMUnitTest ufs_test_suite[] = {
     /* ufsGetStorage tests.                                                   */
     UFS_TEST( test_ufs_get_storage_bad_args ),
     UFS_TEST( test_ufs_get_directory ),
+    UFS_TEST( test_ufs_get_directory_non_root ),
     UFS_TEST( test_ufs_get_directory_parent_does_not_exist ),
     UFS_TEST( test_ufs_get_directory_does_not_exist ),
     UFS_TEST( test_ufs_get_file ),
+    UFS_TEST( test_ufs_get_file_non_root ),
     UFS_TEST( test_ufs_get_file_does_not_exist ),
     UFS_TEST( test_ufs_get_file_parent_does_not_exist ),
     UFS_TEST( test_ufs_get_file_exists_in_different_directory ),
