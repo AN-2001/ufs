@@ -2419,6 +2419,55 @@ static void test_ufs_iter_dir_in_view_only_base( void **state )
     assert_int_equal( isCalled, 0 );
 }
 
+static void test_ufs_iter_dir_in_view_empty_view( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType areaId, fileId0, fileId1;
+    ufsStatusType status;
+    int isCalled;
+
+    ufsStruct = *state;
+
+    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    ASSERT_UFS_NO_ERROR( areaId );
+
+    fileId0 = ufsAddStorage( ufsStruct -> ufs,
+            UFS_STORAGE_ROOT_IDENTIFIER,
+            UFS_STORAGE_TYPE_FILE,
+            TEST_FILE_NAME_0 );
+    ASSERT_UFS_NO_ERROR( fileId0 );
+
+    fileId1 = ufsAddStorage( ufsStruct -> ufs,
+            UFS_STORAGE_ROOT_IDENTIFIER,
+            UFS_STORAGE_TYPE_FILE,
+            TEST_FILE_NAME_1 );
+    ASSERT_UFS_NO_ERROR( fileId1 );
+
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId0 );
+    ASSERT_UFS_STATUS_NO_ERROR( status );
+
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId1 );
+    ASSERT_UFS_STATUS_NO_ERROR( status );
+
+    struct iterValidationStruct validator = {
+        .idents = { fileId0, fileId1, -1 },
+        .names = { TEST_FILE_NAME_0, TEST_FILE_NAME_1 }
+    };
+    ufsViewType view = { UFS_VIEW_TERMINATOR };
+    memset( validator.seen, 0, sizeof( validator.seen ) );
+    isCalled = 0;
+    status = ufsIterateDirInView( 
+            ufsStruct -> ufs, 
+            view, 
+            UFS_STORAGE_ROOT_IDENTIFIER, 
+            iterDummy,
+            &isCalled );
+
+    ASSERT_UFS_STATUS_NO_ERROR( status );
+    assert_int_equal( isCalled, 0 );
+
+}
+
 static void test_ufs_iter_dir_in_view_remove_consinstency( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
@@ -2612,6 +2661,7 @@ static const struct CMUnitTest ufs_test_suite[] = {
     UFS_TEST( test_ufs_iter_dir_in_view_empty_dir ),
     UFS_TEST( test_ufs_iter_dir_in_view_ends_with_base ),
     UFS_TEST( test_ufs_iter_dir_in_view_only_base ),
+    UFS_TEST( test_ufs_iter_dir_in_view_empty_view ),
     UFS_TEST( test_ufs_iter_dir_in_view_remove_consinstency )
     /* ====================================================================== */
 };
