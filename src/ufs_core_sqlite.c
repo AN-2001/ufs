@@ -1051,7 +1051,7 @@ ufsStatusType ufsIterateDirInView( ufsType ufs,
     }
 
     /* Next, if the view is only BASE don't query, just return.               */
-    if ( view[ 0 ] == UFS_AREA_BASE_IDENTIFIER ) {
+    if ( !viewSize || view[ 0 ] == UFS_AREA_BASE_IDENTIFIER ) {
         ufsErrno = UFS_NO_ERROR;
         return ufsErrno;
     }
@@ -1065,7 +1065,7 @@ ufsStatusType ufsIterateDirInView( ufsType ufs,
                               -1,
                               &statement,
                               NULL );
-    if (res != SQLITE_OK) {
+    if (res != SQLITE_OK ) {
         ufsErrno = UFS_UNKNOWN_ERROR;
         return -1;
     }
