@@ -53,6 +53,9 @@ static void test_ufs_init( void **state )
  
     ufsDestroy( ufs );
     assert_int_equal( ufsErrno, UFS_NO_ERROR );
+
+    ufsDestroy( NULL );
+    assert_int_equal( ufsErrno, UFS_NO_ERROR );
 }
 
 /* ufsAddStorage tests                                                        */
@@ -1843,6 +1846,41 @@ static void test_ufs_resolve_storage_in_view( void **state )
     assert_int_equal( ret, areaId );
 }
 
+static void test_ufs_resolve_storage_in_view_view_max_size( void **state )
+{
+    char buff[512];
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType fileId, areaIds[ UFS_VIEW_MAX_SIZE ], ret;
+    int i;
+    ufsStatusType status;
+
+    ufsStruct = *state;
+
+    fileId = ufsAddStorage( ufsStruct -> ufs,
+                UFS_STORAGE_ROOT_IDENTIFIER,
+                UFS_STORAGE_TYPE_FILE,
+                TEST_FILE_NAME );
+    ASSERT_UFS_NO_ERROR( fileId );
+
+    for (i = 0; i < UFS_VIEW_MAX_SIZE + 1; i++) {
+        sprintf( buff, "area%d", i );
+        areaIds[ i ] = ufsAddArea( ufsStruct -> ufs, buff );
+        ASSERT_UFS_NO_ERROR( areaIds[ i ] );
+    }
+
+    status = ufsAddMapping( ufsStruct -> ufs, areaIds[ UFS_VIEW_MAX_SIZE - 1 ], fileId );
+    ASSERT_UFS_STATUS_NO_ERROR( status );
+
+    ufsViewType view;
+    for (i = 0; i < UFS_VIEW_MAX_SIZE; i++)
+        view[ i ] = areaIds[ i ];
+
+    ret = ufsResolveStorageInView( ufsStruct -> ufs, view, fileId );
+    ASSERT_UFS_NO_ERROR( ret );
+
+    assert_int_equal( ret, areaIds[ UFS_VIEW_MAX_SIZE - 1 ] );
+}
+
 static void test_ufs_resolve_storage_in_view_base_fallback( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
@@ -2401,6 +2439,66 @@ static void test_ufs_iter_dir_in_view( void **state )
         assert_int_equal( validator.seen[ i ], 1 );
 }
 
+static void test_ufs_iter_dir_in_view_view_max_size( void **state )
+{
+    char buff[512];
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType fileId0, fileId1, areaIds[ UFS_VIEW_MAX_SIZE ];
+    ufsViewType view;
+    
+    ufsStatusType status;
+    int i;
+
+    ufsStruct = *state;
+
+    for (i = 0; i < UFS_VIEW_MAX_SIZE; i++) {
+        sprintf( buff, "view%d", i );
+        areaIds[ i ] = ufsAddArea( ufsStruct -> ufs, buff );
+        ASSERT_UFS_NO_ERROR( areaIds[ i ] );
+    }
+
+    fileId0 = ufsAddStorage( ufsStruct -> ufs,
+            UFS_STORAGE_ROOT_IDENTIFIER,
+            UFS_STORAGE_TYPE_FILE,
+            TEST_FILE_NAME_0 );
+    ASSERT_UFS_NO_ERROR( fileId0 );
+
+    fileId1 = ufsAddStorage( ufsStruct -> ufs,
+            UFS_STORAGE_ROOT_IDENTIFIER,
+            UFS_STORAGE_TYPE_FILE,
+            TEST_FILE_NAME_1 );
+    ASSERT_UFS_NO_ERROR( fileId1 );
+
+    status = ufsAddMapping( ufsStruct -> ufs,
+            areaIds[ UFS_VIEW_MAX_SIZE - 1 ],
+            fileId0 );
+    ASSERT_UFS_STATUS_NO_ERROR( status );
+
+    status = ufsAddMapping( ufsStruct -> ufs,
+            areaIds[ UFS_VIEW_MAX_SIZE - 1 ],
+            fileId1 );
+    ASSERT_UFS_STATUS_NO_ERROR( status );
+
+    struct iterValidationStruct validator = {
+        .idents = { fileId0, fileId1, -1 },
+        .names = { TEST_FILE_NAME_0, TEST_FILE_NAME_1 }
+    };
+
+    for ( i = 0; i < UFS_VIEW_MAX_SIZE; i++ )
+        view[ i ] = areaIds[ i ];
+
+    memset( validator.seen, 0, sizeof( validator.seen ) );
+    status = ufsIterateDirInView( 
+            ufsStruct -> ufs, 
+            view, 
+            UFS_STORAGE_ROOT_IDENTIFIER, 
+            iterValidator,
+            &validator );
+    ASSERT_UFS_STATUS_NO_ERROR( status );
+    for (i = 0; validator.idents[ i ] != -1; i++)
+        assert_int_equal( validator.seen[ i ], 1 );
+}
+
 static void test_ufs_iter_dir_in_view_multiple_areas( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
@@ -2917,6 +3015,7 @@ static const struct CMUnitTest ufs_test_suite[] = {
     UFS_TEST( test_ufs_resolve_storage_in_view_bad_args ),
     UFS_TEST( test_ufs_resolve_storage_in_view_area_does_not_exist ),
     UFS_TEST( test_ufs_resolve_storage_in_view ),
+    UFS_TEST( test_ufs_resolve_storage_in_view_view_max_size ),
     UFS_TEST( test_ufs_resolve_storage_in_view_base_fallback ),
     UFS_TEST( test_ufs_resolve_storage_in_view_two_areas ),
     UFS_TEST( test_ufs_resolve_storage_in_view_file_does_not_exist ),
@@ -2936,6 +3035,7 @@ static const struct CMUnitTest ufs_test_suite[] = {
     UFS_TEST( test_ufs_iter_dir_in_view_entry_counters_are_valid ),
     UFS_TEST( test_ufs_iter_dir_in_view_return_is_propogated ),
     UFS_TEST( test_ufs_iter_dir_in_view ),
+    UFS_TEST( test_ufs_iter_dir_in_view_view_max_size ),
     UFS_TEST( test_ufs_iter_dir_in_view_multiple_areas ),
     UFS_TEST( test_ufs_iter_dir_in_view_dir_is_not_root ),
     UFS_TEST( test_ufs_iter_dir_in_view_multiple_areas_with_duplicates ),
