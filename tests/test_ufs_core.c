@@ -120,6 +120,26 @@ static void test_ufs_add_directory( void **state )
     ASSERT_UFS_NO_ERROR( id0 );
 }
 
+static void test_ufs_add_directory_non_root( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType id0, dirId;
+
+    ufsStruct = *state;
+
+    dirId = ufsAddStorage( ufsStruct -> ufs,
+            UFS_STORAGE_ROOT_IDENTIFIER,
+            UFS_STORAGE_TYPE_DIRECTORY,
+            TEST_DIRECTORY_NAME_0);
+    ASSERT_UFS_NO_ERROR( dirId );
+
+    id0 = ufsAddStorage( ufsStruct -> ufs,
+            dirId,
+            UFS_STORAGE_TYPE_DIRECTORY,
+            TEST_DIRECTORY_NAME_1 );
+    ASSERT_UFS_NO_ERROR( id0 );
+}
+
 static void test_ufs_add_directory_duplicate( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
@@ -140,6 +160,31 @@ static void test_ufs_add_directory_duplicate( void **state )
     ASSERT_UFS_ERROR( id, UFS_ALREADY_EXISTS );
 }
 
+static void test_ufs_add_directory_duplicate_non_root( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType id, dirId;
+
+    ufsStruct = *state;
+
+    dirId = ufsAddStorage( ufsStruct -> ufs,
+                        UFS_STORAGE_ROOT_IDENTIFIER,
+                        UFS_STORAGE_TYPE_DIRECTORY,
+                        TEST_DIRECTORY_NAME_0 );
+
+    id = ufsAddStorage( ufsStruct -> ufs,
+            dirId,
+            UFS_STORAGE_TYPE_DIRECTORY,
+            TEST_DIRECTORY_NAME_1 );
+    ASSERT_UFS_NO_ERROR( id );
+
+    id = ufsAddStorage( ufsStruct -> ufs,
+            dirId,
+            UFS_STORAGE_TYPE_DIRECTORY,
+            TEST_DIRECTORY_NAME_1 );
+    ASSERT_UFS_ERROR( id, UFS_ALREADY_EXISTS );
+}
+
 static void test_ufs_add_directory_parent_does_not_exist( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
@@ -154,7 +199,103 @@ static void test_ufs_add_directory_parent_does_not_exist( void **state )
     ASSERT_UFS_ERROR( id0, UFS_PARENT_DOES_NOT_EXIST );
 }
 
+static void test_ufs_add_directory_same_name_different_directory( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType id0, id1, dirId0, dirId1;
+
+    ufsStruct = *state;
+
+    dirId0 = ufsAddStorage( ufsStruct -> ufs,
+            UFS_STORAGE_ROOT_IDENTIFIER,
+            UFS_STORAGE_TYPE_DIRECTORY,
+            TEST_DIRECTORY_NAME_0 );
+    ASSERT_UFS_NO_ERROR( dirId0 );
+
+    dirId1 = ufsAddStorage( ufsStruct -> ufs,
+            UFS_STORAGE_ROOT_IDENTIFIER,
+            UFS_STORAGE_TYPE_DIRECTORY,
+            TEST_DIRECTORY_NAME_1 );
+    ASSERT_UFS_NO_ERROR( dirId1 );
+
+    id0 = ufsAddStorage( ufsStruct -> ufs,
+            dirId0,
+            UFS_STORAGE_TYPE_DIRECTORY,
+            TEST_FILE_NAME );
+    ASSERT_UFS_NO_ERROR( id0 );
+
+    id1 = ufsAddStorage( ufsStruct -> ufs,
+            dirId1,
+            UFS_STORAGE_TYPE_DIRECTORY,
+            TEST_FILE_NAME );
+    ASSERT_UFS_NO_ERROR( id1 );
+
+    assert_int_not_equal( id0, id1 );
+}
+
+static void test_ufs_add_directory_same_name_different_directory_one_root( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType id0, id1, dirId;
+
+    ufsStruct = *state;
+
+    dirId = ufsAddStorage( ufsStruct -> ufs,
+            UFS_STORAGE_ROOT_IDENTIFIER,
+            UFS_STORAGE_TYPE_DIRECTORY,
+            TEST_DIRECTORY_NAME_0 );
+    ASSERT_UFS_NO_ERROR( dirId );
+
+    id0 = ufsAddStorage( ufsStruct -> ufs,
+            dirId,
+            UFS_STORAGE_TYPE_FILE,
+            TEST_FILE_NAME );
+    ASSERT_UFS_NO_ERROR( id0 );
+
+    id1 = ufsAddStorage( ufsStruct -> ufs,
+            UFS_STORAGE_ROOT_IDENTIFIER,
+            UFS_STORAGE_TYPE_DIRECTORY,
+            TEST_FILE_NAME );
+    ASSERT_UFS_NO_ERROR( id1 );
+
+    assert_int_not_equal( id0, id1 );
+}
+
+static void test_ufs_add_directory_use_file_as_parent( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType fileId, dirId;
+
+    ufsStruct = *state;
+
+    fileId = ufsAddStorage( ufsStruct -> ufs,
+              UFS_STORAGE_ROOT_IDENTIFIER,
+              UFS_STORAGE_TYPE_FILE,
+              TEST_FILE_NAME_0);
+    ASSERT_UFS_NO_ERROR( fileId );
+
+    dirId = ufsAddStorage( ufsStruct -> ufs,
+              fileId,
+              UFS_STORAGE_TYPE_DIRECTORY,
+              TEST_DIRECTORY_NAME);
+    ASSERT_UFS_ERROR( dirId, UFS_PARENT_DOES_NOT_EXIST );
+}
+
 static void test_ufs_add_file( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType id0;
+
+    ufsStruct = *state;
+
+    id0 = ufsAddStorage( ufsStruct -> ufs,
+            UFS_STORAGE_ROOT_IDENTIFIER,
+            UFS_STORAGE_TYPE_FILE,
+            TEST_FILE_NAME );
+    ASSERT_UFS_NO_ERROR( id0 );
+}
+
+static void test_ufs_add_file_non_root( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
     ufsIdentifierType id0, dirId;
@@ -169,7 +310,7 @@ static void test_ufs_add_file( void **state )
 
     id0 = ufsAddStorage( ufsStruct -> ufs,
             dirId,
-            UFS_STORAGE_TYPE_DIRECTORY,
+            UFS_STORAGE_TYPE_FILE,
             TEST_FILE_NAME );
     ASSERT_UFS_NO_ERROR( id0 );
 }
@@ -189,6 +330,26 @@ static void test_ufs_add_file_parent_does_not_exist( void **state )
 }
 
 static void test_ufs_add_file_duplicate( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType id;
+
+    ufsStruct = *state;
+
+    id = ufsAddStorage( ufsStruct -> ufs,
+            UFS_STORAGE_ROOT_IDENTIFIER,
+            UFS_STORAGE_TYPE_FILE,
+            TEST_FILE_NAME );
+    ASSERT_UFS_NO_ERROR( id );
+
+    id = ufsAddStorage( ufsStruct -> ufs,
+            UFS_STORAGE_ROOT_IDENTIFIER,
+            UFS_STORAGE_TYPE_FILE,
+            TEST_FILE_NAME );
+    ASSERT_UFS_ERROR( id, UFS_ALREADY_EXISTS );
+}
+
+static void test_ufs_add_file_duplicate_non_root( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
     ufsIdentifierType id, dirId;
@@ -212,7 +373,6 @@ static void test_ufs_add_file_duplicate( void **state )
             UFS_STORAGE_TYPE_FILE,
             TEST_FILE_NAME );
     ASSERT_UFS_ERROR( id, UFS_ALREADY_EXISTS );
-
 }
 
 static void test_ufs_add_file_same_name_different_directory( void **state )
@@ -249,10 +409,38 @@ static void test_ufs_add_file_same_name_different_directory( void **state )
     assert_int_not_equal( id0, id1 );
 }
 
-static void test_ufs_add_storage_use_file_as_parent( void **state )
+static void test_ufs_add_file_same_name_different_directory_one_root( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
-    ufsIdentifierType fileId0, fileId1, dirId0;
+    ufsIdentifierType id0, id1, dirId;
+
+    ufsStruct = *state;
+
+    dirId = ufsAddStorage( ufsStruct -> ufs,
+            UFS_STORAGE_ROOT_IDENTIFIER,
+            UFS_STORAGE_TYPE_DIRECTORY,
+            TEST_DIRECTORY_NAME_0 );
+    ASSERT_UFS_NO_ERROR( dirId );
+
+    id0 = ufsAddStorage( ufsStruct -> ufs,
+            dirId,
+            UFS_STORAGE_TYPE_FILE,
+            TEST_FILE_NAME );
+    ASSERT_UFS_NO_ERROR( id0 );
+
+    id1 = ufsAddStorage( ufsStruct -> ufs,
+            UFS_STORAGE_ROOT_IDENTIFIER,
+            UFS_STORAGE_TYPE_FILE,
+            TEST_FILE_NAME );
+    ASSERT_UFS_NO_ERROR( id1 );
+
+    assert_int_not_equal( id0, id1 );
+}
+
+static void test_ufs_add_file_use_file_as_parent( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType fileId0, fileId1;
 
     ufsStruct = *state;
 
@@ -268,14 +456,7 @@ static void test_ufs_add_storage_use_file_as_parent( void **state )
               TEST_FILE_NAME_1);
     ASSERT_UFS_ERROR( fileId1, UFS_PARENT_DOES_NOT_EXIST );
 
-    dirId0 = ufsAddStorage( ufsStruct -> ufs,
-              fileId0,
-              UFS_STORAGE_TYPE_FILE,
-              TEST_DIRECTORY_NAME);
-    ASSERT_UFS_ERROR( dirId0, UFS_PARENT_DOES_NOT_EXIST );
-
 }
-
 /* ########################################################################## */
 
 /* ufsAddArea tests                                                           */
@@ -2543,13 +2724,21 @@ static const struct CMUnitTest ufs_test_suite[] = {
     /* ufsAddStorage tests.                                                     */
     UFS_TEST( test_ufs_add_storage_bad_args ),
     UFS_TEST( test_ufs_add_directory ),
+    UFS_TEST( test_ufs_add_directory_non_root ),
     UFS_TEST( test_ufs_add_directory_duplicate ),
+    UFS_TEST( test_ufs_add_directory_duplicate_non_root ),
     UFS_TEST( test_ufs_add_directory_parent_does_not_exist ),
+    UFS_TEST( test_ufs_add_directory_same_name_different_directory ),
+    UFS_TEST( test_ufs_add_directory_same_name_different_directory_one_root ),
+    UFS_TEST( test_ufs_add_directory_use_file_as_parent ),
     UFS_TEST( test_ufs_add_file ),
+    UFS_TEST( test_ufs_add_file_non_root ),
     UFS_TEST( test_ufs_add_file_duplicate ),
+    UFS_TEST( test_ufs_add_file_duplicate_non_root ),
     UFS_TEST( test_ufs_add_file_parent_does_not_exist ),
     UFS_TEST( test_ufs_add_file_same_name_different_directory ),
-    UFS_TEST( test_ufs_add_storage_use_file_as_parent ),
+    UFS_TEST( test_ufs_add_file_same_name_different_directory_one_root ),
+    UFS_TEST( test_ufs_add_file_use_file_as_parent ),
     /* ====================================================================== */
 
     /* ufsAddArea tests.                                                      */
