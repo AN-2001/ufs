@@ -213,7 +213,7 @@
     UFS_X( UFS_DIRECTORY_IS_NOT_EMPTY,            5 )                          \
     UFS_X( UFS_DOES_NOT_EXIST,                    6 )                          \
     UFS_X( UFS_EXISTS_IN_EXPLICIT_MAPPING,        7 )                          \
-    UFS_X( UFS_CHILD_EXISTS_IN_EXPLICIT_MAPPING, 8 )                           \
+    UFS_X( UFS_CHILD_EXISTS_IN_EXPLICIT_MAPPING,  8 )                          \
     UFS_X( UFS_ILLEGAL_NAME,                      9 )                          \
     UFS_X( UFS_INVALID_AREA_IN_VIEW,              10 )                         \
     UFS_X( UFS_OUT_OF_MEMORY,                     11 )                         \
