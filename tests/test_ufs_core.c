@@ -953,6 +953,18 @@ static void test_ufs_get_area( void **state )
     assert_int_equal( id0, id1 );
 }
 
+static void test_ufs_get_area_base_name( void **state )
+{
+    struct ufsTestUfsStateStruct *ufsStruct;
+    ufsIdentifierType id;
+
+    ufsStruct = *state;
+
+    id = ufsGetArea( ufsStruct -> ufs, UFS_AREA_BASE_NAME );
+    ASSERT_UFS_NO_ERROR( id );
+    assert_int_equal( id, UFS_AREA_BASE_IDENTIFIER );
+}
+
 static void test_ufs_get_area_does_not_exist( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
@@ -973,13 +985,13 @@ static void test_ufs_probe_mapping_bad_args( void **state )
 
     ufsStruct = *state;
 
-    status = ufsAddMapping( NULL, 1, 1 );
+    status = ufsProbeMapping( NULL, 1, 1 );
     ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
 
-    status = ufsAddMapping( ufsStruct -> ufs, -1, 1 );
+    status = ufsProbeMapping( ufsStruct -> ufs, -1, 1 );
     ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
 
-    status = ufsAddMapping( ufsStruct -> ufs, 1, -1 );
+    status = ufsProbeMapping( ufsStruct -> ufs, 1, -1 );
     ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
 
 }
@@ -2960,6 +2972,7 @@ static const struct CMUnitTest ufs_test_suite[] = {
     /* ufsGetArea tests.                                                      */
     UFS_TEST( test_ufs_get_area_bad_args ),
     UFS_TEST( test_ufs_get_area ),
+    UFS_TEST( test_ufs_get_area_base_name ),
     UFS_TEST( test_ufs_get_area_does_not_exist ),
     /* ====================================================================== */
 
