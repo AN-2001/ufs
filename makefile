@@ -14,7 +14,8 @@ INCLUDE_DIR := $(PROJECT_DIR)include
 BUILD_DIR := $(PROJECT_DIR)build
 TESTS_DIR := $(PROJECT_DIR)tests
 
-CFLAGS := -I$(FUSE_DIR)/include -I$(SQLITE_DIR) -I$(INCLUDE_DIR) -Wall -Werror -g \
+CFLAGS := -I$(FUSE_DIR)/include -I$(SQLITE_DIR) -I$(INCLUDE_DIR) \
+		   -I$(SRC_DIR) -Wall -Werror -g \
 		   -fdiagnostics-color=always 
 LDFLAGS := -L$(FUSE_DIR)/lib -L$(BUILD_DIR) \
 		   -Wl,-rpath=$(abspath $(FUSE_DIR)/lib)
