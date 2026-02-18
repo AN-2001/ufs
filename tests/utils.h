@@ -17,6 +17,7 @@
 
 #include <stdbool.h>
 #include "ufs_core.h"
+#include "ufs_trie.h"
 
 #define ASSERT_UFS_ERROR( returnVal, err ) \
     do { \
@@ -46,8 +47,14 @@ struct ufsTestUfsStateStruct {
     ufsType ufs;
 };
 
-int ufsGetInstance( void **state );
+struct ufsTestUfsTrieStateStruct {
+    ufsTrieType trie;
+};
 
+int ufsGetInstance( void **state );
 int ufsCleanup( void **state );
+
+int ufsTrieGetInstance( void **state );
+int ufsTrieCleanup( void **state );
 
 #endif /* UFS_TEST_UTILS_H */

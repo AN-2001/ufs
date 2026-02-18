@@ -31,6 +31,8 @@
 #define UFS_TRIE
 
 #include <stdbool.h>
+#include <stdint.h>
+#include "ufs_core.h"
 
 typedef void *ufsTrieType;
 

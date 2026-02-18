@@ -7,6 +7,7 @@
 *                                                                              *
 \******************************************************************************/
 
+#include "ufs_core.h"
 #include <ufs_trie.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -34,15 +35,24 @@ ufsTrieType ufsTrieInit()
     ufsTrieNode *root;
 
     root = malloc( sizeof( *root ) );
-    if ( !root )
+    if ( !root ) {
+        ufsErrno = UFS_OUT_OF_MEMORY;
         return NULL;
+    }
     memset( root, 0, sizeof( *root ) );
+    ufsErrno = UFS_NO_ERROR;
     return root;
 }
 
-bool ufsTrieAdd( ufsTrieType ufsTrie, const char *str );
+bool ufsTrieAdd( ufsTrieType ufsTrie, const char *str )
+{
+    return false;
+}
 
-bool ufsTrieExists( ufsTrieType ufsTrie, const char *str );
+bool ufsTrieExists( ufsTrieType ufsTrie, const char *str )
+{
+    return false;
+}
 
 void ufsTrieDestroy( ufsTrieType ufsTrie )
 {

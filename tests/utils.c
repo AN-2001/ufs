@@ -7,16 +7,16 @@
 *                                                                              *
 \******************************************************************************/
 
-#include "ufs_core.h"
-#include <unistd.h>
 #define UFS_TESTING
 
-#include "utils.h"
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <memory.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "ufs_core.h"
+#include "ufs_trie.h"
+#include <unistd.h>
+#include "utils.h"
 
 int ufsGetInstance( void **state )
 {
@@ -53,6 +53,45 @@ int ufsCleanup( void **state )
     }
 
     free( ufsStruct );
+    *state = NULL;
+    return 0;
+}
+
+int ufsTrieGetInstance( void **state )
+{
+    struct ufsTestUfsTrieStateStruct *ufsTrieStruct;
+
+
+    ufsTrieStruct = malloc( sizeof( *ufsTrieStruct ) );
+    if (!ufsTrieStruct) {
+        return -1;
+    }
+
+    ufsTrieStruct -> trie = ufsTrieInit();
+    if ( !ufsTrieStruct -> trie ) {
+        printf("Encountered ufs error: %s\n", ufsStatusStrings[ ufsErrno ] );
+        return -1;
+    }
+
+    *state = ufsTrieStruct;
+    return 0;
+}
+
+int ufsTrieCleanup( void **state )
+{
+    struct ufsTestUfsTrieStateStruct *ufsTrieStruct;
+
+    ufsTrieStruct = *state;
+
+    if ( ufsTrieStruct -> trie ) {
+        ufsTrieDestroy( ufsTrieStruct -> trie );
+        if (ufsErrno) {
+            printf("Encountered ufs error: %s\n", ufsStatusStrings[ ufsErrno ] );
+            return -1;
+        }
+    }
+
+    free( ufsTrieStruct );
     *state = NULL;
     return 0;
 }
