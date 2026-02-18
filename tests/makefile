@@ -24,7 +24,7 @@ LDFLAGS :=  -L$(CMOCKA_DIR)/lib -L$(FUSE_DIR)/lib -L$(BUILD_DIR) \
 LDLIBS := -lcmocka -lfuse3 -lufs -lpthread -ldl
 
 # project names.
-TESTS := test_ufs_core
+TESTS := test_ufs_core test_ufs_trie
 
 # Place compilation targets here.
 SOURCES = $(wildcard *.c)
@@ -40,6 +40,10 @@ depend: .depend
 include .depend
 
 test_ufs_core: $(BUILD_DIR)/tests/test_ufs_core.o $(OBJECTS) 
+	@mkdir -p $(BUILD_DIR)/tests
+	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $(BUILD_DIR)/tests/$@
+
+test_ufs_trie: $(BUILD_DIR)/tests/test_ufs_trie.o $(OBJECTS) 
 	@mkdir -p $(BUILD_DIR)/tests
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $(BUILD_DIR)/tests/$@
 
