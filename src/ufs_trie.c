@@ -56,24 +56,15 @@ void ufsTrieDestroy( ufsTrieType ufsTrie )
 
     stack[ stackTop++ ] = ufsTrie;
     while ( stackTop ) {
-        current = stack[ stackTop - 1 ];
-
+        current = stack[ --stackTop ];
         for ( i = 0; i < UFS_TRIE_TOTAL_CHARS; i++ ) {
             tmp = &current -> edges[ i ].Node;
-            if ( *tmp ) {
+            if ( *tmp )
                 stack[ stackTop++ ] = *tmp;
-                *tmp = NULL;
-            }
         }
 
-        /* stack top would only move, this condition boils down to:           */
-        /* Did this node have children prior to the above loop?               */
-        if ( stack[ stackTop - 1 ] == current ) {
-            free( current -> terminalStr );
-            free( current );
-            stackTop--;
-        }
-
+        free( current -> terminalStr );
+        free( current );
     }
 
 }
