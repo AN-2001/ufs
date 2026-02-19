@@ -159,7 +159,6 @@ static inline bool handleAddAtEdge( ufsTrieTraversalResult *res,
         newEdge0 -> len = edge -> len - res -> prefixLen;
         newEdge0 -> node = tmp;
 
-
         edge -> node = newNode;
         edge -> len = res -> prefixLen;
 
@@ -178,7 +177,6 @@ static inline bool handleAddAtEdge( ufsTrieTraversalResult *res,
     newEdge1 -> start = 0;
     newEdge1 -> len = strLen - res -> offset;
 
-
     newEdge0 = &fork -> edges[ (unsigned char) edge -> str[ edge -> start + res -> prefixLen ] ];
     newEdge0 -> str = edge -> str;
     newEdge0 -> start = edge -> start + res -> prefixLen;
@@ -195,6 +193,7 @@ static inline bool handleAddAtEdge( ufsTrieTraversalResult *res,
 bool ufsTrieAdd( ufsTrieType ufsTrie, const char *str )
 {
     int strLen;
+    ufsTrieTraversalResult res;
     static bool (*handlers[])( ufsTrieTraversalResult*, const char *, int) = {
         handleAddAtNode,
         handleAddAtEdge
@@ -204,40 +203,45 @@ bool ufsTrieAdd( ufsTrieType ufsTrie, const char *str )
         ufsErrno = UFS_BAD_CALL;
         return false;
     }
-    strLen = strlen( str );
 
-    ufsTrieTraversalResult res = traverse( ufsTrie, str, strLen );
+    strLen = strlen( str );
+    res = traverse( ufsTrie, str, strLen );
 
     return handlers[ res.type ]( &res, str, strLen );
 }
 
 bool ufsTrieExists( ufsTrieType ufsTrie, const char *str )
 {
+    ufsTrieTraversalResult res;
     if ( !ufsTrie || !str ) {
         ufsErrno = UFS_BAD_CALL;
         return false;
     }
-    ufsTrieTraversalResult res = traverse( ufsTrie, str, strlen( str ) );
+
+    res = traverse( ufsTrie, str, strlen( str ) );
+
     if ( res.type == UFS_TRIE_NODE &&
          res.node -> isTerminal &&
          !str[ res.offset ] ) {
         ufsErrno = UFS_NO_ERROR;
         return true;
     }
+
     ufsErrno = UFS_DOES_NOT_EXIST;
     return false;
 }
 
 void ufsTrieDestroy( ufsTrieType ufsTrie )
 {
-    if ( !ufsTrie ) {
-        ufsErrno = UFS_NO_ERROR;
-        return;
-    }
     ufsTrieNode *stack[ UFS_STACK_SIZE ],
                 *current;
     uint64_t i,
              stackTop = 0;
+
+    if ( !ufsTrie ) {
+        ufsErrno = UFS_NO_ERROR;
+        return;
+    }
 
     stack[ stackTop++ ] = ufsTrie;
     while ( stackTop ) {
@@ -254,5 +258,4 @@ void ufsTrieDestroy( ufsTrieType ufsTrie )
     }
 
     ufsErrno = UFS_NO_ERROR;
-
 }
