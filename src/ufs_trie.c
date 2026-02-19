@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <memory.h>
+#include <string.h>
 
 #define UFS_TRIE_TOTAL_CHARS (256)
 #define UFS_STACK_SIZE (512)
@@ -67,7 +68,7 @@ static inline ufsTrieTraversalResult traverse( ufsTrieNode *node,
 
     while ( edge -> node && res.offset < strLen ) {
          
-        res.prefixLen = findLongestCommonPrefixLen( str + res.offset, strLen,
+        res.prefixLen = findLongestCommonPrefixLen( str + res.offset, strLen - res.offset,
                                                 edge -> str + edge -> start,
                                                 edge -> len );
         res.offset += res.prefixLen;
@@ -151,10 +152,10 @@ static inline bool handleAddAtEdge( ufsTrieTraversalResult *res,
 
         newNode = createNode( NULL );
         newNode -> isTerminal = true;
-        newEdge0 = &newNode -> edges[ (unsigned char )edge -> str[ res -> prefixLen ] ];
+        newEdge0 = &newNode -> edges[ (unsigned char )edge -> str[ edge -> start + res -> prefixLen ] ];
 
         newEdge0 -> str = edge -> str;
-        newEdge0 -> start = res -> prefixLen;
+        newEdge0 -> start = edge -> start + res -> prefixLen;
         newEdge0 -> len = edge -> len - res -> prefixLen;
         newEdge0 -> node = tmp;
 
@@ -171,7 +172,7 @@ static inline bool handleAddAtEdge( ufsTrieTraversalResult *res,
 
     fork = createNode( NULL );
 
-    newEdge1 = &fork -> edges[ (unsigned char) str[ res -> offset] ];
+    newEdge1 = &fork -> edges[ (unsigned char) str[ res -> offset ] ];
     newEdge1 -> node = createNode( str + res -> offset );
     newEdge1 -> str = newEdge1 -> node -> terminalStr;
     newEdge1 -> start = 0;

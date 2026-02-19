@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <ufs_trie.h>
 #include "utils.h"
+#include <time.h>
 
 #include <cmocka.h>
 
@@ -158,9 +159,40 @@ void test_ufs_trie_exists_does_not_exist( void **state )
 
 /* ########################################################################## */
 
-/* ufsTrie 1000 strings test.                                                 */
-void test_ufs_trie_1000_strings( void **state )
+/* ufsTrie 4096 strings test.                                                 */
+void test_ufs_trie_4096_strings( void **state )
 {
+    int i, j;
+    char strings[4096][256];
+    struct ufsTestUfsTrieStateStruct *ufsTrieStruct;
+    bool res;
+
+    memset( strings, 0, sizeof( strings ) );
+
+    for ( i = 0; i < 4096; i ++ )
+        for ( j = 0; ( rand() % 1000 ) < 950 && j < 255; j++ )
+            strings[ i ][ j ] = 'a' + rand() % ( 'z' - 'a' + 1 );
+
+    ufsTrieStruct = *state;
+
+    for ( i = 0; i < 4096; i++ ) { 
+        if ( ufsTrieExists( ufsTrieStruct -> trie, strings [ i ] ) ) {
+            assert_int_equal( ufsErrno, UFS_NO_ERROR );
+            continue;
+        }
+
+        assert_int_equal( ufsErrno, UFS_DOES_NOT_EXIST );
+        res = ufsTrieAdd( ufsTrieStruct -> trie, strings [ i ] );
+        assert_true( res );
+        assert_int_equal( ufsErrno, UFS_NO_ERROR );
+    }
+
+    for ( i = 0; i < 4096; i++ ) { 
+        res = ufsTrieExists( ufsTrieStruct -> trie, strings [ i ] );
+        assert_true( res );
+        assert_int_equal( ufsErrno, UFS_NO_ERROR );
+    }
+
 
 }
 
@@ -181,13 +213,20 @@ static const struct CMUnitTest ufs_test_trie[] = {
     UFS_TRIE_TEST( test_ufs_trie_exists_does_not_exist ),
     /* ====================================================================== */
 
-    /* ufsTrie 1000 strings                                                   */
-    UFS_TRIE_TEST( test_ufs_trie_1000_strings )
+    /* ufsTrie 4096 strings                                                   */
+    UFS_TRIE_TEST( test_ufs_trie_4096_strings )
     /* ====================================================================== */
 
 };
 
 int main( void ) {
+    time_t seed;
+
+    seed = time( NULL );
+    // seed = 1771532713;
+    printf( "SEED IS %lu\n", seed );
+
+    srand( seed );
     return cmocka_run_group_tests( ufs_test_trie, NULL, NULL );
 }
 
