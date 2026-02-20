@@ -201,7 +201,7 @@
 #define UFS_STORAGE_ROOT_NAME ("ROOT") 
 #define UFS_STORAGE_ROOT_IDENTIFIER (0)
 
-
+#include <stdbool.h>
 #include <stdint.h>
 #include <sys/types.h>
 
@@ -246,10 +246,9 @@ typedef ufsStatusType (*ufsDirIter)( ufsIdentifierType storageId,
                                      const char *storageName,
                                      uint64_t currEntry,
                                      uint64_t numEntries,
-                                     void *userData);
-typedef ufsIdentifierType ufsViewType[ UFS_VIEW_MAX_SIZE ];
+                                     void *userData );
 
-extern ufsStatusType ufsErrno;
+typedef ufsIdentifierType ufsViewType[ UFS_VIEW_MAX_SIZE ];
 
 /******************************************************************************\
 * ufsInit                                                                      *
@@ -268,7 +267,7 @@ extern ufsStatusType ufsErrno;
 *  -ufsType: a new ufs instance.                                               *
 *                                                                              *
 \******************************************************************************/
-ufsType ufsInit();
+ufsType ufsInit( ufsStatusType *statusNo );
 
 /******************************************************************************\
 * ufsDestroy                                                                   *
@@ -288,7 +287,7 @@ ufsType ufsInit();
 *  -void.                                                                      *
 *                                                                              *
 \******************************************************************************/
-void ufsDestroy( ufsType ufs );
+void ufsDestroy( ufsType ufs, ufsStatusType *statusNo );
 
 /******************************************************************************\
 * ufsAddStorage                                                                *
@@ -317,7 +316,8 @@ void ufsDestroy( ufsType ufs );
 ufsIdentifierType ufsAddStorage( ufsType ufs,
                                  ufsIdentifierType parent,
                                  ufsStorageTypeEnum type,
-                                 const char *name );
+                                 const char *name,
+                                 ufsStatusType *statusNo );
 
 /******************************************************************************\
 * ufsAddArea                                                                   *
@@ -342,7 +342,8 @@ ufsIdentifierType ufsAddStorage( ufsType ufs,
 *                                                                              *
 \******************************************************************************/
 ufsIdentifierType ufsAddArea( ufsType ufs,
-                              const char *name );
+                              const char *name,
+                              ufsStatusType *statusNo );
 
 /******************************************************************************\
 * ufsAddMapping                                                                *
@@ -368,9 +369,10 @@ ufsIdentifierType ufsAddArea( ufsType ufs,
 *  -ufsStatusType: The status of this call, ufsErrno is also set.              *
 *                                                                              *
 \******************************************************************************/
-ufsStatusType ufsAddMapping( ufsType ufs,
-                             ufsIdentifierType area,
-                             ufsIdentifierType storage );
+bool ufsAddMapping( ufsType ufs,
+                    ufsIdentifierType area,
+                    ufsIdentifierType storage,
+                    ufsStatusType *statusNo );
 
 /******************************************************************************\
 * ufsGetStorage                                                                *
@@ -398,7 +400,8 @@ ufsStatusType ufsAddMapping( ufsType ufs,
 ufsIdentifierType ufsGetStorage( ufsType ufs,
                                  ufsIdentifierType parent,
                                  ufsStorageTypeEnum type,
-                                 const char *name );
+                                 const char *name,
+                                 ufsStatusType *statusNo );
 
 /******************************************************************************\
 * ufsGetArea                                                                   *
@@ -422,7 +425,8 @@ ufsIdentifierType ufsGetStorage( ufsType ufs,
 *                                                                              *
 \******************************************************************************/
 ufsIdentifierType ufsGetArea( ufsType ufs,
-                              const char *name );
+                              const char *name,
+                              ufsStatusType *statusNo );
 
 /******************************************************************************\
 * ufsProbeMapping                                                              *
@@ -449,9 +453,10 @@ ufsIdentifierType ufsGetArea( ufsType ufs,
 *  If the mapping exists UFS_NO_ERROR is returned and set in ufsErrno.         *
 *                                                                              *
 \******************************************************************************/
-ufsStatusType ufsProbeMapping( ufsType ufs,
-                               ufsIdentifierType area,
-                               ufsIdentifierType storage );
+bool ufsProbeMapping( ufsType ufs,
+                      ufsIdentifierType area,
+                      ufsIdentifierType storage,
+                      ufsStatusType *statusNo );
 
 /******************************************************************************\
 * ufsRemoveStorage                                                             *
@@ -477,8 +482,9 @@ ufsStatusType ufsProbeMapping( ufsType ufs,
 *  -ufsStatusType: The status of this call, ufsErrno is also set.              *
 *                                                                              *
 \******************************************************************************/
-ufsStatusType ufsRemoveStorage( ufsType ufs,
-                                ufsIdentifierType storage );
+bool ufsRemoveStorage( ufsType ufs,
+                       ufsIdentifierType storage,
+                       ufsStatusType *statusNo );
 
 /******************************************************************************\
 * ufsRemoveArea                                                                *
@@ -503,8 +509,9 @@ ufsStatusType ufsRemoveStorage( ufsType ufs,
 *  -ufsStatusType: The status of this call, ufsErrno is also set.              *
 *                                                                              *
 \******************************************************************************/
-ufsStatusType ufsRemoveArea( ufsType ufs,
-                             ufsIdentifierType area );
+bool ufsRemoveArea( ufsType ufs,
+                    ufsIdentifierType area,
+                    ufsStatusType *statusNo );
 
 /******************************************************************************\
 * ufsRemoveMapping                                                             *
@@ -529,9 +536,10 @@ ufsStatusType ufsRemoveArea( ufsType ufs,
 *  -ufsStatusType: The status of this call, ufsErrno is also set.              *
 *                                                                              *
 \******************************************************************************/
-ufsStatusType ufsRemoveMapping( ufsType ufs,
-                                ufsIdentifierType area,
-                                ufsIdentifierType storage );
+bool ufsRemoveMapping( ufsType ufs,
+                       ufsIdentifierType area,
+                       ufsIdentifierType storage,
+                       ufsStatusType *statusNo );
 
 /******************************************************************************\
 * ufsResolveStorageInView                                                      *
@@ -565,7 +573,8 @@ ufsStatusType ufsRemoveMapping( ufsType ufs,
 \******************************************************************************/
 ufsIdentifierType ufsResolveStorageInView( ufsType ufs,
                                            ufsViewType view,
-                                           ufsIdentifierType storage );
+                                           ufsIdentifierType storage,
+                                           ufsStatusType *statusNo );
 
 /******************************************************************************\
 * ufsIterateDirInView                                                          *
@@ -595,10 +604,11 @@ ufsIdentifierType ufsResolveStorageInView( ufsType ufs,
 *  -ufsStatusType: The status of this call, ufsErrno is also set.              *
 *                                                                              *
 \******************************************************************************/
-ufsStatusType ufsIterateDirInView( ufsType ufs,
-                                   ufsViewType view,
-                                   ufsIdentifierType directory,
-                                   ufsDirIter iterator,
-                                   void *userData );
+bool ufsIterateDirInView( ufsType ufs,
+                          ufsViewType view,
+                          ufsIdentifierType directory,
+                          ufsDirIter iterator,
+                          void *userData,
+                          ufsStatusType *statusNo );
 
 #endif /* UFS_CORE_H */

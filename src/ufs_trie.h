@@ -33,6 +33,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "ufs_core.h"
+#include "ufs_utils.h"
 
 typedef void *ufsTrieType;
 
@@ -50,7 +51,7 @@ typedef void *ufsTrieType;
 *  ufsTrieType: the new trie, can be NULL if out of memory.                    *
 *                                                                              *
 \******************************************************************************/
-ufsTrieType ufsTrieInit();
+ufsTrieType ufsTrieInit( ufsStatusType *statusNo );
 
 /******************************************************************************\
 * ufsTrieAdd                                                                   *
@@ -73,7 +74,7 @@ ufsTrieType ufsTrieInit();
 *  -bool: true on success, false otherwise.                                    *
 *                                                                              *
 \******************************************************************************/
-bool ufsTrieAdd( ufsTrieType ufsTrie, const char *str );
+bool ufsTrieAdd( ufsTrieType ufsTrie, const char *str, ufsStatusType *statusNo  );
 
 /******************************************************************************\
 * ufsTrieAdd                                                                   *
@@ -95,7 +96,7 @@ bool ufsTrieAdd( ufsTrieType ufsTrie, const char *str );
 *  -bool: true if str exists in ufsTrie, false otherwise.                      *
 *                                                                              *
 \******************************************************************************/
-bool ufsTrieExists( ufsTrieType ufsTrie, const char *str );
+bool ufsTrieExists( ufsTrieType ufsTrie, const char *str, ufsStatusType *statusNo );
 
 /******************************************************************************\
 * ufsTrieDestroy                                                               *
@@ -114,6 +115,6 @@ bool ufsTrieExists( ufsTrieType ufsTrie, const char *str );
 *  -void.                                                                      *
 *                                                                              *
 \******************************************************************************/
-void ufsTrieDestroy( ufsTrieType ufsTrie );
+void ufsTrieDestroy( ufsTrieType ufsTrie, ufsStatusType *statusNo );
 
 #endif /* UFS_TRIE */

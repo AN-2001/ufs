@@ -1,16 +1,16 @@
 /******************************************************************************\
-*  ufs_core.c                                                                  *
+*  ufs_utils.h                                                                 *
 *                                                                              *
-*  Correspdonding .c part of ufs_core.h. Used to link global symbols.          *
+*  Internals utilities for ufs.                                                *
 *                                                                              *
-*              Written by A.N.                                  24-01-2026     *
+*              Written by A.N.                                  20-02-2026     *
 *                                                                              *
 \******************************************************************************/
 
-#include "ufs_core.h"
+#ifndef UFS_UTILS
+#define UFS_UTILS
 
-const char *ufsStatusStrings[ UFS_NUM_ERRORS ] = {
-#define UFS_X( name, val ) #name, 
-    UFS_STATUS_LIST
-#undef UFS_X
-};
+#define SET_STATUS( status ) \
+    if ( statusNo ) *statusNo = (status);
+
+#endif /* UFS_UTILS */

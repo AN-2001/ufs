@@ -9,12 +9,13 @@
 
 
 #include "sqlite3.h"
-#include "ufs_core.h"
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
+#include "ufs_core.h"
+#include "ufs_utils.h"
 
 #define UFS_SQLITE_BUFF_SIZE (4096)
 #define UFS_SQLITE_BUFF_SIZE_BIG (4096 * 2)
@@ -148,7 +149,7 @@ static const char * const DIR_ITERATOR_QUERY =
     "ON ufsMappings.areaid = viewData.areaid "
     "WHERE ufsStorage.parent = ?;";
 
-static inline ufsSqliteStruct *prepareSqliteDb( sqlite3 *db );
+struct ufsSqliteStruct *prepareSqliteDb( sqlite3 *db, ufsStatusType *statusNo );
 
 
 static inline bool validateViewStructure( ufsViewType view, uint64_t *viewSize );
@@ -248,14 +249,14 @@ bool validateViewSemantics( ufsSqliteStruct *ufsSqlite,
     return true;
 }
 
-struct ufsSqliteStruct *prepareSqliteDb( sqlite3 *db )
+struct ufsSqliteStruct *prepareSqliteDb( sqlite3 *db, ufsStatusType *statusNo )
 {
     int res, i;
     ufsSqliteStruct *ufsSqlite;
 
     ufsSqlite = malloc( sizeof( *ufsSqlite ) );
     if ( !ufsSqlite ) {
-        ufsErrno = UFS_OUT_OF_MEMORY;
+        SET_STATUS( UFS_OUT_OF_MEMORY );
         return NULL;
     }
 
@@ -263,7 +264,7 @@ struct ufsSqliteStruct *prepareSqliteDb( sqlite3 *db )
     res = sqlite3_exec( db, UFS_SQL_TEXT[ 0 ], NULL, NULL, NULL );
     if ( res != SQLITE_OK ) {
         free( ufsSqlite );
-        ufsErrno = UFS_UNKNOWN_ERROR;
+        SET_STATUS( UFS_UNKNOWN_ERROR );
         return NULL;
     }
 
@@ -278,16 +279,16 @@ struct ufsSqliteStruct *prepareSqliteDb( sqlite3 *db )
         "sqlite3_prepare_v2 failed: %s\n",
         sqlite3_errmsg(db) );
             free( ufsSqlite );
-            ufsErrno = UFS_UNKNOWN_ERROR;
+            SET_STATUS( UFS_UNKNOWN_ERROR );
             return NULL;
         }
     }
 
-    ufsErrno = UFS_NO_ERROR;
+    SET_STATUS( UFS_NO_ERROR );
     return ufsSqlite;
 }
 
-ufsType ufsInit()
+ufsType ufsInit( ufsStatusType *statusNo )
 {
     ufsSqliteStruct *ret;
     sqlite3 *db;
@@ -295,31 +296,32 @@ ufsType ufsInit()
 
     res = sqlite3_open( ":memory:", &db );
     if ( !db ) {
-        ufsErrno = UFS_OUT_OF_MEMORY;
+        SET_STATUS( UFS_OUT_OF_MEMORY );
         return NULL;
     }
 
     if ( res != SQLITE_OK ) {
         sqlite3_close( db );
-        ufsErrno = UFS_UNKNOWN_ERROR;
+        SET_STATUS( UFS_UNKNOWN_ERROR );
         return NULL;
     }
 
-    ret = prepareSqliteDb( db );
+    ret = prepareSqliteDb( db, statusNo );
     if ( !ret ) {
         sqlite3_close( db );
         return NULL;
     }
-    ufsErrno = UFS_NO_ERROR;
+
+    SET_STATUS( UFS_NO_ERROR );
     return ret;
 }
 
-void ufsDestroy( ufsType ufs )
+void ufsDestroy( ufsType ufs, ufsStatusType *statusNo )
 {
     int i;
     ufsSqliteStruct *ufsSqlite;
     if ( !ufs ) {
-        ufsErrno = UFS_NO_ERROR;
+        SET_STATUS( UFS_NO_ERROR );
         return;
     }
 
@@ -328,19 +330,20 @@ void ufsDestroy( ufsType ufs )
         sqlite3_finalize( ufsSqlite -> statements[ i ] );
     sqlite3_close( ufsSqlite -> db );
     free( ufsSqlite );
-    ufsErrno = UFS_NO_ERROR;
+    SET_STATUS( UFS_NO_ERROR );
 }
 
 ufsIdentifierType ufsAddStorage( ufsType ufs,
                                  ufsIdentifierType parent,
                                  ufsStorageTypeEnum type,
-                                 const char *name )
+                                 const char *name,
+                                 ufsStatusType *statusNo )
 {
     ufsSqliteStruct *ufsSqlite;
     int res;
     if ( !ufs || parent < 0 || !name ||
          type < 0 || type >= UFS_STORAGE_TOTAL_TYPES ) {
-        ufsErrno = UFS_BAD_CALL;
+        SET_STATUS( UFS_BAD_CALL );
         return -1;
     }
 
@@ -361,7 +364,7 @@ ufsIdentifierType ufsAddStorage( ufsType ufs,
         res = sqlite3_step(
             ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_ID_TYPE ] );
         if ( res != SQLITE_ROW ) {
-            ufsErrno = UFS_PARENT_DOES_NOT_EXIST;
+            SET_STATUS( UFS_PARENT_DOES_NOT_EXIST );
             return -1;
         }
     }
@@ -383,12 +386,12 @@ ufsIdentifierType ufsAddStorage( ufsType ufs,
     res = sqlite3_step(
         ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_NAME_TYPE ] );
     if ( res == SQLITE_ROW ) {
-        ufsErrno = UFS_ALREADY_EXISTS;
+        SET_STATUS( UFS_ALREADY_EXISTS );
         return -1;
     }
 
     if ( res != SQLITE_DONE ) {
-        ufsErrno = UFS_UNKNOWN_ERROR;
+        SET_STATUS( UFS_UNKNOWN_ERROR );
         return -1;
     }
 
@@ -409,21 +412,22 @@ ufsIdentifierType ufsAddStorage( ufsType ufs,
     res = sqlite3_step(
             ufsSqlite -> statements[ UFS_STATEMENT_INSERT_INTO_STORAGE ] );
     if ( res != SQLITE_DONE ) {
-        ufsErrno = UFS_UNKNOWN_ERROR;
+        SET_STATUS( UFS_UNKNOWN_ERROR );
         return -1;
     }
 
-    ufsErrno = UFS_NO_ERROR;
+    SET_STATUS( UFS_NO_ERROR );
     return sqlite3_last_insert_rowid( ufsSqlite -> db );
 }
 
 ufsIdentifierType ufsAddArea( ufsType ufs,
-                              const char *name )
+                              const char *name,
+                              ufsStatusType *statusNo )
 {
     ufsSqliteStruct *ufsSqlite;
     int res;
     if ( !ufs || !name ) {
-        ufsErrno = UFS_BAD_CALL;
+        SET_STATUS( UFS_BAD_CALL );
         return -1;
     }
 
@@ -431,7 +435,7 @@ ufsIdentifierType ufsAddArea( ufsType ufs,
                 UFS_AREA_BASE_NAME,
                 sizeof( UFS_AREA_BASE_NAME ) /
                 sizeof( char )) == 0 ) {
-        ufsErrno = UFS_ILLEGAL_NAME;
+        SET_STATUS( UFS_ILLEGAL_NAME );
         return -1;
     }
 
@@ -448,12 +452,12 @@ ufsIdentifierType ufsAddArea( ufsType ufs,
     res = sqlite3_step( 
             ufsSqlite -> statements[ UFS_STATEMENT_QUERY_AREAS_BY_NAME ] );
     if ( res == SQLITE_ROW ) {
-        ufsErrno = UFS_ALREADY_EXISTS;
+        SET_STATUS( UFS_ALREADY_EXISTS );
         return -1;
     }
 
     if ( res != SQLITE_DONE ) {
-        ufsErrno = UFS_UNKNOWN_ERROR;
+        SET_STATUS( UFS_UNKNOWN_ERROR );
         return -1;
     }
 
@@ -468,24 +472,25 @@ ufsIdentifierType ufsAddArea( ufsType ufs,
     res = sqlite3_step(
             ufsSqlite -> statements[ UFS_STATEMENT_INSERT_INTO_AREAS ] );
     if ( res != SQLITE_DONE ) {
-        ufsErrno = UFS_UNKNOWN_ERROR;
+        SET_STATUS( UFS_UNKNOWN_ERROR );
         return -1;
     }
 
-    ufsErrno = UFS_NO_ERROR;
+    SET_STATUS( UFS_NO_ERROR );
     return sqlite3_last_insert_rowid( ufsSqlite -> db );
 }
 
-ufsStatusType ufsAddMapping( ufsType ufs,
+bool ufsAddMapping( ufsType ufs,
                              ufsIdentifierType area,
-                             ufsIdentifierType storage )
+                             ufsIdentifierType storage,
+                             ufsStatusType *statusNo )
 {
     int res;
     ufsSqliteStruct *ufsSqlite;
     ufsIdentifierType parent;
     if ( !ufs || area <= 0 || storage < 0 ) {
-        ufsErrno = UFS_BAD_CALL;
-        return ufsErrno;
+        SET_STATUS( UFS_BAD_CALL );
+        return false;
     }
 
     ufsSqlite = ufs;
@@ -501,8 +506,8 @@ ufsStatusType ufsAddMapping( ufsType ufs,
     res = sqlite3_step( 
             ufsSqlite -> statements[ UFS_STATEMENT_QUERY_AREAS_BY_ID ] );
     if ( res != SQLITE_ROW ) {
-        ufsErrno = UFS_DOES_NOT_EXIST;
-        return ufsErrno;
+        SET_STATUS( UFS_DOES_NOT_EXIST );
+        return false;
     }
 
     /* Then verify that the storage exists.                                   */
@@ -516,8 +521,8 @@ ufsStatusType ufsAddMapping( ufsType ufs,
     res = sqlite3_step( 
             ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_ID ] );
     if ( res != SQLITE_ROW ) {
-        ufsErrno = UFS_DOES_NOT_EXIST;
-        return ufsErrno;
+        SET_STATUS( UFS_DOES_NOT_EXIST );
+        return false;
     }
 
     parent = sqlite3_column_int(
@@ -539,8 +544,8 @@ ufsStatusType ufsAddMapping( ufsType ufs,
         res = sqlite3_step( 
                 ufsSqlite -> statements[ UFS_STATEMENT_QUERY_MAPPINGS_BY_IDS ] );
         if ( res != SQLITE_ROW ) {
-            ufsErrno = UFS_PARENT_IS_NOT_MAPPED;
-            return ufsErrno;
+            SET_STATUS( UFS_PARENT_IS_NOT_MAPPED );
+            return false;
         }
     }
 
@@ -559,13 +564,13 @@ ufsStatusType ufsAddMapping( ufsType ufs,
     res = sqlite3_step( 
             ufsSqlite -> statements[ UFS_STATEMENT_QUERY_MAPPINGS_BY_IDS ] );
     if ( res == SQLITE_ROW ) {
-        ufsErrno = UFS_ALREADY_EXISTS;
-        return ufsErrno;
+        SET_STATUS( UFS_ALREADY_EXISTS );
+        return false;
     }
 
     if ( res != SQLITE_DONE ) {
-        ufsErrno = UFS_UNKNOWN_ERROR;
-        return ufsErrno;
+        SET_STATUS( UFS_UNKNOWN_ERROR );
+        return false;
     }
 
     /* Finally, insert the area into the db.                                  */
@@ -582,25 +587,26 @@ ufsStatusType ufsAddMapping( ufsType ufs,
     res = sqlite3_step(
             ufsSqlite -> statements[ UFS_STATEMENT_INSERT_INTO_MAPPINGS ] );
     if ( res != SQLITE_DONE ) {
-        ufsErrno = UFS_UNKNOWN_ERROR;
-        return ufsErrno;
+        SET_STATUS( UFS_UNKNOWN_ERROR );
+        return false;
     }
 
 
-    ufsErrno = UFS_NO_ERROR;
-	return ufsErrno;
+    SET_STATUS( UFS_NO_ERROR );
+	return true;
 }
 
 ufsIdentifierType ufsGetStorage( ufsType ufs,
                                  ufsIdentifierType parent,
                                  ufsStorageTypeEnum type,
-                                 const char *name )
+                                 const char *name,
+                                 ufsStatusType *statusNo )
 {
     int res;
     ufsSqliteStruct *ufsSqlite;
     if ( !ufs || parent < 0 ||
          !name || type < 0 || type >= UFS_STORAGE_TOTAL_TYPES ) {
-        ufsErrno = UFS_BAD_CALL;
+        SET_STATUS( UFS_BAD_CALL );
         return -1;
     }
 
@@ -624,23 +630,24 @@ ufsIdentifierType ufsGetStorage( ufsType ufs,
         ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_NAME_TYPE ] );
 
     if ( res != SQLITE_ROW ) {
-        ufsErrno = UFS_DOES_NOT_EXIST;
+        SET_STATUS( UFS_DOES_NOT_EXIST );
         return -1;
     }
 
-    ufsErrno = UFS_NO_ERROR;
+    SET_STATUS( UFS_NO_ERROR );
 	return sqlite3_column_int(
             ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_NAME_TYPE ],
             0 );
 }
 
 ufsIdentifierType ufsGetArea( ufsType ufs,
-                              const char *name )
+                              const char *name,
+                              ufsStatusType *statusNo )
 {
     int res;
     ufsSqliteStruct *ufsSqlite;
     if ( !ufs || !name ) {
-        ufsErrno = UFS_BAD_CALL;
+        SET_STATUS( UFS_BAD_CALL );
         return -1;
     }
 
@@ -664,25 +671,26 @@ ufsIdentifierType ufsGetArea( ufsType ufs,
             ufsSqlite -> statements[ UFS_STATEMENT_QUERY_AREAS_BY_NAME ] );
 
     if ( res != SQLITE_ROW ) {
-        ufsErrno = UFS_DOES_NOT_EXIST;
+        SET_STATUS( UFS_DOES_NOT_EXIST );
         return -1;
     }
 
-    ufsErrno = UFS_NO_ERROR;
+    SET_STATUS( UFS_NO_ERROR );
 	return sqlite3_column_int(
             ufsSqlite -> statements[ UFS_STATEMENT_QUERY_AREAS_BY_NAME ],
             0 );
 }
 
-ufsStatusType ufsProbeMapping( ufsType ufs,
-                               ufsIdentifierType area,
-                               ufsIdentifierType storage )
+bool ufsProbeMapping( ufsType ufs,
+                      ufsIdentifierType area,
+                      ufsIdentifierType storage,
+                      ufsStatusType *statusNo )
 {
     int res;
     ufsSqliteStruct *ufsSqlite;
     if ( !ufs || area < 0 || storage < 0 ) {
-        ufsErrno = UFS_BAD_CALL;
-        return ufsErrno;
+        SET_STATUS( UFS_BAD_CALL );
+        return false;
     }
 
     ufsSqlite = ufs;
@@ -702,22 +710,23 @@ ufsStatusType ufsProbeMapping( ufsType ufs,
             ufsSqlite -> statements[ UFS_STATEMENT_QUERY_MAPPINGS_BY_IDS ] );
 
     if ( res != SQLITE_ROW ) {
-        ufsErrno = UFS_DOES_NOT_EXIST;
-        return ufsErrno;
+        SET_STATUS( UFS_DOES_NOT_EXIST );
+        return false;
     }
 
-    ufsErrno = UFS_NO_ERROR;
-	return ufsErrno;
+    SET_STATUS( UFS_NO_ERROR );
+	return true;
 }
 
-ufsStatusType ufsRemoveStorage( ufsType ufs,
-                                ufsIdentifierType identifier )
+bool ufsRemoveStorage( ufsType ufs,
+                       ufsIdentifierType identifier,
+                       ufsStatusType *statusNo )
 {
     int res, type;
     ufsSqliteStruct *ufsSqlite;
     if ( !ufs || identifier <= 0 ) {
-        ufsErrno = UFS_BAD_CALL;
-        return ufsErrno;
+        SET_STATUS( UFS_BAD_CALL );
+        return false;
     }
 
     ufsSqlite = ufs;
@@ -734,8 +743,8 @@ ufsStatusType ufsRemoveStorage( ufsType ufs,
          ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_ID_TYPE_BY_ID ] );
 
     if ( res != SQLITE_ROW ) {
-        ufsErrno = UFS_DOES_NOT_EXIST;
-        return ufsErrno;
+        SET_STATUS( UFS_DOES_NOT_EXIST );
+        return false;
     }
 
     type = sqlite3_column_int( 
@@ -756,8 +765,8 @@ ufsStatusType ufsRemoveStorage( ufsType ufs,
              ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_PARENT ] );
 
         if ( res != SQLITE_DONE ) {
-            ufsErrno = UFS_DIRECTORY_IS_NOT_EMPTY;
-            return ufsErrno;
+            SET_STATUS( UFS_DIRECTORY_IS_NOT_EMPTY );
+            return false;
         }
     }
 
@@ -773,8 +782,8 @@ ufsStatusType ufsRemoveStorage( ufsType ufs,
          ufsSqlite -> statements[ UFS_STATEMENT_QUERY_MAPPINGS_BY_STORAGE_ID ] );
 
     if ( res != SQLITE_DONE ) {
-        ufsErrno = UFS_EXISTS_IN_EXPLICIT_MAPPING;
-        return ufsErrno;
+        SET_STATUS( UFS_EXISTS_IN_EXPLICIT_MAPPING );
+        return false;
     }
 
     /* We can now safely remove this storage.                                 */
@@ -789,22 +798,23 @@ ufsStatusType ufsRemoveStorage( ufsType ufs,
          ufsSqlite -> statements[ UFS_STATEMENT_REMOVE_STORAGE_BY_ID ] );
 
     if ( res != SQLITE_DONE ) {
-        ufsErrno = UFS_UNKNOWN_ERROR;
-        return ufsErrno;
+        SET_STATUS( UFS_UNKNOWN_ERROR );
+        return false;
     }
 
-    ufsErrno = UFS_NO_ERROR;
-	return ufsErrno;
+    SET_STATUS( UFS_NO_ERROR );
+	return true;
 }
 
-ufsStatusType ufsRemoveArea( ufsType ufs,
-                             ufsIdentifierType area )
+bool ufsRemoveArea( ufsType ufs,
+                    ufsIdentifierType area,
+                    ufsStatusType *statusNo )
 {
     int res;
     ufsSqliteStruct *ufsSqlite;
     if ( !ufs || area <= 0 ) {
-        ufsErrno = UFS_BAD_CALL;
-        return ufsErrno;
+        SET_STATUS( UFS_BAD_CALL );
+        return false;
 
     }
     ufsSqlite = ufs;
@@ -821,8 +831,8 @@ ufsStatusType ufsRemoveArea( ufsType ufs,
          ufsSqlite -> statements[ UFS_STATEMENT_QUERY_AREAS_BY_ID ] );
 
     if ( res != SQLITE_ROW ) {
-        ufsErrno = UFS_DOES_NOT_EXIST;
-        return ufsErrno;
+        SET_STATUS( UFS_DOES_NOT_EXIST );
+        return false;
     }
 
     /* Now make sure this area does not exist in a mapping.                   */
@@ -837,8 +847,8 @@ ufsStatusType ufsRemoveArea( ufsType ufs,
          ufsSqlite -> statements[ UFS_STATEMENT_QUERY_MAPPINGS_BY_AREA_ID ] );
 
     if ( res != SQLITE_DONE ) {
-        ufsErrno = UFS_EXISTS_IN_EXPLICIT_MAPPING;
-        return ufsErrno;
+        SET_STATUS( UFS_EXISTS_IN_EXPLICIT_MAPPING );
+        return false;
     }
 
     /* We can now safely remove this area.                                    */
@@ -853,23 +863,24 @@ ufsStatusType ufsRemoveArea( ufsType ufs,
          ufsSqlite -> statements[ UFS_STATEMENT_REMOVE_AREA_BY_ID ] );
 
     if ( res != SQLITE_DONE ) {
-        ufsErrno = UFS_UNKNOWN_ERROR;
-        return ufsErrno;
+        SET_STATUS( UFS_UNKNOWN_ERROR );
+        return false;
     }
 
-    ufsErrno = UFS_NO_ERROR;
-	return ufsErrno;
+    SET_STATUS( UFS_NO_ERROR );
+	return true;
 }
 
-ufsStatusType ufsRemoveMapping( ufsType ufs,
-                                ufsIdentifierType area,
-                                ufsIdentifierType storage )
+bool ufsRemoveMapping( ufsType ufs,
+                       ufsIdentifierType area,
+                       ufsIdentifierType storage,
+                       ufsStatusType *statusNo )
 {
     int res;
     ufsSqliteStruct *ufsSqlite;
     if ( !ufs || area <= 0 || storage <= 0 ) {
-        ufsErrno = UFS_BAD_CALL;
-        return ufsErrno;
+        SET_STATUS( UFS_BAD_CALL );
+        return false;
     }
 
     ufsSqlite = ufs;
@@ -889,8 +900,8 @@ ufsStatusType ufsRemoveMapping( ufsType ufs,
          ufsSqlite -> statements[ UFS_STATEMENT_QUERY_MAPPINGS_BY_IDS ] );
 
     if ( res != SQLITE_ROW ) {
-        ufsErrno = UFS_DOES_NOT_EXIST;
-        return ufsErrno;
+        SET_STATUS( UFS_DOES_NOT_EXIST );
+        return false;
     }
 
     /* Check if one of the children of this directory is mapped to this area. */
@@ -908,8 +919,8 @@ ufsStatusType ufsRemoveMapping( ufsType ufs,
          ufsSqlite -> statements[ UFS_STATEMENT_COMPOSITE_FIND_CHILD_MAPPINGS ] );
 
     if ( res != SQLITE_DONE ) {
-        ufsErrno = UFS_CHILD_EXISTS_IN_EXPLICIT_MAPPING;
-        return ufsErrno;
+        SET_STATUS( UFS_CHILD_EXISTS_IN_EXPLICIT_MAPPING );
+        return false;
     }
 
     /* We can just remove, no need to perform any more checks.                */
@@ -927,17 +938,18 @@ ufsStatusType ufsRemoveMapping( ufsType ufs,
          ufsSqlite -> statements[ UFS_STATEMENT_REMOVE_MAPPINGS_BY_IDS ] );
 
     if ( res != SQLITE_DONE ) {
-        ufsErrno = UFS_UNKNOWN_ERROR;
-        return ufsErrno;
+        SET_STATUS( UFS_UNKNOWN_ERROR );
+        return false;
     }
 
-    ufsErrno = UFS_NO_ERROR;
-	return ufsErrno;
+    SET_STATUS( UFS_NO_ERROR );
+	return true;
 }
 
 ufsIdentifierType ufsResolveStorageInView( ufsType ufs,
                                            ufsViewType view,
-                                           ufsIdentifierType storage )
+                                           ufsIdentifierType storage,
+                                           ufsStatusType *statusNo )
 {
     char areaList[ UFS_SQLITE_BUFF_SIZE ], query[ UFS_SQLITE_BUFF_SIZE_BIG ];
     int res;
@@ -945,24 +957,24 @@ ufsIdentifierType ufsResolveStorageInView( ufsType ufs,
     ufsSqliteStruct *ufsSqlite;
     uint64_t viewSize;
     if ( !ufs || !validateViewStructure( view, &viewSize ) || storage < 0 ) {
-        ufsErrno = UFS_BAD_CALL;
+        SET_STATUS( UFS_BAD_CALL );
         return -1;
     }
 
     ufsSqlite = ufs;
 
     if ( !validateViewSemantics( ufsSqlite, view, viewSize ) ) {
-        ufsErrno = UFS_INVALID_AREA_IN_VIEW;
+        SET_STATUS( UFS_INVALID_AREA_IN_VIEW );
         return -1;
     }
 
     if ( !viewSize ) {
-        ufsErrno = UFS_DOES_NOT_EXIST;
+        SET_STATUS( UFS_DOES_NOT_EXIST );
         return -1;
     }
 
     if ( storage == UFS_STORAGE_ROOT_IDENTIFIER ) {
-        ufsErrno = UFS_NO_ERROR;
+        SET_STATUS( UFS_NO_ERROR );
         return view[ 0 ];
     }
 
@@ -975,7 +987,7 @@ ufsIdentifierType ufsResolveStorageInView( ufsType ufs,
                               &statement,
                               NULL );
     if (res != SQLITE_OK) {
-        ufsErrno = UFS_UNKNOWN_ERROR;
+        SET_STATUS( UFS_UNKNOWN_ERROR );
         return -1;
     }
         
@@ -988,24 +1000,25 @@ ufsIdentifierType ufsResolveStorageInView( ufsType ufs,
         sqlite3_finalize( statement );
 
         if ( view[ viewSize - 1 ] == UFS_AREA_BASE_IDENTIFIER ) {
-            ufsErrno = UFS_CHECK_BASE;
+            SET_STATUS( UFS_CHECK_BASE );
             return -1;
         }
-        ufsErrno = UFS_DOES_NOT_EXIST;
+        SET_STATUS( UFS_DOES_NOT_EXIST );
         return -1;
     }
 
-    ufsErrno = UFS_NO_ERROR;
+    SET_STATUS( UFS_NO_ERROR );
     res = sqlite3_column_int( statement, 0 );
     sqlite3_finalize( statement );
 	return res;
 }
 
-ufsStatusType ufsIterateDirInView( ufsType ufs,
-                                   ufsViewType view,
-                                   ufsIdentifierType directory,
-                                   ufsDirIter iterator,
-                                   void *userData )
+bool ufsIterateDirInView( ufsType ufs,
+                          ufsViewType view,
+                          ufsIdentifierType directory,
+                          ufsDirIter iterator,
+                          void *userData,
+                          ufsStatusType *statusNo )
 {
     char areaList[ UFS_SQLITE_BUFF_SIZE ], query[ UFS_SQLITE_BUFF_SIZE_BIG ];
     int res;
@@ -1017,15 +1030,15 @@ ufsStatusType ufsIterateDirInView( ufsType ufs,
     uint64_t viewSize, total, i;
     if ( !ufs || !validateViewStructure( view, &viewSize ) ||
             directory < 0 || !iterator ) {
-        ufsErrno = UFS_BAD_CALL;
-        return ufsErrno;
+        SET_STATUS( UFS_BAD_CALL );
+        return false;
     }
 
     ufsSqlite = ufs;
 
     if ( !validateViewSemantics( ufsSqlite, view, viewSize ) ){
-        ufsErrno = UFS_INVALID_AREA_IN_VIEW;
-        return ufsErrno;
+        SET_STATUS( UFS_INVALID_AREA_IN_VIEW );
+        return false;
     }
 
     /* First check if the directory exists if it's not root.                  */
@@ -1043,15 +1056,15 @@ ufsStatusType ufsIterateDirInView( ufsType ufs,
         res = sqlite3_step(
             ufsSqlite -> statements[ UFS_STATEMENT_QUERY_STORAGE_BY_ID_TYPE ] );
         if ( res != SQLITE_ROW ) {
-            ufsErrno = UFS_DOES_NOT_EXIST;
-            return ufsErrno;
+            SET_STATUS( UFS_DOES_NOT_EXIST );
+            return false;
         }
     }
 
     /* Next, if the view is only BASE don't query, just return.               */
     if ( !viewSize || view[ 0 ] == UFS_AREA_BASE_IDENTIFIER ) {
-        ufsErrno = UFS_NO_ERROR;
-        return ufsErrno;
+        SET_STATUS( UFS_NO_ERROR );
+        return true;
     }
 
     /* Next do the actual union query.                                        */
@@ -1064,16 +1077,16 @@ ufsStatusType ufsIterateDirInView( ufsType ufs,
                               &statement,
                               NULL );
     if (res != SQLITE_OK ) {
-        ufsErrno = UFS_UNKNOWN_ERROR;
-        return -1;
+        SET_STATUS( UFS_UNKNOWN_ERROR );
+        return false;
     }
 
     sqlite3_bind_int( statement, 1, directory );
     res = sqlite3_step( statement );
     if ( res != SQLITE_ROW ) {
         sqlite3_finalize( statement );
-        ufsErrno = UFS_NO_ERROR;
-        return ufsErrno;
+        SET_STATUS( UFS_NO_ERROR );
+        return true;
     }
 
     i = 0;
@@ -1085,8 +1098,8 @@ ufsStatusType ufsIterateDirInView( ufsType ufs,
 
         if ( ( status = iterator( storage, name, i, total, userData ) ) != UFS_NO_ERROR ) {
             sqlite3_finalize( statement );
-            ufsErrno = status;
-            return ufsErrno;
+            SET_STATUS( status );
+            return false;
         }
         
         res = sqlite3_step( statement );
@@ -1094,6 +1107,6 @@ ufsStatusType ufsIterateDirInView( ufsType ufs,
     } while ( i < total && res == SQLITE_ROW );
 
     sqlite3_finalize( statement );
-    ufsErrno = UFS_NO_ERROR;
-	return ufsErrno;
+    SET_STATUS( UFS_NO_ERROR );
+	return true;
 }

@@ -87,13 +87,13 @@ static inline ufsTrieTraversalResult traverse( ufsTrieNode *node,
     return res;
 }
 
-static ufsTrieNode *createNode( const char *str )
+static ufsTrieNode *createNode( const char *str, ufsStatusType *statusNo )
 {
     ufsTrieNode *node;
 
     node = malloc( sizeof( *node ) );
     if ( !node ) {
-        ufsErrno = UFS_OUT_OF_MEMORY;
+        SET_STATUS( UFS_OUT_OF_MEMORY );
         return NULL;
     }
     memset( node, 0, sizeof( *node ) );
@@ -101,46 +101,48 @@ static ufsTrieNode *createNode( const char *str )
         node -> isTerminal = true;
         node -> terminalStr = strdup( str );
     }
-    ufsErrno = UFS_NO_ERROR;
+    SET_STATUS( UFS_NO_ERROR );
     return node;
 }
 
-ufsTrieType ufsTrieInit()
+ufsTrieType ufsTrieInit( ufsStatusType *statusNo )
 {
-    return createNode( NULL );
+    return createNode( NULL, statusNo );
 }
 
 static inline bool handleAddAtNode( ufsTrieTraversalResult *res,
                                     const char *str,
-                                    int strLen )
+                                    int strLen,
+                                    ufsStatusType *statusNo )
 {
     ufsTrieNode *newNode;
     ufsTrieEdge *edge;
     if ( !str[ res -> offset ] ) {
         if ( res -> node -> isTerminal ) {
-            ufsErrno = UFS_ALREADY_EXISTS;
+            SET_STATUS( UFS_ALREADY_EXISTS );
             return false;
         }
         res -> node -> isTerminal = true;
-        ufsErrno = UFS_NO_ERROR;
+        SET_STATUS( UFS_NO_ERROR );
         return true;
     }
 
     edge = &res -> node -> edges[ (unsigned char) str[ res -> offset ] ];
-    newNode = createNode( str + res -> offset );
+    newNode = createNode( str + res -> offset, statusNo );
 
     edge -> str = newNode -> terminalStr;
     edge -> node = newNode;
     edge -> start = 0;
     edge -> len = strLen - res -> offset;
 
-    ufsErrno = UFS_NO_ERROR;
+    SET_STATUS( UFS_NO_ERROR );
     return true;
 }
 
 static inline bool handleAddAtEdge( ufsTrieTraversalResult *res,
                                     const char *str,
-                                    int strLen )
+                                    int strLen,
+                                    ufsStatusType *statusNo )
 {
     ufsTrieNode *newNode, *tmp, *fork;
     ufsTrieEdge  *newEdge0, *newEdge1,
@@ -150,7 +152,7 @@ static inline bool handleAddAtEdge( ufsTrieTraversalResult *res,
     if ( !str[ res -> offset ] ) {
         tmp = edge -> node;
 
-        newNode = createNode( NULL );
+        newNode = createNode( NULL, statusNo );
         newNode -> isTerminal = true;
         newEdge0 = &newNode -> edges[ (unsigned char )edge -> str[ edge -> start + res -> prefixLen ] ];
 
@@ -162,17 +164,17 @@ static inline bool handleAddAtEdge( ufsTrieTraversalResult *res,
         edge -> node = newNode;
         edge -> len = res -> prefixLen;
 
-        ufsErrno = UFS_NO_ERROR;
+        SET_STATUS( UFS_NO_ERROR );
         return true;
 
     }
 
     tmp = edge -> node;
 
-    fork = createNode( NULL );
+    fork = createNode( NULL, statusNo );
 
     newEdge1 = &fork -> edges[ (unsigned char) str[ res -> offset ] ];
-    newEdge1 -> node = createNode( str + res -> offset );
+    newEdge1 -> node = createNode( str + res -> offset, statusNo );
     newEdge1 -> str = newEdge1 -> node -> terminalStr;
     newEdge1 -> start = 0;
     newEdge1 -> len = strLen - res -> offset;
@@ -186,35 +188,38 @@ static inline bool handleAddAtEdge( ufsTrieTraversalResult *res,
     edge -> len = res -> prefixLen;
     edge -> node = fork;
 
-    ufsErrno = UFS_NO_ERROR;
+    SET_STATUS( UFS_NO_ERROR );
     return true;
 }
 
-bool ufsTrieAdd( ufsTrieType ufsTrie, const char *str )
+bool ufsTrieAdd( ufsTrieType ufsTrie, const char *str, ufsStatusType *statusNo  )
 {
     int strLen;
     ufsTrieTraversalResult res;
-    static bool (*handlers[])( ufsTrieTraversalResult*, const char *, int) = {
+    static bool (*handlers[])( ufsTrieTraversalResult*,
+                               const char *,
+                               int,
+                               ufsStatusType *) = {
         handleAddAtNode,
         handleAddAtEdge
     };
 
     if ( !ufsTrie || !str ) {
-        ufsErrno = UFS_BAD_CALL;
+        SET_STATUS( UFS_BAD_CALL );
         return false;
     }
 
     strLen = strlen( str );
     res = traverse( ufsTrie, str, strLen );
 
-    return handlers[ res.type ]( &res, str, strLen );
+    return handlers[ res.type ]( &res, str, strLen, statusNo );
 }
 
-bool ufsTrieExists( ufsTrieType ufsTrie, const char *str )
+bool ufsTrieExists( ufsTrieType ufsTrie, const char *str, ufsStatusType *statusNo )
 {
     ufsTrieTraversalResult res;
     if ( !ufsTrie || !str ) {
-        ufsErrno = UFS_BAD_CALL;
+        SET_STATUS( UFS_BAD_CALL );
         return false;
     }
 
@@ -223,15 +228,15 @@ bool ufsTrieExists( ufsTrieType ufsTrie, const char *str )
     if ( res.type == UFS_TRIE_NODE &&
          res.node -> isTerminal &&
          !str[ res.offset ] ) {
-        ufsErrno = UFS_NO_ERROR;
+        SET_STATUS( UFS_NO_ERROR );
         return true;
     }
 
-    ufsErrno = UFS_DOES_NOT_EXIST;
+    SET_STATUS( UFS_DOES_NOT_EXIST );
     return false;
 }
 
-void ufsTrieDestroy( ufsTrieType ufsTrie )
+void ufsTrieDestroy( ufsTrieType ufsTrie, ufsStatusType *statusNo )
 {
     ufsTrieNode *stack[ UFS_STACK_SIZE ],
                 *current;
@@ -239,7 +244,7 @@ void ufsTrieDestroy( ufsTrieType ufsTrie )
              stackTop = 0;
 
     if ( !ufsTrie ) {
-        ufsErrno = UFS_NO_ERROR;
+        SET_STATUS( UFS_NO_ERROR );
         return;
     }
 
@@ -257,5 +262,5 @@ void ufsTrieDestroy( ufsTrieType ufsTrie )
         }
     }
 
-    ufsErrno = UFS_NO_ERROR;
+    SET_STATUS( UFS_NO_ERROR );
 }
