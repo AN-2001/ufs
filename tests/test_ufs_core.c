@@ -2251,7 +2251,6 @@ static void test_ufs_resolve_storage_in_view_root( void **state )
 
 /* ufsIterDirInView                                                           */
 
-
 struct iterValidationStruct {
     ufsIdentifierType idents[ 32 ];
     char *names[ 32 ];
@@ -2347,13 +2346,14 @@ static void test_ufs_iter_dir_in_view_bad_args( void **state )
     file0 = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_FILE,
-            TEST_FILE_NAME );
+            TEST_FILE_NAME,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( file0 );
 
-    area0 = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    area0 = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( area0 );
 
-    status = ufsAddMapping( ufsStruct -> ufs, area0, file0 );
+    status = ufsAddMapping( ufsStruct -> ufs, area0, file0, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
     ufsViewType view0 = { area0, UFS_VIEW_TERMINATOR };
@@ -2361,7 +2361,8 @@ static void test_ufs_iter_dir_in_view_bad_args( void **state )
             view0,
             UFS_STORAGE_ROOT_IDENTIFIER,
             iterDummy,
-            NULL );
+            NULL,
+            &errorNo );
     ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
 
     ufsViewType view1 = { area0, area0, UFS_VIEW_TERMINATOR };
@@ -2369,7 +2370,8 @@ static void test_ufs_iter_dir_in_view_bad_args( void **state )
             view1,
             UFS_STORAGE_ROOT_IDENTIFIER,
             iterDummy,
-            NULL );
+            NULL,
+            &errorNo );
     ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
 
     ufsViewType view2 = { UFS_AREA_BASE_IDENTIFIER, area0, UFS_VIEW_TERMINATOR };
@@ -2377,7 +2379,8 @@ static void test_ufs_iter_dir_in_view_bad_args( void **state )
             view2,
             UFS_STORAGE_ROOT_IDENTIFIER,
             iterDummy,
-            NULL );
+            NULL,
+            &errorNo );
     ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
 
     ufsViewType view3 = { -10, UFS_VIEW_TERMINATOR };
@@ -2385,21 +2388,24 @@ static void test_ufs_iter_dir_in_view_bad_args( void **state )
             view3,
             UFS_STORAGE_ROOT_IDENTIFIER,
             iterDummy,
-            NULL );
+            NULL,
+            &errorNo );
     ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
 
     status = ufsIterateDirInView( ufsStruct -> ufs,
             view0,
             -1,
             iterDummy,
-            NULL );
+            NULL,
+            &errorNo );
     ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
 
     status = ufsIterateDirInView( ufsStruct -> ufs,
             view0,
             UFS_STORAGE_ROOT_IDENTIFIER,
             NULL,
-            NULL );
+            NULL,
+            &errorNo );
     ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
 
 }
@@ -2417,7 +2423,8 @@ static void test_ufs_iter_dir_in_view_area_does_not_exist( void **state )
             view,
             1,
             iterDummy,
-            NULL );
+            NULL,
+            &errorNo );
     ASSERT_UFS_STATUS( status, UFS_INVALID_AREA_IN_VIEW );
 }
 
@@ -2434,7 +2441,8 @@ static void test_ufs_iter_dir_in_view_directory_does_not_exist( void **state )
             view,
             1,
             iterDummy,
-            NULL );
+            NULL,
+            &errorNo );
     ASSERT_UFS_STATUS( status, UFS_DOES_NOT_EXIST );
 }
 
@@ -2451,15 +2459,16 @@ static void test_ufs_iter_dir_in_view_callback_is_called( void **state )
     fileId = ufsAddStorage( ufsStruct -> ufs, 
                             UFS_STORAGE_ROOT_IDENTIFIER,
                             UFS_STORAGE_TYPE_FILE,
-                            TEST_FILE_NAME );
+                            TEST_FILE_NAME,
+                            &errorNo );
     ASSERT_UFS_NO_ERROR( fileId );
 
-    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
     ufsViewType view = { areaId, UFS_VIEW_TERMINATOR };
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
     isCalled = 0;
@@ -2467,7 +2476,8 @@ static void test_ufs_iter_dir_in_view_callback_is_called( void **state )
             view,
             UFS_STORAGE_ROOT_IDENTIFIER,
             iterDummy, 
-            &isCalled );
+            &isCalled,
+            &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
     assert_int_equal( isCalled, 1 );
@@ -2485,13 +2495,14 @@ static void test_ufs_iter_dir_in_view_name_is_not_null( void **state )
     fileId = ufsAddStorage( ufsStruct -> ufs, 
                             UFS_STORAGE_ROOT_IDENTIFIER,
                             UFS_STORAGE_TYPE_FILE,
-                            TEST_FILE_NAME );
+                            TEST_FILE_NAME,
+                            &errorNo );
     ASSERT_UFS_NO_ERROR( fileId );
 
-    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
     ufsViewType view = { areaId, UFS_VIEW_TERMINATOR };
@@ -2500,7 +2511,8 @@ static void test_ufs_iter_dir_in_view_name_is_not_null( void **state )
             view,
             UFS_STORAGE_ROOT_IDENTIFIER,
             iterNameCheck, 
-            NULL );
+            NULL,
+            &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 }
 
@@ -2516,13 +2528,14 @@ static void test_ufs_iter_dir_in_view_storage_is_valid( void **state )
     fileId = ufsAddStorage( ufsStruct -> ufs, 
                             UFS_STORAGE_ROOT_IDENTIFIER,
                             UFS_STORAGE_TYPE_FILE,
-                            TEST_FILE_NAME );
+                            TEST_FILE_NAME,
+                            &errorNo );
     ASSERT_UFS_NO_ERROR( fileId );
 
-    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
     ufsViewType view = { areaId, UFS_VIEW_TERMINATOR };
@@ -2531,7 +2544,8 @@ static void test_ufs_iter_dir_in_view_storage_is_valid( void **state )
             view,
             UFS_STORAGE_ROOT_IDENTIFIER,
             iterStorageCheck,
-            NULL );
+            NULL,
+            &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 }
 
@@ -2547,13 +2561,14 @@ static void test_ufs_iter_dir_in_view_entry_counters_are_valid( void **state )
     fileId = ufsAddStorage( ufsStruct -> ufs, 
                             UFS_STORAGE_ROOT_IDENTIFIER,
                             UFS_STORAGE_TYPE_FILE,
-                            TEST_FILE_NAME );
+                            TEST_FILE_NAME,
+                            &errorNo );
     ASSERT_UFS_NO_ERROR( fileId );
 
-    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
     ufsViewType view = { areaId, UFS_VIEW_TERMINATOR };
@@ -2562,7 +2577,8 @@ static void test_ufs_iter_dir_in_view_entry_counters_are_valid( void **state )
             view,
             UFS_STORAGE_ROOT_IDENTIFIER,
             iterEntryCountCheck,
-            NULL );
+            NULL,
+            &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
 }
@@ -2580,22 +2596,24 @@ static void test_ufs_iter_dir_in_view_return_is_propogated( void **state )
     fileId0 = ufsAddStorage( ufsStruct -> ufs, 
                             UFS_STORAGE_ROOT_IDENTIFIER,
                             UFS_STORAGE_TYPE_FILE,
-                            TEST_FILE_NAME_0 );
+                            TEST_FILE_NAME_0,
+                            &errorNo );
     ASSERT_UFS_NO_ERROR( fileId0 );
 
     fileId1 = ufsAddStorage( ufsStruct -> ufs, 
                             UFS_STORAGE_ROOT_IDENTIFIER,
                             UFS_STORAGE_TYPE_FILE,
-                            TEST_FILE_NAME_1 );
+                            TEST_FILE_NAME_1,
+                            &errorNo );
     ASSERT_UFS_NO_ERROR( fileId1 );
 
-    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId0 );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId0, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId1 );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId1, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
     ufsViewType view = { areaId, UFS_VIEW_TERMINATOR };
@@ -2605,7 +2623,8 @@ static void test_ufs_iter_dir_in_view_return_is_propogated( void **state )
             view,
             UFS_STORAGE_ROOT_IDENTIFIER,
             iterReturnValidator,
-            &numCalls );
+            &numCalls,
+            &errorNo );
     ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
     assert_int_equal( numCalls, 1 );
 }
@@ -2620,25 +2639,27 @@ static void test_ufs_iter_dir_in_view( void **state )
 
     ufsStruct = *state;
 
-    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
     fileId0 = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_FILE,
-            TEST_FILE_NAME_0 );
+            TEST_FILE_NAME_0,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( fileId0 );
 
     fileId1 = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_FILE,
-            TEST_FILE_NAME_1 );
+            TEST_FILE_NAME_1,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( fileId1 );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId0 );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId0, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId1 );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId1, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
     struct iterValidationStruct validator = {
@@ -2652,7 +2673,8 @@ static void test_ufs_iter_dir_in_view( void **state )
             view, 
             UFS_STORAGE_ROOT_IDENTIFIER, 
             iterValidator,
-            &validator );
+            &validator,
+            &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
     for (i = 0; validator.idents[ i ] != -1; i++)
         assert_int_equal( validator.seen[ i ], 1 );
@@ -2673,30 +2695,34 @@ static void test_ufs_iter_dir_in_view_view_max_size( void **state )
 
     for (i = 0; i < UFS_VIEW_MAX_SIZE; i++) {
         sprintf( buff, "view%d", i );
-        areaIds[ i ] = ufsAddArea( ufsStruct -> ufs, buff );
+        areaIds[ i ] = ufsAddArea( ufsStruct -> ufs, buff, &errorNo );
         ASSERT_UFS_NO_ERROR( areaIds[ i ] );
     }
 
     fileId0 = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_FILE,
-            TEST_FILE_NAME_0 );
+            TEST_FILE_NAME_0,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( fileId0 );
 
     fileId1 = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_FILE,
-            TEST_FILE_NAME_1 );
+            TEST_FILE_NAME_1,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( fileId1 );
 
     status = ufsAddMapping( ufsStruct -> ufs,
             areaIds[ UFS_VIEW_MAX_SIZE - 1 ],
-            fileId0 );
+            fileId0,
+            &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
     status = ufsAddMapping( ufsStruct -> ufs,
             areaIds[ UFS_VIEW_MAX_SIZE - 1 ],
-            fileId1 );
+            fileId1,
+            &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
     struct iterValidationStruct validator = {
@@ -2713,7 +2739,8 @@ static void test_ufs_iter_dir_in_view_view_max_size( void **state )
             view, 
             UFS_STORAGE_ROOT_IDENTIFIER, 
             iterValidator,
-            &validator );
+            &validator,
+            &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
     for (i = 0; validator.idents[ i ] != -1; i++)
         assert_int_equal( validator.seen[ i ], 1 );
@@ -2729,28 +2756,30 @@ static void test_ufs_iter_dir_in_view_multiple_areas( void **state )
 
     ufsStruct = *state;
 
-    areaId0 = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME_0 );
+    areaId0 = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME_0, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId0 );
 
-    areaId1 = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME_1 );
+    areaId1 = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME_1, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId1 );
 
     fileId0 = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_FILE,
-            TEST_FILE_NAME_0 );
+            TEST_FILE_NAME_0,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( fileId0 );
 
     fileId1 = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_FILE,
-            TEST_FILE_NAME_1 );
+            TEST_FILE_NAME_1,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( fileId1 );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId0, fileId0 );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId0, fileId0, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId1, fileId1 );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId1, fileId1, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
     struct iterValidationStruct validator = {
@@ -2764,7 +2793,8 @@ static void test_ufs_iter_dir_in_view_multiple_areas( void **state )
             view, 
             UFS_STORAGE_ROOT_IDENTIFIER, 
             iterValidator,
-            &validator );
+            &validator,
+            &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
     for (i = 0; validator.idents[ i ] != -1; i++)
         assert_int_equal( validator.seen[ i ], 1 );
@@ -2781,35 +2811,38 @@ static void test_ufs_iter_dir_in_view_dir_is_not_root( void **state )
 
     ufsStruct = *state;
 
-    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
     dirId = ufsAddStorage( ufsStruct -> ufs, 
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_DIRECTORY,
-            TEST_DIRECTORY_NAME );
+            TEST_DIRECTORY_NAME,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( dirId );
 
     fileId0 = ufsAddStorage( ufsStruct -> ufs,
             dirId,
             UFS_STORAGE_TYPE_FILE,
-            TEST_FILE_NAME_0 );
+            TEST_FILE_NAME_0,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( fileId0 );
 
     fileId1 = ufsAddStorage( ufsStruct -> ufs,
             dirId,
             UFS_STORAGE_TYPE_FILE,
-            TEST_FILE_NAME_1 );
+            TEST_FILE_NAME_1,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( fileId1 );
 
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId0 );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId0, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId1 );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId1, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
     struct iterValidationStruct validator = {
@@ -2823,7 +2856,8 @@ static void test_ufs_iter_dir_in_view_dir_is_not_root( void **state )
             view, 
             dirId, 
             iterValidator,
-            &validator );
+            &validator,
+            &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
     for (i = 0; validator.idents[ i ] != -1; i++)
         assert_int_equal( validator.seen[ i ], 1 );
@@ -2840,34 +2874,36 @@ static void test_ufs_iter_dir_in_view_multiple_areas_with_duplicates( void **sta
 
     ufsStruct = *state;
 
-    areaId0 = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME_0 );
+    areaId0 = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME_0, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId0 );
 
-    areaId1 = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME_1 );
+    areaId1 = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME_1, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId1 );
 
     fileId0 = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_FILE,
-            TEST_FILE_NAME_0 );
+            TEST_FILE_NAME_0,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( fileId0 );
 
     fileId1 = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_FILE,
-            TEST_FILE_NAME_1 );
+            TEST_FILE_NAME_1,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( fileId1 );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId0, fileId0 );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId0, fileId0, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId0, fileId1 );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId0, fileId1, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId1, fileId0 );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId1, fileId0, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId1, fileId1 );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId1, fileId1, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
     struct iterValidationStruct validator = {
@@ -2881,7 +2917,8 @@ static void test_ufs_iter_dir_in_view_multiple_areas_with_duplicates( void **sta
             view, 
             UFS_STORAGE_ROOT_IDENTIFIER, 
             iterValidator,
-            &validator );
+            &validator,
+            &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
     for (i = 0; validator.idents[ i ] != -1; i++)
         assert_int_equal( validator.seen[ i ], 1 );
@@ -2898,7 +2935,7 @@ static void test_ufs_iter_dir_in_view_empty_dir( void **state )
 
     ufsStruct = *state;
 
-    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
     ufsViewType view = { areaId, UFS_VIEW_TERMINATOR };
@@ -2908,7 +2945,8 @@ static void test_ufs_iter_dir_in_view_empty_dir( void **state )
             view,
             UFS_STORAGE_ROOT_IDENTIFIER,
             iterDummy, 
-            &isCalled );
+            &isCalled,
+            &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
     assert_int_equal( isCalled, 0 );
@@ -2924,25 +2962,27 @@ static void test_ufs_iter_dir_in_view_ends_with_base( void **state )
 
     ufsStruct = *state;
 
-    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
     fileId0 = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_FILE,
-            TEST_FILE_NAME_0 );
+            TEST_FILE_NAME_0,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( fileId0 );
 
     fileId1 = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_FILE,
-            TEST_FILE_NAME_1 );
+            TEST_FILE_NAME_1,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( fileId1 );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId0 );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId0, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId1 );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId1, &errorNo  );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
     struct iterValidationStruct validator = {
@@ -2956,7 +2996,8 @@ static void test_ufs_iter_dir_in_view_ends_with_base( void **state )
             view, 
             UFS_STORAGE_ROOT_IDENTIFIER, 
             iterValidator,
-            &validator );
+            &validator,
+            &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
     for (i = 0; validator.idents[ i ] != -1; i++)
         assert_int_equal( validator.seen[ i ], 1 );
@@ -2973,25 +3014,27 @@ static void test_ufs_iter_dir_in_view_only_base( void **state )
 
     ufsStruct = *state;
 
-    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
     fileId0 = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_FILE,
-            TEST_FILE_NAME_0 );
+            TEST_FILE_NAME_0,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( fileId0 );
 
     fileId1 = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_FILE,
-            TEST_FILE_NAME_1 );
+            TEST_FILE_NAME_1,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( fileId1 );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId0 );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId0, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId1 );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId1, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
     struct iterValidationStruct validator = {
@@ -3006,7 +3049,8 @@ static void test_ufs_iter_dir_in_view_only_base( void **state )
             view, 
             UFS_STORAGE_ROOT_IDENTIFIER, 
             iterDummy,
-            &isCalled );
+            &isCalled,
+            &errorNo );
 
     ASSERT_UFS_STATUS_NO_ERROR( status );
     assert_int_equal( isCalled, 0 );
@@ -3022,25 +3066,27 @@ static void test_ufs_iter_dir_in_view_empty_view( void **state )
 
     ufsStruct = *state;
 
-    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
     fileId0 = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_FILE,
-            TEST_FILE_NAME_0 );
+            TEST_FILE_NAME_0,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( fileId0 );
 
     fileId1 = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_FILE,
-            TEST_FILE_NAME_1 );
+            TEST_FILE_NAME_1,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( fileId1 );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId0 );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId0, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId1 );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId1, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
     struct iterValidationStruct validator = {
@@ -3055,7 +3101,8 @@ static void test_ufs_iter_dir_in_view_empty_view( void **state )
             view, 
             UFS_STORAGE_ROOT_IDENTIFIER, 
             iterDummy,
-            &isCalled );
+            &isCalled,
+            &errorNo );
 
     ASSERT_UFS_STATUS_NO_ERROR( status );
     assert_int_equal( isCalled, 0 );
@@ -3072,25 +3119,27 @@ static void test_ufs_iter_dir_in_view_remove_consinstency( void **state )
 
     ufsStruct = *state;
 
-    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
     fileId0 = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_FILE,
-            TEST_FILE_NAME_0 );
+            TEST_FILE_NAME_0,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( fileId0 );
 
     fileId1 = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_FILE,
-            TEST_FILE_NAME_1 );
+            TEST_FILE_NAME_1,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( fileId1 );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId0 );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId0, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId1 );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId1, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
     struct iterValidationStruct validator0 = {
@@ -3104,12 +3153,13 @@ static void test_ufs_iter_dir_in_view_remove_consinstency( void **state )
             view, 
             UFS_STORAGE_ROOT_IDENTIFIER, 
             iterValidator,
-            &validator0 );
+            &validator0,
+            &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
     for (i = 0; validator0.idents[ i ] != -1; i++)
         assert_int_equal( validator0.seen[ i ], 1 );
 
-    status = ufsRemoveMapping( ufsStruct -> ufs, areaId, fileId1 );
+    status = ufsRemoveMapping( ufsStruct -> ufs, areaId, fileId1, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
     struct iterValidationStruct validator1 = {
@@ -3122,7 +3172,8 @@ static void test_ufs_iter_dir_in_view_remove_consinstency( void **state )
             view, 
             UFS_STORAGE_ROOT_IDENTIFIER, 
             iterValidator,
-            &validator1 );
+            &validator1,
+            &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
     for (i = 0; validator1.idents[ i ] != -1; i++)
