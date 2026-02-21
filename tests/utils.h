@@ -27,7 +27,7 @@
 
 #define ASSERT_UFS_STATUS( returnVal, err ) \
     do { \
-        assert_int_equal( ( returnVal ), ( err ) ); \
+        assert_false( ( returnVal ) ); \
         assert_int_equal( errorNo, ( err ) ); \
     } while ( 0 )
 
@@ -39,7 +39,7 @@
 
 #define ASSERT_UFS_STATUS_NO_ERROR( returnVal ) \
     do { \
-        assert_int_equal( ( returnVal ), UFS_NO_ERROR ); \
+        assert_true( ( returnVal ) ); \
         assert_int_equal( errorNo, UFS_NO_ERROR ); \
     } while ( 0 )
 
