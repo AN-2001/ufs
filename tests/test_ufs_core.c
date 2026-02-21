@@ -1977,32 +1977,33 @@ static void test_ufs_resolve_storage_in_view_bad_args( void **state )
     file0 = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_FILE,
-            TEST_FILE_NAME );
+            TEST_FILE_NAME,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( file0 );
 
-    area0 = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    area0 = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( area0 );
 
-    status = ufsAddMapping( ufsStruct -> ufs, area0, file0 );
+    status = ufsAddMapping( ufsStruct -> ufs, area0, file0, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
     ufsViewType view0 = { area0, UFS_VIEW_TERMINATOR };
-    id = ufsResolveStorageInView( NULL, view0, file0 );
+    id = ufsResolveStorageInView( NULL, view0, file0, &errorNo );
     ASSERT_UFS_ERROR( id, UFS_BAD_CALL );
 
     ufsViewType view1 = { area0, area0, UFS_VIEW_TERMINATOR };
-    id = ufsResolveStorageInView( ufsStruct -> ufs, view1, file0 );
+    id = ufsResolveStorageInView( ufsStruct -> ufs, view1, file0, &errorNo );
     ASSERT_UFS_ERROR( id, UFS_BAD_CALL );
 
     ufsViewType view2 = { UFS_AREA_BASE_IDENTIFIER, area0, UFS_VIEW_TERMINATOR };
-    id = ufsResolveStorageInView( ufsStruct -> ufs, view2, file0 );
+    id = ufsResolveStorageInView( ufsStruct -> ufs, view2, file0, &errorNo );
     ASSERT_UFS_ERROR( id, UFS_BAD_CALL );
 
     ufsViewType view3 = { -10, UFS_VIEW_TERMINATOR };
-    id = ufsResolveStorageInView( ufsStruct -> ufs, view3, file0 );
+    id = ufsResolveStorageInView( ufsStruct -> ufs, view3, file0, &errorNo );
     ASSERT_UFS_ERROR( id, UFS_BAD_CALL );
 
-    id = ufsResolveStorageInView( ufsStruct -> ufs, view0, -1 );
+    id = ufsResolveStorageInView( ufsStruct -> ufs, view0, -1, &errorNo );
     ASSERT_UFS_ERROR( id, UFS_BAD_CALL );
 }
 
@@ -2015,7 +2016,7 @@ static void test_ufs_resolve_storage_in_view_area_does_not_exist( void **state )
 
     ufsStruct = *state;
 
-    id = ufsResolveStorageInView( ufsStruct -> ufs, view, 1 );
+    id = ufsResolveStorageInView( ufsStruct -> ufs, view, 1, &errorNo );
     ASSERT_UFS_ERROR( id, UFS_INVALID_AREA_IN_VIEW );
 }
 
@@ -2031,18 +2032,18 @@ static void test_ufs_resolve_storage_in_view( void **state )
     fileId = ufsAddStorage( ufsStruct -> ufs,
                 UFS_STORAGE_ROOT_IDENTIFIER,
                 UFS_STORAGE_TYPE_FILE,
-                TEST_FILE_NAME );
+                TEST_FILE_NAME,
+                &errorNo );
     ASSERT_UFS_NO_ERROR( fileId );
 
-    areaId = ufsAddArea( ufsStruct -> ufs,
-                    TEST_AREA_NAME );
+    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
     ufsViewType view = { areaId, UFS_VIEW_TERMINATOR };
-    ret = ufsResolveStorageInView( ufsStruct -> ufs, view, fileId );
+    ret = ufsResolveStorageInView( ufsStruct -> ufs, view, fileId, &errorNo );
     ASSERT_UFS_NO_ERROR( ret );
 
     assert_int_equal( ret, areaId );
@@ -2062,23 +2063,24 @@ static void test_ufs_resolve_storage_in_view_view_max_size( void **state )
     fileId = ufsAddStorage( ufsStruct -> ufs,
                 UFS_STORAGE_ROOT_IDENTIFIER,
                 UFS_STORAGE_TYPE_FILE,
-                TEST_FILE_NAME );
+                TEST_FILE_NAME,
+                &errorNo );
     ASSERT_UFS_NO_ERROR( fileId );
 
     for (i = 0; i < UFS_VIEW_MAX_SIZE + 1; i++) {
         sprintf( buff, "area%d", i );
-        areaIds[ i ] = ufsAddArea( ufsStruct -> ufs, buff );
+        areaIds[ i ] = ufsAddArea( ufsStruct -> ufs, buff, &errorNo );
         ASSERT_UFS_NO_ERROR( areaIds[ i ] );
     }
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaIds[ UFS_VIEW_MAX_SIZE - 1 ], fileId );
+    status = ufsAddMapping( ufsStruct -> ufs, areaIds[ UFS_VIEW_MAX_SIZE - 1 ], fileId, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
     ufsViewType view;
     for (i = 0; i < UFS_VIEW_MAX_SIZE; i++)
         view[ i ] = areaIds[ i ];
 
-    ret = ufsResolveStorageInView( ufsStruct -> ufs, view, fileId );
+    ret = ufsResolveStorageInView( ufsStruct -> ufs, view, fileId, &errorNo );
     ASSERT_UFS_NO_ERROR( ret );
 
     assert_int_equal( ret, areaIds[ UFS_VIEW_MAX_SIZE - 1 ] );
@@ -2093,11 +2095,12 @@ static void test_ufs_resolve_storage_in_view_base_fallback( void **state )
     ufsStruct = *state;
 
     areaId = ufsAddArea( ufsStruct -> ufs,
-                    TEST_AREA_NAME );
+                    TEST_AREA_NAME,
+                    &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
     ufsViewType view = { areaId, UFS_AREA_BASE_IDENTIFIER, UFS_VIEW_TERMINATOR };
-    ret = ufsResolveStorageInView( ufsStruct -> ufs, view, 1 );
+    ret = ufsResolveStorageInView( ufsStruct -> ufs, view, 1, &errorNo );
     ASSERT_UFS_ERROR( ret, UFS_CHECK_BASE );
 }
 
@@ -2113,27 +2116,26 @@ static void test_ufs_resolve_storage_in_view_two_areas( void **state )
     fileId = ufsAddStorage( ufsStruct -> ufs,
                 UFS_STORAGE_ROOT_IDENTIFIER,
                 UFS_STORAGE_TYPE_FILE,
-                TEST_FILE_NAME );
+                TEST_FILE_NAME,
+                &errorNo );
     ASSERT_UFS_NO_ERROR( fileId );
 
-    areaId0 = ufsAddArea( ufsStruct -> ufs,
-                    TEST_AREA_NAME_0 );
+    areaId0 = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME_0, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId0 );
 
-    areaId1 = ufsAddArea( ufsStruct -> ufs,
-                    TEST_AREA_NAME_1 );
+    areaId1 = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME_1, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId1 );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId0, fileId );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId0, fileId, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
     ufsViewType view0 = { areaId0, areaId1, UFS_VIEW_TERMINATOR };
-    ret = ufsResolveStorageInView( ufsStruct -> ufs, view0, fileId );
+    ret = ufsResolveStorageInView( ufsStruct -> ufs, view0, fileId, &errorNo );
     ASSERT_UFS_NO_ERROR( ret );
     assert_int_equal( ret, areaId0 );
 
     ufsViewType view1 = { areaId1, areaId0, UFS_VIEW_TERMINATOR };
-    ret = ufsResolveStorageInView( ufsStruct -> ufs, view1, fileId );
+    ret = ufsResolveStorageInView( ufsStruct -> ufs, view1, fileId, &errorNo );
     ASSERT_UFS_NO_ERROR( ret );
     assert_int_equal( ret, areaId0 );
 }
@@ -2146,12 +2148,11 @@ static void test_ufs_resolve_storage_in_view_file_does_not_exist( void **state )
 
     ufsStruct = *state;
 
-    areaId = ufsAddArea( ufsStruct -> ufs,
-                    TEST_AREA_NAME );
+    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
     ufsViewType view = { areaId, UFS_VIEW_TERMINATOR };
-    ret = ufsResolveStorageInView( ufsStruct -> ufs, view, 1 );
+    ret = ufsResolveStorageInView( ufsStruct -> ufs, view, 1, &errorNo );
     ASSERT_UFS_ERROR( ret, UFS_DOES_NOT_EXIST );
 
 }
@@ -2168,30 +2169,29 @@ static void test_ufs_resolve_storage_in_view_view_order( void **state )
     fileId = ufsAddStorage( ufsStruct -> ufs,
                 UFS_STORAGE_ROOT_IDENTIFIER,
                 UFS_STORAGE_TYPE_FILE,
-                TEST_FILE_NAME );
+                TEST_FILE_NAME,
+                &errorNo );
     ASSERT_UFS_NO_ERROR( fileId );
 
-    areaId0 = ufsAddArea( ufsStruct -> ufs,
-                    TEST_AREA_NAME_0 );
+    areaId0 = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME_0, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId0 );
 
-    areaId1 = ufsAddArea( ufsStruct -> ufs,
-                    TEST_AREA_NAME_1 );
+    areaId1 = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME_1, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId1 );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId0, fileId );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId0, fileId, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId1, fileId );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId1, fileId, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
     ufsViewType view0 = { areaId0, areaId1, UFS_VIEW_TERMINATOR };
-    ret = ufsResolveStorageInView( ufsStruct -> ufs, view0, fileId );
+    ret = ufsResolveStorageInView( ufsStruct -> ufs, view0, fileId, &errorNo );
     ASSERT_UFS_NO_ERROR( ret );
     assert_int_equal( ret, areaId0 );
 
     ufsViewType view1 = { areaId1, areaId0, UFS_VIEW_TERMINATOR };
-    ret = ufsResolveStorageInView( ufsStruct -> ufs, view1, fileId );
+    ret = ufsResolveStorageInView( ufsStruct -> ufs, view1, fileId, &errorNo );
     ASSERT_UFS_NO_ERROR( ret );
     assert_int_equal( ret, areaId1 );
 }
@@ -2205,7 +2205,7 @@ static void test_ufs_resolve_storage_in_view_empty_view( void **state )
     ufsStruct = *state;
     ufsViewType view = { UFS_VIEW_TERMINATOR };
 
-    id = ufsResolveStorageInView( ufsStruct -> ufs, view, 1 );
+    id = ufsResolveStorageInView( ufsStruct -> ufs, view, 1, &errorNo );
     ASSERT_UFS_ERROR( id, UFS_DOES_NOT_EXIST );
 }
 
@@ -2218,7 +2218,7 @@ static void test_ufs_resolve_storage_in_view_only_base( void **state )
     ufsStruct = *state;
     ufsViewType view = { UFS_AREA_BASE_IDENTIFIER, UFS_VIEW_TERMINATOR };
 
-    id = ufsResolveStorageInView( ufsStruct -> ufs, view, 1 );
+    id = ufsResolveStorageInView( ufsStruct -> ufs, view, 1, &errorNo );
     ASSERT_UFS_ERROR( id, UFS_CHECK_BASE );
 }
 
@@ -2231,20 +2231,20 @@ static void test_ufs_resolve_storage_in_view_root( void **state )
     ufsStruct = *state;
     ufsViewType view0 = { UFS_AREA_BASE_IDENTIFIER, UFS_VIEW_TERMINATOR };
 
-    id = ufsResolveStorageInView( ufsStruct -> ufs, view0, UFS_STORAGE_ROOT_IDENTIFIER );
+    id = ufsResolveStorageInView( ufsStruct -> ufs, view0, UFS_STORAGE_ROOT_IDENTIFIER, &errorNo );
     ASSERT_UFS_NO_ERROR( id );
     assert_int_equal( id, UFS_AREA_BASE_IDENTIFIER );
 
-    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
     ufsViewType view1 = { areaId, UFS_VIEW_TERMINATOR };
-    id = ufsResolveStorageInView( ufsStruct -> ufs, view1, UFS_STORAGE_ROOT_IDENTIFIER );
+    id = ufsResolveStorageInView( ufsStruct -> ufs, view1, UFS_STORAGE_ROOT_IDENTIFIER, &errorNo );
     ASSERT_UFS_NO_ERROR( id );
     assert_int_equal( id, areaId );
 
     ufsViewType view2 = { UFS_VIEW_TERMINATOR };
-    id = ufsResolveStorageInView( ufsStruct -> ufs, view2, UFS_STORAGE_ROOT_IDENTIFIER );
+    id = ufsResolveStorageInView( ufsStruct -> ufs, view2, UFS_STORAGE_ROOT_IDENTIFIER, &errorNo );
     ASSERT_UFS_ERROR( id, UFS_DOES_NOT_EXIST );
 }
 /* ########################################################################## */
