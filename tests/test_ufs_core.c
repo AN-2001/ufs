@@ -1204,13 +1204,13 @@ static void test_ufs_remove_storage_bad_args( void **state )
 
     ufsStruct = *state;
 
-    status = ufsRemoveStorage( NULL, 1 );
+    status = ufsRemoveStorage( NULL, 1, &errorNo );
     ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, UFS_STORAGE_ROOT_IDENTIFIER );
+    status = ufsRemoveStorage( ufsStruct -> ufs, UFS_STORAGE_ROOT_IDENTIFIER, &errorNo );
     ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, -1 );
+    status = ufsRemoveStorage( ufsStruct -> ufs, -1, &errorNo );
     ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
 
 }
@@ -1227,10 +1227,11 @@ static void test_ufs_remove_directory( void **state )
     id = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_DIRECTORY,
-            TEST_DIRECTORY_NAME );
+            TEST_DIRECTORY_NAME,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( id );
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, id );
+    status = ufsRemoveStorage( ufsStruct -> ufs, id, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 }
 
@@ -1246,17 +1247,19 @@ static void test_ufs_remove_directory_non_root( void **state )
     dirId = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_DIRECTORY,
-            TEST_DIRECTORY_NAME_0 );
+            TEST_DIRECTORY_NAME_0,
+            &errorNo );
 
     ASSERT_UFS_NO_ERROR( dirId );
 
     id = ufsAddStorage( ufsStruct -> ufs,
             dirId,
             UFS_STORAGE_TYPE_DIRECTORY,
-            TEST_DIRECTORY_NAME );
+            TEST_DIRECTORY_NAME,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( id );
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, id );
+    status = ufsRemoveStorage( ufsStruct -> ufs, id, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 }
 
@@ -1268,7 +1271,7 @@ static void test_ufs_remove_directory_does_not_exist( void **state )
 
     ufsStruct = *state;
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, 1 );
+    status = ufsRemoveStorage( ufsStruct -> ufs, 1, &errorNo );
     ASSERT_UFS_STATUS( status, UFS_DOES_NOT_EXIST );
 
 }
@@ -1285,17 +1288,19 @@ static void test_ufs_remove_directory_contains_file( void **state )
     dirId = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_DIRECTORY,
-            TEST_DIRECTORY_NAME );
+            TEST_DIRECTORY_NAME,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( dirId );
 
     fileId = ufsAddStorage( ufsStruct -> ufs,
             dirId,
             UFS_STORAGE_TYPE_FILE,
-            TEST_FILE_NAME );
+            TEST_FILE_NAME,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( fileId );
 
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, dirId );
+    status = ufsRemoveStorage( ufsStruct -> ufs, dirId, &errorNo );
     ASSERT_UFS_STATUS( status, UFS_DIRECTORY_IS_NOT_EMPTY );
 
 }
@@ -1309,19 +1314,20 @@ static void test_ufs_remove_directory_exists_in_mapping( void **state )
 
     ufsStruct = *state;
 
-    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
     dirId = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_DIRECTORY,
-            TEST_DIRECTORY_NAME );
+            TEST_DIRECTORY_NAME,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( dirId );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, dirId );
+    status = ufsRemoveStorage( ufsStruct -> ufs, dirId, &errorNo );
     ASSERT_UFS_STATUS( status, UFS_EXISTS_IN_EXPLICIT_MAPPING );
 
 }
@@ -1338,13 +1344,14 @@ static void test_ufs_remove_directory_double_remove( void **state )
     dirId = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_DIRECTORY,
-            TEST_DIRECTORY_NAME );
+            TEST_DIRECTORY_NAME,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( dirId );
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, dirId );
+    status = ufsRemoveStorage( ufsStruct -> ufs, dirId, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, dirId );
+    status = ufsRemoveStorage( ufsStruct -> ufs, dirId, &errorNo );
     ASSERT_UFS_STATUS( status, UFS_DOES_NOT_EXIST );
 }
 
@@ -1360,16 +1367,18 @@ static void test_ufs_remove_directory_remove_then_add( void **state )
     dirId = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_DIRECTORY,
-            TEST_DIRECTORY_NAME );
+            TEST_DIRECTORY_NAME,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( dirId );
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, dirId );
+    status = ufsRemoveStorage( ufsStruct -> ufs, dirId, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
     dirId = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_DIRECTORY,
-            TEST_DIRECTORY_NAME );
+            TEST_DIRECTORY_NAME,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( dirId );
 }
 
@@ -1385,16 +1394,18 @@ static void test_ufs_remove_directory_remove_then_get( void **state )
     dirId = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_DIRECTORY,
-            TEST_DIRECTORY_NAME );
+            TEST_DIRECTORY_NAME,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( dirId );
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, dirId );
+    status = ufsRemoveStorage( ufsStruct -> ufs, dirId, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
     dirId = ufsGetStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_DIRECTORY,
-            TEST_DIRECTORY_NAME );
+            TEST_DIRECTORY_NAME,
+            &errorNo );
     ASSERT_UFS_ERROR( dirId, UFS_DOES_NOT_EXIST );
 
 }
@@ -1411,10 +1422,11 @@ static void test_ufs_remove_file( void **state )
     fileId = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_FILE,
-            TEST_FILE_NAME );
+            TEST_FILE_NAME,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( fileId );
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, fileId );
+    status = ufsRemoveStorage( ufsStruct -> ufs, fileId, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 }
 
@@ -1430,16 +1442,18 @@ static void test_ufs_remove_file_non_root( void **state )
     dirId = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_DIRECTORY,
-            TEST_DIRECTORY_NAME );
+            TEST_DIRECTORY_NAME,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( dirId );
 
     fileId = ufsAddStorage( ufsStruct -> ufs,
             dirId,
             UFS_STORAGE_TYPE_FILE,
-            TEST_FILE_NAME );
+            TEST_FILE_NAME,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( fileId );
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, fileId );
+    status = ufsRemoveStorage( ufsStruct -> ufs, fileId, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 }
 
@@ -1451,7 +1465,7 @@ static void test_ufs_remove_file_does_not_exist( void **state )
 
     ufsStruct = *state;
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, 1 );
+    status = ufsRemoveStorage( ufsStruct -> ufs, 1, &errorNo );
     ASSERT_UFS_STATUS( status, UFS_DOES_NOT_EXIST );
 }
 
@@ -1464,19 +1478,20 @@ static void test_ufs_remove_file_exists_in_mapping( void **state )
 
     ufsStruct = *state;
 
-    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
     fileId = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_FILE,
-            TEST_FILE_NAME );
+            TEST_FILE_NAME,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( fileId );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, fileId );
+    status = ufsRemoveStorage( ufsStruct -> ufs, fileId, &errorNo );
     ASSERT_UFS_STATUS( status, UFS_EXISTS_IN_EXPLICIT_MAPPING );
 }
 
@@ -1492,19 +1507,21 @@ static void test_ufs_remove_file_double_remove( void **state )
     dirId = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_DIRECTORY,
-            TEST_DIRECTORY_NAME );
+            TEST_DIRECTORY_NAME,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( dirId );
 
     fileId = ufsAddStorage( ufsStruct -> ufs,
             dirId,
             UFS_STORAGE_TYPE_FILE,
-            TEST_FILE_NAME );
+            TEST_FILE_NAME,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( fileId );
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, fileId );
+    status = ufsRemoveStorage( ufsStruct -> ufs, fileId, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, fileId );
+    status = ufsRemoveStorage( ufsStruct -> ufs, fileId, &errorNo );
     ASSERT_UFS_STATUS( status, UFS_DOES_NOT_EXIST );
 
 }
@@ -1521,22 +1538,25 @@ static void test_ufs_remove_file_remove_then_add( void **state )
     dirId = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_DIRECTORY,
-            TEST_DIRECTORY_NAME );
+            TEST_DIRECTORY_NAME,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( dirId );
 
     fileId = ufsAddStorage( ufsStruct -> ufs,
             dirId,
             UFS_STORAGE_TYPE_FILE,
-            TEST_FILE_NAME );
+            TEST_FILE_NAME,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( fileId );
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, fileId );
+    status = ufsRemoveStorage( ufsStruct -> ufs, fileId, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
     fileId = ufsAddStorage( ufsStruct -> ufs,
             dirId,
             UFS_STORAGE_TYPE_FILE,
-            TEST_FILE_NAME );
+            TEST_FILE_NAME,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( fileId );
 
 }
@@ -1553,22 +1573,25 @@ static void test_ufs_remove_file_remove_then_get( void **state )
     dirId = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_DIRECTORY,
-            TEST_DIRECTORY_NAME );
+            TEST_DIRECTORY_NAME,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( dirId );
 
     fileId = ufsAddStorage( ufsStruct -> ufs,
             dirId,
             UFS_STORAGE_TYPE_FILE,
-            TEST_FILE_NAME );
+            TEST_FILE_NAME,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( fileId );
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, fileId );
+    status = ufsRemoveStorage( ufsStruct -> ufs, fileId, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
     fileId = ufsGetStorage( ufsStruct -> ufs,
             dirId,
             UFS_STORAGE_TYPE_FILE,
-            TEST_FILE_NAME );
+            TEST_FILE_NAME,
+            &errorNo );
     ASSERT_UFS_ERROR( fileId, UFS_DOES_NOT_EXIST );
 
 }
@@ -1583,13 +1606,13 @@ static void test_ufs_remove_area_bad_args( void **state )
 
     ufsStruct = *state;
 
-    status = ufsRemoveArea( NULL, 1 );
+    status = ufsRemoveArea( NULL, 1, &errorNo );
     ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
 
-    status = ufsRemoveArea( ufsStruct -> ufs, 0 );
+    status = ufsRemoveArea( ufsStruct -> ufs, 0, &errorNo );
     ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
 
-    status = ufsRemoveArea( ufsStruct -> ufs, -1 );
+    status = ufsRemoveArea( ufsStruct -> ufs, -1, &errorNo );
     ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
 
 }
@@ -1603,10 +1626,10 @@ static void test_ufs_remove_area( void **state )
 
     ufsStruct = *state;
 
-    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    status = ufsRemoveArea( ufsStruct -> ufs, areaId );
+    status = ufsRemoveArea( ufsStruct -> ufs, areaId, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 }
 
@@ -1618,7 +1641,7 @@ static void test_ufs_remove_area_does_not_exist( void **state )
 
     ufsStruct = *state;
 
-    status = ufsRemoveArea( ufsStruct -> ufs, 1 );
+    status = ufsRemoveArea( ufsStruct -> ufs, 1, &errorNo );
     ASSERT_UFS_STATUS( status, UFS_DOES_NOT_EXIST );
 
 }
@@ -1632,19 +1655,20 @@ static void test_ufs_remove_area_exists_in_mapping( void **state )
 
     ufsStruct = *state;
 
-    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
     fileId = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_FILE,
-            TEST_FILE_NAME );
+            TEST_FILE_NAME,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( fileId );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
-    status = ufsRemoveArea( ufsStruct -> ufs, areaId );
+    status = ufsRemoveArea( ufsStruct -> ufs, areaId, &errorNo );
     ASSERT_UFS_STATUS( status, UFS_EXISTS_IN_EXPLICIT_MAPPING );
 
 }
@@ -1658,13 +1682,13 @@ static void test_ufs_remove_area_double_remove( void **state )
 
     ufsStruct = *state;
 
-    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    status = ufsRemoveArea( ufsStruct -> ufs, areaId );
+    status = ufsRemoveArea( ufsStruct -> ufs, areaId, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
-    status = ufsRemoveArea( ufsStruct -> ufs, areaId );
+    status = ufsRemoveArea( ufsStruct -> ufs, areaId, &errorNo );
     ASSERT_UFS_STATUS( status, UFS_DOES_NOT_EXIST );
 
 }
@@ -1678,13 +1702,13 @@ static void test_ufs_remove_area_remove_then_add( void **state )
 
     ufsStruct = *state;
 
-    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    status = ufsRemoveArea( ufsStruct -> ufs, areaId );
+    status = ufsRemoveArea( ufsStruct -> ufs, areaId, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
-    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
 }
@@ -1698,13 +1722,13 @@ static void test_ufs_remove_area_remove_then_get( void **state )
 
     ufsStruct = *state;
 
-    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    status = ufsRemoveArea( ufsStruct -> ufs, areaId );
+    status = ufsRemoveArea( ufsStruct -> ufs, areaId, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
-    areaId = ufsGetArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    areaId = ufsGetArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_ERROR( areaId, UFS_DOES_NOT_EXIST );
 
 }
@@ -1719,13 +1743,13 @@ static void test_ufs_remove_mapping_bad_args( void **state )
 
     ufsStruct = *state;
 
-    status = ufsRemoveMapping( NULL, 1, 1);
+    status = ufsRemoveMapping( NULL, 1, 1, &errorNo );
     ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
 
-    status = ufsRemoveMapping( ufsStruct -> ufs, -1, 1);
+    status = ufsRemoveMapping( ufsStruct -> ufs, -1, 1, &errorNo );
     ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
 
-    status = ufsRemoveMapping( ufsStruct -> ufs, 1, -1);
+    status = ufsRemoveMapping( ufsStruct -> ufs, 1, -1, &errorNo );
     ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
 
 }
@@ -1742,17 +1766,18 @@ static void test_ufs_remove_mapping( void **state )
     dirId = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_DIRECTORY,
-            TEST_DIRECTORY_NAME );
+            TEST_DIRECTORY_NAME,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( dirId );
 
-    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
 
-    status = ufsRemoveMapping( ufsStruct -> ufs, areaId, dirId);
+    status = ufsRemoveMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 }
 
@@ -1764,7 +1789,7 @@ static void test_ufs_remove_mapping_does_not_exist( void **state )
 
     ufsStruct = *state;
 
-    status = ufsRemoveMapping( ufsStruct -> ufs, 1, 1 );
+    status = ufsRemoveMapping( ufsStruct -> ufs, 1, 1, &errorNo );
     ASSERT_UFS_STATUS( status, UFS_DOES_NOT_EXIST );
 
 }
@@ -1781,25 +1806,26 @@ static void test_ufs_remove_mapping_no_side_effects( void **state )
     dirId0 = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_DIRECTORY,
-            TEST_DIRECTORY_NAME );
+            TEST_DIRECTORY_NAME,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( dirId0 );
 
-    areaId0 = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    areaId0 = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId0 );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId0, dirId0 );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId0, dirId0, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
 
-    status = ufsRemoveMapping( ufsStruct -> ufs, areaId0, dirId0);
+    status = ufsRemoveMapping( ufsStruct -> ufs, areaId0, dirId0, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
-    areaId1 = ufsGetArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    areaId1 = ufsGetArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId1 );
 
     assert_int_equal( areaId0, areaId1 );
 
-    dirId1 = ufsGetArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    dirId1 = ufsGetArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( dirId1 );
 
     assert_int_equal( dirId0, dirId1 );
@@ -1818,20 +1844,21 @@ static void test_ufs_remove_mapping_double_remove( void **state )
     dirId = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_DIRECTORY,
-            TEST_DIRECTORY_NAME );
+            TEST_DIRECTORY_NAME,
+            &errorNo);
     ASSERT_UFS_NO_ERROR( dirId );
 
-    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
 
-    status = ufsRemoveMapping( ufsStruct -> ufs, areaId, dirId);
+    status = ufsRemoveMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
-    status = ufsRemoveMapping( ufsStruct -> ufs, areaId, dirId);
+    status = ufsRemoveMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
     ASSERT_UFS_STATUS( status, UFS_DOES_NOT_EXIST );
 
 }
@@ -1848,20 +1875,21 @@ static void test_ufs_remove_mapping_remove_then_add( void **state )
     dirId = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_DIRECTORY,
-            TEST_DIRECTORY_NAME );
+            TEST_DIRECTORY_NAME,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( dirId );
 
-    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
 
-    status = ufsRemoveMapping( ufsStruct -> ufs, areaId, dirId);
+    status = ufsRemoveMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
 }
@@ -1878,22 +1906,21 @@ static void test_ufs_remove_mapping_remove_then_probe( void **state )
     dirId = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_DIRECTORY,
-            TEST_DIRECTORY_NAME );
+            TEST_DIRECTORY_NAME,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( dirId );
 
-    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
-
-    status = ufsRemoveMapping( ufsStruct -> ufs, areaId, dirId);
+    status = ufsRemoveMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
-    status = ufsProbeMapping( ufsStruct -> ufs, areaId, dirId );
+    status = ufsProbeMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
     ASSERT_UFS_STATUS( status, UFS_DOES_NOT_EXIST );
-
 }
 
 static void test_ufs_remove_mapping_child_is_mapped( void **state )
@@ -1908,25 +1935,27 @@ static void test_ufs_remove_mapping_child_is_mapped( void **state )
     dirId0 = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
             UFS_STORAGE_TYPE_DIRECTORY,
-            TEST_DIRECTORY_NAME );
+            TEST_DIRECTORY_NAME,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( dirId0 );
 
     dirId1 = ufsAddStorage( ufsStruct -> ufs,
             dirId0,
             UFS_STORAGE_TYPE_DIRECTORY,
-            TEST_DIRECTORY_NAME );
+            TEST_DIRECTORY_NAME,
+            &errorNo );
     ASSERT_UFS_NO_ERROR( dirId1 );
 
-    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME );
+    areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId0 );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId0, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId1 );
+    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId1, &errorNo );
     ASSERT_UFS_STATUS_NO_ERROR( status );
 
-    status = ufsRemoveMapping( ufsStruct -> ufs, areaId, dirId0 );
+    status = ufsRemoveMapping( ufsStruct -> ufs, areaId, dirId0, &errorNo );
 
     ASSERT_UFS_STATUS( status, UFS_CHILD_EXISTS_IN_EXPLICIT_MAPPING );
 }
