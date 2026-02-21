@@ -8,6 +8,7 @@
 \******************************************************************************/
 
 #include "ufs_core.h"
+#include "ufs_utils.h"
 #include <ufs_trie.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -100,6 +101,11 @@ static ufsTrieNode *createNode( const char *str, ufsStatusType *statusNo )
     if ( str ) {
         node -> isTerminal = true;
         node -> terminalStr = strdup( str );
+        if ( !node -> terminalStr ) {
+            free( node );
+            SET_STATUS( UFS_OUT_OF_MEMORY );
+            return NULL;
+        }
     }
     SET_STATUS( UFS_NO_ERROR );
     return node;
@@ -129,6 +135,9 @@ static inline bool handleAddAtNode( ufsTrieTraversalResult *res,
 
     edge = &res -> node -> edges[ (unsigned char) str[ res -> offset ] ];
     newNode = createNode( str + res -> offset, statusNo );
+    if ( !newNode ) {
+        return NULL;
+    }
 
     edge -> str = newNode -> terminalStr;
     edge -> node = newNode;
@@ -153,6 +162,10 @@ static inline bool handleAddAtEdge( ufsTrieTraversalResult *res,
         tmp = edge -> node;
 
         newNode = createNode( NULL, statusNo );
+        if ( !newNode ) {
+            return NULL;
+        }
+
         newNode -> isTerminal = true;
         newEdge0 = &newNode -> edges[ (unsigned char )edge -> str[ edge -> start + res -> prefixLen ] ];
 
@@ -172,9 +185,17 @@ static inline bool handleAddAtEdge( ufsTrieTraversalResult *res,
     tmp = edge -> node;
 
     fork = createNode( NULL, statusNo );
+    if (!fork) {
+        return NULL;
+    }
 
     newEdge1 = &fork -> edges[ (unsigned char) str[ res -> offset ] ];
     newEdge1 -> node = createNode( str + res -> offset, statusNo );
+    if ( !newEdge1 ) {
+        free( fork );
+        return NULL;
+    }
+
     newEdge1 -> str = newEdge1 -> node -> terminalStr;
     newEdge1 -> start = 0;
     newEdge1 -> len = strLen - res -> offset;
