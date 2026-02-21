@@ -583,27 +583,28 @@ static void test_ufs_add_area_illegal_name( void **state )
 static void test_ufs_add_mapping_bad_args( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
-    status = ufsAddMapping( NULL, 1, 1, &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
+    res = ufsAddMapping( NULL, 1, 1, &errorNo );
+    ASSERT_UFS_BOOL( res, UFS_BAD_CALL );
 
-    status = ufsAddMapping( ufsStruct -> ufs, -1, 1, &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
+    res = ufsAddMapping( ufsStruct -> ufs, -1, 1, &errorNo );
+    ASSERT_UFS_BOOL( res, UFS_BAD_CALL );
 
-    status = ufsAddMapping( ufsStruct -> ufs, 1, -1, &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
+    res = ufsAddMapping( ufsStruct -> ufs, 1, -1, &errorNo );
+    ASSERT_UFS_BOOL( res, UFS_BAD_CALL );
 
 }
 
 static void test_ufs_add_mapping_area_file( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
-    ufsStatusType status, areaId, fileId;
+    ufsIdentifierType areaId, fileId;
 
     ufsStruct = *state;
 
@@ -617,16 +618,16 @@ static void test_ufs_add_mapping_area_file( void **state )
             &errorNo );
     ASSERT_UFS_NO_ERROR( fileId );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
-
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, fileId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 }
 
 static void test_ufs_add_mapping_area_directory( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
-    ufsStatusType status, areaId, dirId;
+    ufsIdentifierType areaId, dirId;
 
     ufsStruct = *state;
 
@@ -640,16 +641,17 @@ static void test_ufs_add_mapping_area_directory( void **state )
             &errorNo );
     ASSERT_UFS_NO_ERROR( dirId );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
 }
 
 static void test_ufs_add_mapping_duplicate( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
-    ufsStatusType status, areaId, fileId;
+    ufsIdentifierType areaId, fileId;
 
     ufsStruct = *state;
 
@@ -663,18 +665,19 @@ static void test_ufs_add_mapping_duplicate( void **state )
             &errorNo );
     ASSERT_UFS_NO_ERROR( fileId );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, fileId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId, &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_ALREADY_EXISTS );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, fileId, &errorNo );
+    ASSERT_UFS_BOOL( res, UFS_ALREADY_EXISTS );
 }
 
 static void test_ufs_add_mapping_area_does_not_exist( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
-    ufsStatusType status, dirId, fileId;
+    ufsIdentifierType dirId, fileId;
 
     ufsStruct = *state;
 
@@ -692,31 +695,33 @@ static void test_ufs_add_mapping_area_does_not_exist( void **state )
             &errorNo );
     ASSERT_UFS_NO_ERROR( fileId );
 
-    status = ufsAddMapping( ufsStruct -> ufs, 1, fileId, &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_DOES_NOT_EXIST );
+    res = ufsAddMapping( ufsStruct -> ufs, 1, fileId, &errorNo );
+    ASSERT_UFS_BOOL( res, UFS_DOES_NOT_EXIST );
 
 }
 
 static void test_ufs_add_mapping_file_does_not_exist( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
-    ufsStatusType status, areaId;
+    ufsIdentifierType areaId;
 
     ufsStruct = *state;
 
     areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, 1, &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_DOES_NOT_EXIST );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, 1, &errorNo );
+    ASSERT_UFS_BOOL( res, UFS_DOES_NOT_EXIST );
 }
 
 static void test_ufs_add_mapping_parent_is_not_mapped( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
-    ufsStatusType status, areaId, fileId, dirId0, dirId1;
+    ufsIdentifierType areaId, fileId, dirId0, dirId1;
 
     ufsStruct = *state;
 
@@ -748,11 +753,11 @@ static void test_ufs_add_mapping_parent_is_not_mapped( void **state )
 
     ASSERT_UFS_NO_ERROR( areaId );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId, &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_PARENT_IS_NOT_MAPPED );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, fileId, &errorNo );
+    ASSERT_UFS_BOOL( res, UFS_PARENT_IS_NOT_MAPPED );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId1, &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_PARENT_IS_NOT_MAPPED );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, dirId1, &errorNo );
+    ASSERT_UFS_BOOL( res, UFS_PARENT_IS_NOT_MAPPED );
 }
 /* ########################################################################## */
 
@@ -1101,28 +1106,28 @@ static void test_ufs_get_area_does_not_exist( void **state )
 static void test_ufs_probe_mapping_bad_args( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
-    status = ufsProbeMapping( NULL, 1, 1, &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
+    res = ufsProbeMapping( NULL, 1, 1, &errorNo );
+    ASSERT_UFS_BOOL( res, UFS_BAD_CALL );
 
-    status = ufsProbeMapping( ufsStruct -> ufs, -1, 1, &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
+    res = ufsProbeMapping( ufsStruct -> ufs, -1, 1, &errorNo );
+    ASSERT_UFS_BOOL( res, UFS_BAD_CALL );
 
-    status = ufsProbeMapping( ufsStruct -> ufs, 1, -1, &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
+    res = ufsProbeMapping( ufsStruct -> ufs, 1, -1, &errorNo );
+    ASSERT_UFS_BOOL( res, UFS_BAD_CALL );
 
 }
 
 static void test_ufs_probe_mapping( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType areaId, fileId;
-    ufsStatusType status0, status1;
 
     ufsStruct = *state;
 
@@ -1136,19 +1141,19 @@ static void test_ufs_probe_mapping( void **state )
             &errorNo );
     ASSERT_UFS_NO_ERROR( fileId );
 
-    status0 = ufsAddMapping( ufsStruct -> ufs, areaId, fileId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status0 );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, fileId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
-    status1 = ufsProbeMapping( ufsStruct -> ufs, areaId, fileId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status1 );
+    res = ufsProbeMapping( ufsStruct -> ufs, areaId, fileId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 }
 
 static void test_ufs_probe_mapping_area_does_not_exist( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType fileId;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
@@ -1159,17 +1164,16 @@ static void test_ufs_probe_mapping_area_does_not_exist( void **state )
             &errorNo );
     ASSERT_UFS_NO_ERROR( fileId );
 
-    status = ufsProbeMapping( ufsStruct -> ufs, 1, fileId, &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_DOES_NOT_EXIST );
-
+    res = ufsProbeMapping( ufsStruct -> ufs, 1, fileId, &errorNo );
+    ASSERT_UFS_BOOL( res, UFS_DOES_NOT_EXIST );
 }
 
 static void test_ufs_probe_mapping_file_does_not_exist( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType areaId;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
@@ -1177,21 +1181,20 @@ static void test_ufs_probe_mapping_file_does_not_exist( void **state )
     ASSERT_UFS_NO_ERROR( areaId );
 
 
-    status = ufsProbeMapping( ufsStruct -> ufs, areaId, 1, &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_DOES_NOT_EXIST );
-
+    res = ufsProbeMapping( ufsStruct -> ufs, areaId, 1, &errorNo );
+    ASSERT_UFS_BOOL( res, UFS_DOES_NOT_EXIST );
 }
 
 static void test_ufs_probe_mapping_mapping_does_not_exist( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
-    status = ufsProbeMapping( ufsStruct -> ufs, 1, 1, &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_DOES_NOT_EXIST );
+    res = ufsProbeMapping( ufsStruct -> ufs, 1, 1, &errorNo );
+    ASSERT_UFS_BOOL( res, UFS_DOES_NOT_EXIST );
 }
 /* ########################################################################## */
 
@@ -1199,28 +1202,27 @@ static void test_ufs_probe_mapping_mapping_does_not_exist( void **state )
 static void test_ufs_remove_storage_bad_args( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
-    status = ufsRemoveStorage( NULL, 1, &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
+    res = ufsRemoveStorage( NULL, 1, &errorNo );
+    ASSERT_UFS_BOOL( res, UFS_BAD_CALL );
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, UFS_STORAGE_ROOT_IDENTIFIER, &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
+    res = ufsRemoveStorage( ufsStruct -> ufs, UFS_STORAGE_ROOT_IDENTIFIER, &errorNo );
+    ASSERT_UFS_BOOL( res, UFS_BAD_CALL );
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, -1, &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
-
+    res = ufsRemoveStorage( ufsStruct -> ufs, -1, &errorNo );
+    ASSERT_UFS_BOOL( res, UFS_BAD_CALL );
 }
 
 static void test_ufs_remove_directory( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType id;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
@@ -1231,16 +1233,16 @@ static void test_ufs_remove_directory( void **state )
             &errorNo );
     ASSERT_UFS_NO_ERROR( id );
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, id, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsRemoveStorage( ufsStruct -> ufs, id, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 }
 
 static void test_ufs_remove_directory_non_root( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType id, dirId;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
@@ -1259,29 +1261,28 @@ static void test_ufs_remove_directory_non_root( void **state )
             &errorNo );
     ASSERT_UFS_NO_ERROR( id );
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, id, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsRemoveStorage( ufsStruct -> ufs, id, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 }
 
 static void test_ufs_remove_directory_does_not_exist( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, 1, &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_DOES_NOT_EXIST );
-
+    res = ufsRemoveStorage( ufsStruct -> ufs, 1, &errorNo );
+    ASSERT_UFS_BOOL( res, UFS_DOES_NOT_EXIST );
 }
 
 static void test_ufs_remove_directory_contains_file( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType dirId, fileId;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
@@ -1300,17 +1301,16 @@ static void test_ufs_remove_directory_contains_file( void **state )
     ASSERT_UFS_NO_ERROR( fileId );
 
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, dirId, &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_DIRECTORY_IS_NOT_EMPTY );
-
+    res = ufsRemoveStorage( ufsStruct -> ufs, dirId, &errorNo );
+    ASSERT_UFS_BOOL( res, UFS_DIRECTORY_IS_NOT_EMPTY );
 }
 
 static void test_ufs_remove_directory_exists_in_mapping( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType areaId, dirId;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
@@ -1324,20 +1324,19 @@ static void test_ufs_remove_directory_exists_in_mapping( void **state )
             &errorNo );
     ASSERT_UFS_NO_ERROR( dirId );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, dirId, &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_EXISTS_IN_EXPLICIT_MAPPING );
-
+    res = ufsRemoveStorage( ufsStruct -> ufs, dirId, &errorNo );
+    ASSERT_UFS_BOOL( res, UFS_EXISTS_IN_EXPLICIT_MAPPING );
 }
 
 static void test_ufs_remove_directory_double_remove( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType dirId;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
@@ -1348,19 +1347,19 @@ static void test_ufs_remove_directory_double_remove( void **state )
             &errorNo );
     ASSERT_UFS_NO_ERROR( dirId );
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, dirId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsRemoveStorage( ufsStruct -> ufs, dirId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, dirId, &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_DOES_NOT_EXIST );
+    res = ufsRemoveStorage( ufsStruct -> ufs, dirId, &errorNo );
+    ASSERT_UFS_BOOL( res, UFS_DOES_NOT_EXIST );
 }
 
 static void test_ufs_remove_directory_remove_then_add( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType dirId;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
@@ -1371,8 +1370,8 @@ static void test_ufs_remove_directory_remove_then_add( void **state )
             &errorNo );
     ASSERT_UFS_NO_ERROR( dirId );
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, dirId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsRemoveStorage( ufsStruct -> ufs, dirId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
     dirId = ufsAddStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
@@ -1385,9 +1384,9 @@ static void test_ufs_remove_directory_remove_then_add( void **state )
 static void test_ufs_remove_directory_remove_then_get( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType dirId;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
@@ -1398,8 +1397,8 @@ static void test_ufs_remove_directory_remove_then_get( void **state )
             &errorNo );
     ASSERT_UFS_NO_ERROR( dirId );
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, dirId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsRemoveStorage( ufsStruct -> ufs, dirId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
     dirId = ufsGetStorage( ufsStruct -> ufs,
             UFS_STORAGE_ROOT_IDENTIFIER,
@@ -1407,15 +1406,14 @@ static void test_ufs_remove_directory_remove_then_get( void **state )
             TEST_DIRECTORY_NAME,
             &errorNo );
     ASSERT_UFS_ERROR( dirId, UFS_DOES_NOT_EXIST );
-
 }
 
 static void test_ufs_remove_file( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType fileId;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
@@ -1426,16 +1424,16 @@ static void test_ufs_remove_file( void **state )
             &errorNo );
     ASSERT_UFS_NO_ERROR( fileId );
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, fileId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsRemoveStorage( ufsStruct -> ufs, fileId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 }
 
 static void test_ufs_remove_file_non_root( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType dirId, fileId;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
@@ -1453,28 +1451,28 @@ static void test_ufs_remove_file_non_root( void **state )
             &errorNo );
     ASSERT_UFS_NO_ERROR( fileId );
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, fileId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsRemoveStorage( ufsStruct -> ufs, fileId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 }
 
 static void test_ufs_remove_file_does_not_exist( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, 1, &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_DOES_NOT_EXIST );
+    res = ufsRemoveStorage( ufsStruct -> ufs, 1, &errorNo );
+    ASSERT_UFS_BOOL( res, UFS_DOES_NOT_EXIST );
 }
 
 static void test_ufs_remove_file_exists_in_mapping( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType areaId, fileId;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
@@ -1488,19 +1486,19 @@ static void test_ufs_remove_file_exists_in_mapping( void **state )
             &errorNo );
     ASSERT_UFS_NO_ERROR( fileId );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, fileId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, fileId, &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_EXISTS_IN_EXPLICIT_MAPPING );
+    res = ufsRemoveStorage( ufsStruct -> ufs, fileId, &errorNo );
+    ASSERT_UFS_BOOL( res, UFS_EXISTS_IN_EXPLICIT_MAPPING );
 }
 
 static void test_ufs_remove_file_double_remove( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType dirId, fileId;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
@@ -1518,20 +1516,19 @@ static void test_ufs_remove_file_double_remove( void **state )
             &errorNo );
     ASSERT_UFS_NO_ERROR( fileId );
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, fileId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsRemoveStorage( ufsStruct -> ufs, fileId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, fileId, &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_DOES_NOT_EXIST );
-
+    res = ufsRemoveStorage( ufsStruct -> ufs, fileId, &errorNo );
+    ASSERT_UFS_BOOL( res, UFS_DOES_NOT_EXIST );
 }
 
 static void test_ufs_remove_file_remove_then_add( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType dirId, fileId;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
@@ -1549,8 +1546,8 @@ static void test_ufs_remove_file_remove_then_add( void **state )
             &errorNo );
     ASSERT_UFS_NO_ERROR( fileId );
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, fileId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsRemoveStorage( ufsStruct -> ufs, fileId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
     fileId = ufsAddStorage( ufsStruct -> ufs,
             dirId,
@@ -1558,15 +1555,14 @@ static void test_ufs_remove_file_remove_then_add( void **state )
             TEST_FILE_NAME,
             &errorNo );
     ASSERT_UFS_NO_ERROR( fileId );
-
 }
 
 static void test_ufs_remove_file_remove_then_get( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType dirId, fileId;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
@@ -1584,8 +1580,8 @@ static void test_ufs_remove_file_remove_then_get( void **state )
             &errorNo );
     ASSERT_UFS_NO_ERROR( fileId );
 
-    status = ufsRemoveStorage( ufsStruct -> ufs, fileId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsRemoveStorage( ufsStruct -> ufs, fileId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
     fileId = ufsGetStorage( ufsStruct -> ufs,
             dirId,
@@ -1601,57 +1597,56 @@ static void test_ufs_remove_file_remove_then_get( void **state )
 static void test_ufs_remove_area_bad_args( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
-    status = ufsRemoveArea( NULL, 1, &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
+    res = ufsRemoveArea( NULL, 1, &errorNo );
+    ASSERT_UFS_BOOL( res, UFS_BAD_CALL );
 
-    status = ufsRemoveArea( ufsStruct -> ufs, 0, &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
+    res = ufsRemoveArea( ufsStruct -> ufs, 0, &errorNo );
+    ASSERT_UFS_BOOL( res, UFS_BAD_CALL );
 
-    status = ufsRemoveArea( ufsStruct -> ufs, -1, &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
+    res = ufsRemoveArea( ufsStruct -> ufs, -1, &errorNo );
+    ASSERT_UFS_BOOL( res, UFS_BAD_CALL );
 
 }
 
 static void test_ufs_remove_area( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType areaId;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
     areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    status = ufsRemoveArea( ufsStruct -> ufs, areaId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsRemoveArea( ufsStruct -> ufs, areaId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 }
 
 static void test_ufs_remove_area_does_not_exist( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
-    status = ufsRemoveArea( ufsStruct -> ufs, 1, &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_DOES_NOT_EXIST );
-
+    res = ufsRemoveArea( ufsStruct -> ufs, 1, &errorNo );
+    ASSERT_UFS_BOOL( res, UFS_DOES_NOT_EXIST );
 }
 
 static void test_ufs_remove_area_exists_in_mapping( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType areaId, fileId;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
@@ -1665,72 +1660,68 @@ static void test_ufs_remove_area_exists_in_mapping( void **state )
             &errorNo );
     ASSERT_UFS_NO_ERROR( fileId );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, fileId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
-    status = ufsRemoveArea( ufsStruct -> ufs, areaId, &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_EXISTS_IN_EXPLICIT_MAPPING );
-
+    res = ufsRemoveArea( ufsStruct -> ufs, areaId, &errorNo );
+    ASSERT_UFS_BOOL( res, UFS_EXISTS_IN_EXPLICIT_MAPPING );
 }
 
 static void test_ufs_remove_area_double_remove( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType areaId;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
     areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    status = ufsRemoveArea( ufsStruct -> ufs, areaId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsRemoveArea( ufsStruct -> ufs, areaId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
-    status = ufsRemoveArea( ufsStruct -> ufs, areaId, &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_DOES_NOT_EXIST );
-
+    res = ufsRemoveArea( ufsStruct -> ufs, areaId, &errorNo );
+    ASSERT_UFS_BOOL( res, UFS_DOES_NOT_EXIST );
 }
 
 static void test_ufs_remove_area_remove_then_add( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType areaId;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
     areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    status = ufsRemoveArea( ufsStruct -> ufs, areaId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsRemoveArea( ufsStruct -> ufs, areaId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
     areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
-
 }
 
 static void test_ufs_remove_area_remove_then_get( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType areaId;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
     areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    status = ufsRemoveArea( ufsStruct -> ufs, areaId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsRemoveArea( ufsStruct -> ufs, areaId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
     areaId = ufsGetArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_ERROR( areaId, UFS_DOES_NOT_EXIST );
-
 }
 /* ########################################################################## */
 
@@ -1738,28 +1729,28 @@ static void test_ufs_remove_area_remove_then_get( void **state )
 static void test_ufs_remove_mapping_bad_args( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
-    status = ufsRemoveMapping( NULL, 1, 1, &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
+    res = ufsRemoveMapping( NULL, 1, 1, &errorNo );
+    ASSERT_UFS_BOOL( res, UFS_BAD_CALL );
 
-    status = ufsRemoveMapping( ufsStruct -> ufs, -1, 1, &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
+    res = ufsRemoveMapping( ufsStruct -> ufs, -1, 1, &errorNo );
+    ASSERT_UFS_BOOL( res, UFS_BAD_CALL );
 
-    status = ufsRemoveMapping( ufsStruct -> ufs, 1, -1, &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
+    res = ufsRemoveMapping( ufsStruct -> ufs, 1, -1, &errorNo );
+    ASSERT_UFS_BOOL( res, UFS_BAD_CALL );
 
 }
 
 static void test_ufs_remove_mapping( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType areaId, dirId;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
@@ -1773,33 +1764,32 @@ static void test_ufs_remove_mapping( void **state )
     areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
 
-    status = ufsRemoveMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsRemoveMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 }
 
 static void test_ufs_remove_mapping_does_not_exist( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
-    status = ufsRemoveMapping( ufsStruct -> ufs, 1, 1, &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_DOES_NOT_EXIST );
-
+    res = ufsRemoveMapping( ufsStruct -> ufs, 1, 1, &errorNo );
+    ASSERT_UFS_BOOL( res, UFS_DOES_NOT_EXIST );
 }
 
 static void test_ufs_remove_mapping_no_side_effects( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType areaId0, areaId1, dirId0, dirId1;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
@@ -1813,12 +1803,11 @@ static void test_ufs_remove_mapping_no_side_effects( void **state )
     areaId0 = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId0 );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId0, dirId0, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId0, dirId0, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
-
-    status = ufsRemoveMapping( ufsStruct -> ufs, areaId0, dirId0, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsRemoveMapping( ufsStruct -> ufs, areaId0, dirId0, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
     areaId1 = ufsGetArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId1 );
@@ -1835,9 +1824,9 @@ static void test_ufs_remove_mapping_no_side_effects( void **state )
 static void test_ufs_remove_mapping_double_remove( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType areaId, dirId;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
@@ -1851,24 +1840,23 @@ static void test_ufs_remove_mapping_double_remove( void **state )
     areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
 
-    status = ufsRemoveMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsRemoveMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
-    status = ufsRemoveMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_DOES_NOT_EXIST );
-
+    res = ufsRemoveMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
+    ASSERT_UFS_BOOL( res, UFS_DOES_NOT_EXIST );
 }
 
 static void test_ufs_remove_mapping_remove_then_add( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType areaId, dirId;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
@@ -1882,24 +1870,23 @@ static void test_ufs_remove_mapping_remove_then_add( void **state )
     areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
 
-    status = ufsRemoveMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsRemoveMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
-
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 }
 
 static void test_ufs_remove_mapping_remove_then_probe( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType areaId, dirId;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
@@ -1913,22 +1900,22 @@ static void test_ufs_remove_mapping_remove_then_probe( void **state )
     areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
-    status = ufsRemoveMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsRemoveMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
-    status = ufsProbeMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_DOES_NOT_EXIST );
+    res = ufsProbeMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
+    ASSERT_UFS_BOOL( res, UFS_DOES_NOT_EXIST );
 }
 
 static void test_ufs_remove_mapping_child_is_mapped( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType dirId0, dirId1, areaId;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
@@ -1949,15 +1936,15 @@ static void test_ufs_remove_mapping_child_is_mapped( void **state )
     areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId0, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, dirId0, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId1, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, dirId1, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
-    status = ufsRemoveMapping( ufsStruct -> ufs, areaId, dirId0, &errorNo );
+    res = ufsRemoveMapping( ufsStruct -> ufs, areaId, dirId0, &errorNo );
 
-    ASSERT_UFS_STATUS( status, UFS_CHILD_EXISTS_IN_EXPLICIT_MAPPING );
+    ASSERT_UFS_BOOL( res, UFS_CHILD_EXISTS_IN_EXPLICIT_MAPPING );
 }
 
 /* ########################################################################## */
@@ -1968,9 +1955,9 @@ static void test_ufs_remove_mapping_child_is_mapped( void **state )
 static void test_ufs_resolve_storage_in_view_bad_args( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType id, area0, file0;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
@@ -1984,8 +1971,8 @@ static void test_ufs_resolve_storage_in_view_bad_args( void **state )
     area0 = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( area0 );
 
-    status = ufsAddMapping( ufsStruct -> ufs, area0, file0, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, area0, file0, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
     ufsViewType view0 = { area0, UFS_VIEW_TERMINATOR };
     id = ufsResolveStorageInView( NULL, view0, file0, &errorNo );
@@ -2023,9 +2010,9 @@ static void test_ufs_resolve_storage_in_view_area_does_not_exist( void **state )
 static void test_ufs_resolve_storage_in_view( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType fileId, areaId, ret;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
@@ -2039,8 +2026,8 @@ static void test_ufs_resolve_storage_in_view( void **state )
     areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, fileId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
     ufsViewType view = { areaId, UFS_VIEW_TERMINATOR };
     ret = ufsResolveStorageInView( ufsStruct -> ufs, view, fileId, &errorNo );
@@ -2053,10 +2040,10 @@ static void test_ufs_resolve_storage_in_view_view_max_size( void **state )
 {
     char buff[512];
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType fileId, areaIds[ UFS_VIEW_MAX_SIZE ], ret;
     int i;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
@@ -2073,8 +2060,8 @@ static void test_ufs_resolve_storage_in_view_view_max_size( void **state )
         ASSERT_UFS_NO_ERROR( areaIds[ i ] );
     }
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaIds[ UFS_VIEW_MAX_SIZE - 1 ], fileId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaIds[ UFS_VIEW_MAX_SIZE - 1 ], fileId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
     ufsViewType view;
     for (i = 0; i < UFS_VIEW_MAX_SIZE; i++)
@@ -2107,9 +2094,9 @@ static void test_ufs_resolve_storage_in_view_base_fallback( void **state )
 static void test_ufs_resolve_storage_in_view_two_areas( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType fileId, areaId0, areaId1, ret;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
@@ -2126,8 +2113,8 @@ static void test_ufs_resolve_storage_in_view_two_areas( void **state )
     areaId1 = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME_1, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId1 );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId0, fileId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId0, fileId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
     ufsViewType view0 = { areaId0, areaId1, UFS_VIEW_TERMINATOR };
     ret = ufsResolveStorageInView( ufsStruct -> ufs, view0, fileId, &errorNo );
@@ -2160,9 +2147,9 @@ static void test_ufs_resolve_storage_in_view_file_does_not_exist( void **state )
 static void test_ufs_resolve_storage_in_view_view_order( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType fileId, areaId0, areaId1, ret;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
@@ -2179,11 +2166,11 @@ static void test_ufs_resolve_storage_in_view_view_order( void **state )
     areaId1 = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME_1, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId1 );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId0, fileId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId0, fileId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId1, fileId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId1, fileId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
     ufsViewType view0 = { areaId0, areaId1, UFS_VIEW_TERMINATOR };
     ret = ufsResolveStorageInView( ufsStruct -> ufs, view0, fileId, &errorNo );
@@ -2337,9 +2324,9 @@ static ufsStatusType iterReturnValidator( ufsIdentifierType storage,
 static void test_ufs_iter_dir_in_view_bad_args( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType area0, file0;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
@@ -2353,106 +2340,105 @@ static void test_ufs_iter_dir_in_view_bad_args( void **state )
     area0 = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( area0 );
 
-    status = ufsAddMapping( ufsStruct -> ufs, area0, file0, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, area0, file0, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
     ufsViewType view0 = { area0, UFS_VIEW_TERMINATOR };
-    status = ufsIterateDirInView( NULL,
+    res = ufsIterateDirInView( NULL,
             view0,
             UFS_STORAGE_ROOT_IDENTIFIER,
             iterDummy,
             NULL,
             &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
+    ASSERT_UFS_BOOL( res, UFS_BAD_CALL );
 
     ufsViewType view1 = { area0, area0, UFS_VIEW_TERMINATOR };
-    status = ufsIterateDirInView( ufsStruct -> ufs,
+    res = ufsIterateDirInView( ufsStruct -> ufs,
             view1,
             UFS_STORAGE_ROOT_IDENTIFIER,
             iterDummy,
             NULL,
             &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
+    ASSERT_UFS_BOOL( res, UFS_BAD_CALL );
 
     ufsViewType view2 = { UFS_AREA_BASE_IDENTIFIER, area0, UFS_VIEW_TERMINATOR };
-    status = ufsIterateDirInView( ufsStruct -> ufs,
+    res = ufsIterateDirInView( ufsStruct -> ufs,
             view2,
             UFS_STORAGE_ROOT_IDENTIFIER,
             iterDummy,
             NULL,
             &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
+    ASSERT_UFS_BOOL( res, UFS_BAD_CALL );
 
     ufsViewType view3 = { -10, UFS_VIEW_TERMINATOR };
-    status = ufsIterateDirInView( ufsStruct -> ufs,
+    res = ufsIterateDirInView( ufsStruct -> ufs,
             view3,
             UFS_STORAGE_ROOT_IDENTIFIER,
             iterDummy,
             NULL,
             &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
+    ASSERT_UFS_BOOL( res, UFS_BAD_CALL );
 
-    status = ufsIterateDirInView( ufsStruct -> ufs,
+    res = ufsIterateDirInView( ufsStruct -> ufs,
             view0,
             -1,
             iterDummy,
             NULL,
             &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
+    ASSERT_UFS_BOOL( res, UFS_BAD_CALL );
 
-    status = ufsIterateDirInView( ufsStruct -> ufs,
+    res = ufsIterateDirInView( ufsStruct -> ufs,
             view0,
             UFS_STORAGE_ROOT_IDENTIFIER,
             NULL,
             NULL,
             &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
-
+    ASSERT_UFS_BOOL( res, UFS_BAD_CALL );
 }
 
 static void test_ufs_iter_dir_in_view_area_does_not_exist( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
-    ufsStatusType status;
     ufsViewType view = { 1, UFS_VIEW_TERMINATOR };
 
     ufsStruct = *state;
 
-    status = ufsIterateDirInView( ufsStruct -> ufs,
+    res = ufsIterateDirInView( ufsStruct -> ufs,
             view,
             1,
             iterDummy,
             NULL,
             &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_INVALID_AREA_IN_VIEW );
+    ASSERT_UFS_BOOL( res, UFS_INVALID_AREA_IN_VIEW );
 }
 
 static void test_ufs_iter_dir_in_view_directory_does_not_exist( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
-    ufsStatusType status;
     ufsViewType view = { UFS_VIEW_TERMINATOR };
 
     ufsStruct = *state;
 
-    status = ufsIterateDirInView( ufsStruct -> ufs,
+    res = ufsIterateDirInView( ufsStruct -> ufs,
             view,
             1,
             iterDummy,
             NULL,
             &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_DOES_NOT_EXIST );
+    ASSERT_UFS_BOOL( res, UFS_DOES_NOT_EXIST );
 }
 
 static void test_ufs_iter_dir_in_view_callback_is_called( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     int isCalled;
     ufsIdentifierType fileId, areaId;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
@@ -2468,17 +2454,17 @@ static void test_ufs_iter_dir_in_view_callback_is_called( void **state )
 
     ufsViewType view = { areaId, UFS_VIEW_TERMINATOR };
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, fileId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
     isCalled = 0;
-    status = ufsIterateDirInView( ufsStruct -> ufs,
+    res = ufsIterateDirInView( ufsStruct -> ufs,
             view,
             UFS_STORAGE_ROOT_IDENTIFIER,
             iterDummy, 
             &isCalled,
             &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
     assert_int_equal( isCalled, 1 );
 }
@@ -2486,9 +2472,9 @@ static void test_ufs_iter_dir_in_view_callback_is_called( void **state )
 static void test_ufs_iter_dir_in_view_name_is_not_null( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType fileId, areaId;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
@@ -2502,26 +2488,26 @@ static void test_ufs_iter_dir_in_view_name_is_not_null( void **state )
     areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, fileId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
     ufsViewType view = { areaId, UFS_VIEW_TERMINATOR };
 
-    status = ufsIterateDirInView( ufsStruct -> ufs,
+    res = ufsIterateDirInView( ufsStruct -> ufs,
             view,
             UFS_STORAGE_ROOT_IDENTIFIER,
             iterNameCheck, 
             NULL,
             &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 }
 
 static void test_ufs_iter_dir_in_view_storage_is_valid( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType fileId, areaId;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
@@ -2535,26 +2521,26 @@ static void test_ufs_iter_dir_in_view_storage_is_valid( void **state )
     areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, fileId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
     ufsViewType view = { areaId, UFS_VIEW_TERMINATOR };
 
-    status = ufsIterateDirInView( ufsStruct -> ufs,
+    res = ufsIterateDirInView( ufsStruct -> ufs,
             view,
             UFS_STORAGE_ROOT_IDENTIFIER,
             iterStorageCheck,
             NULL,
             &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 }
 
 static void test_ufs_iter_dir_in_view_entry_counters_are_valid( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType fileId, areaId;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
@@ -2568,27 +2554,26 @@ static void test_ufs_iter_dir_in_view_entry_counters_are_valid( void **state )
     areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, fileId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
     ufsViewType view = { areaId, UFS_VIEW_TERMINATOR };
 
-    status = ufsIterateDirInView( ufsStruct -> ufs,
+    res = ufsIterateDirInView( ufsStruct -> ufs,
             view,
             UFS_STORAGE_ROOT_IDENTIFIER,
             iterEntryCountCheck,
             NULL,
             &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
-
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 }
 
 static void test_ufs_iter_dir_in_view_return_is_propogated( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType fileId0, fileId1, areaId;
-    ufsStatusType status;
     int numCalls;
 
     ufsStruct = *state;
@@ -2610,31 +2595,31 @@ static void test_ufs_iter_dir_in_view_return_is_propogated( void **state )
     areaId = ufsAddArea( ufsStruct -> ufs, TEST_AREA_NAME, &errorNo );
     ASSERT_UFS_NO_ERROR( areaId );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId0, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, fileId0, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId1, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, fileId1, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
     ufsViewType view = { areaId, UFS_VIEW_TERMINATOR };
 
     numCalls = 0;
-    status = ufsIterateDirInView( ufsStruct -> ufs,
+    res = ufsIterateDirInView( ufsStruct -> ufs,
             view,
             UFS_STORAGE_ROOT_IDENTIFIER,
             iterReturnValidator,
             &numCalls,
             &errorNo );
-    ASSERT_UFS_STATUS( status, UFS_BAD_CALL );
+    ASSERT_UFS_BOOL( res, UFS_BAD_CALL );
     assert_int_equal( numCalls, 1 );
 }
 
 static void test_ufs_iter_dir_in_view( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType areaId, fileId0, fileId1;
-    ufsStatusType status;
     int i;
 
     ufsStruct = *state;
@@ -2656,11 +2641,11 @@ static void test_ufs_iter_dir_in_view( void **state )
             &errorNo );
     ASSERT_UFS_NO_ERROR( fileId1 );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId0, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, fileId0, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId1, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, fileId1, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
     struct iterValidationStruct validator = {
         .idents = { fileId0, fileId1, -1 },
@@ -2668,14 +2653,14 @@ static void test_ufs_iter_dir_in_view( void **state )
     };
     ufsViewType view = { areaId, UFS_VIEW_TERMINATOR };
     memset( validator.seen, 0, sizeof( validator.seen ) );
-    status = ufsIterateDirInView( 
+    res = ufsIterateDirInView( 
             ufsStruct -> ufs, 
             view, 
             UFS_STORAGE_ROOT_IDENTIFIER, 
             iterValidator,
             &validator,
             &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
     for (i = 0; validator.idents[ i ] != -1; i++)
         assert_int_equal( validator.seen[ i ], 1 );
 }
@@ -2684,11 +2669,10 @@ static void test_ufs_iter_dir_in_view_view_max_size( void **state )
 {
     char buff[512];
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType fileId0, fileId1, areaIds[ UFS_VIEW_MAX_SIZE ];
     ufsViewType view;
-    
-    ufsStatusType status;
     int i;
 
     ufsStruct = *state;
@@ -2713,17 +2697,17 @@ static void test_ufs_iter_dir_in_view_view_max_size( void **state )
             &errorNo );
     ASSERT_UFS_NO_ERROR( fileId1 );
 
-    status = ufsAddMapping( ufsStruct -> ufs,
+    res = ufsAddMapping( ufsStruct -> ufs,
             areaIds[ UFS_VIEW_MAX_SIZE - 1 ],
             fileId0,
             &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
-    status = ufsAddMapping( ufsStruct -> ufs,
+    res = ufsAddMapping( ufsStruct -> ufs,
             areaIds[ UFS_VIEW_MAX_SIZE - 1 ],
             fileId1,
             &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
     struct iterValidationStruct validator = {
         .idents = { fileId0, fileId1, -1 },
@@ -2734,14 +2718,14 @@ static void test_ufs_iter_dir_in_view_view_max_size( void **state )
         view[ i ] = areaIds[ i ];
 
     memset( validator.seen, 0, sizeof( validator.seen ) );
-    status = ufsIterateDirInView( 
+    res = ufsIterateDirInView( 
             ufsStruct -> ufs, 
             view, 
             UFS_STORAGE_ROOT_IDENTIFIER, 
             iterValidator,
             &validator,
             &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
     for (i = 0; validator.idents[ i ] != -1; i++)
         assert_int_equal( validator.seen[ i ], 1 );
 }
@@ -2749,9 +2733,9 @@ static void test_ufs_iter_dir_in_view_view_max_size( void **state )
 static void test_ufs_iter_dir_in_view_multiple_areas( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType areaId0, areaId1, fileId0, fileId1;
-    ufsStatusType status;
     int i;
 
     ufsStruct = *state;
@@ -2776,11 +2760,11 @@ static void test_ufs_iter_dir_in_view_multiple_areas( void **state )
             &errorNo );
     ASSERT_UFS_NO_ERROR( fileId1 );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId0, fileId0, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId0, fileId0, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId1, fileId1, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId1, fileId1, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
     struct iterValidationStruct validator = {
         .idents = { fileId0, fileId1, -1 },
@@ -2788,25 +2772,24 @@ static void test_ufs_iter_dir_in_view_multiple_areas( void **state )
     };
     ufsViewType view = { areaId0, areaId1, UFS_VIEW_TERMINATOR };
     memset( validator.seen, 0, sizeof( validator.seen ) );
-    status = ufsIterateDirInView( 
+    res = ufsIterateDirInView( 
             ufsStruct -> ufs, 
             view, 
             UFS_STORAGE_ROOT_IDENTIFIER, 
             iterValidator,
             &validator,
             &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
     for (i = 0; validator.idents[ i ] != -1; i++)
         assert_int_equal( validator.seen[ i ], 1 );
-
 }
 
 static void test_ufs_iter_dir_in_view_dir_is_not_root( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType areaId, dirId, fileId0, fileId1;
-    ufsStatusType status;
     int i;
 
     ufsStruct = *state;
@@ -2836,14 +2819,14 @@ static void test_ufs_iter_dir_in_view_dir_is_not_root( void **state )
     ASSERT_UFS_NO_ERROR( fileId1 );
 
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, dirId, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId0, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, fileId0, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId1, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, fileId1, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
     struct iterValidationStruct validator = {
         .idents = { fileId0, fileId1, -1 },
@@ -2851,14 +2834,14 @@ static void test_ufs_iter_dir_in_view_dir_is_not_root( void **state )
     };
     ufsViewType view = { areaId, UFS_VIEW_TERMINATOR };
     memset( validator.seen, 0, sizeof( validator.seen ) );
-    status = ufsIterateDirInView( 
+    res = ufsIterateDirInView( 
             ufsStruct -> ufs, 
             view, 
             dirId, 
             iterValidator,
             &validator,
             &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
     for (i = 0; validator.idents[ i ] != -1; i++)
         assert_int_equal( validator.seen[ i ], 1 );
 
@@ -2867,9 +2850,9 @@ static void test_ufs_iter_dir_in_view_dir_is_not_root( void **state )
 static void test_ufs_iter_dir_in_view_multiple_areas_with_duplicates( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType areaId0, areaId1, fileId0, fileId1;
-    ufsStatusType status;
     int i;
 
     ufsStruct = *state;
@@ -2894,17 +2877,17 @@ static void test_ufs_iter_dir_in_view_multiple_areas_with_duplicates( void **sta
             &errorNo );
     ASSERT_UFS_NO_ERROR( fileId1 );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId0, fileId0, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId0, fileId0, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId0, fileId1, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId0, fileId1, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId1, fileId0, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId1, fileId0, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId1, fileId1, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId1, fileId1, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
     struct iterValidationStruct validator = {
         .idents = { fileId0, fileId1, -1 },
@@ -2912,14 +2895,14 @@ static void test_ufs_iter_dir_in_view_multiple_areas_with_duplicates( void **sta
     };
     ufsViewType view = { areaId0, areaId1, UFS_VIEW_TERMINATOR };
     memset( validator.seen, 0, sizeof( validator.seen ) );
-    status = ufsIterateDirInView( 
+    res = ufsIterateDirInView( 
             ufsStruct -> ufs, 
             view, 
             UFS_STORAGE_ROOT_IDENTIFIER, 
             iterValidator,
             &validator,
             &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
     for (i = 0; validator.idents[ i ] != -1; i++)
         assert_int_equal( validator.seen[ i ], 1 );
 
@@ -2928,10 +2911,10 @@ static void test_ufs_iter_dir_in_view_multiple_areas_with_duplicates( void **sta
 static void test_ufs_iter_dir_in_view_empty_dir( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     int isCalled;
     ufsIdentifierType areaId;
-    ufsStatusType status;
 
     ufsStruct = *state;
 
@@ -2941,13 +2924,13 @@ static void test_ufs_iter_dir_in_view_empty_dir( void **state )
     ufsViewType view = { areaId, UFS_VIEW_TERMINATOR };
 
     isCalled = 0;
-    status = ufsIterateDirInView( ufsStruct -> ufs,
+    res = ufsIterateDirInView( ufsStruct -> ufs,
             view,
             UFS_STORAGE_ROOT_IDENTIFIER,
             iterDummy, 
             &isCalled,
             &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
     assert_int_equal( isCalled, 0 );
 }
@@ -2955,9 +2938,9 @@ static void test_ufs_iter_dir_in_view_empty_dir( void **state )
 static void test_ufs_iter_dir_in_view_ends_with_base( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType areaId, fileId0, fileId1;
-    ufsStatusType status;
     int i;
 
     ufsStruct = *state;
@@ -2979,11 +2962,11 @@ static void test_ufs_iter_dir_in_view_ends_with_base( void **state )
             &errorNo );
     ASSERT_UFS_NO_ERROR( fileId1 );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId0, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, fileId0, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId1, &errorNo  );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, fileId1, &errorNo  );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
     struct iterValidationStruct validator = {
         .idents = { fileId0, fileId1, -1 },
@@ -2991,14 +2974,14 @@ static void test_ufs_iter_dir_in_view_ends_with_base( void **state )
     };
     ufsViewType view = { areaId, UFS_AREA_BASE_IDENTIFIER, UFS_VIEW_TERMINATOR };
     memset( validator.seen, 0, sizeof( validator.seen ) );
-    status = ufsIterateDirInView( 
+    res = ufsIterateDirInView( 
             ufsStruct -> ufs, 
             view, 
             UFS_STORAGE_ROOT_IDENTIFIER, 
             iterValidator,
             &validator,
             &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
     for (i = 0; validator.idents[ i ] != -1; i++)
         assert_int_equal( validator.seen[ i ], 1 );
 
@@ -3007,9 +2990,9 @@ static void test_ufs_iter_dir_in_view_ends_with_base( void **state )
 static void test_ufs_iter_dir_in_view_only_base( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType areaId, fileId0, fileId1;
-    ufsStatusType status;
     int isCalled;
 
     ufsStruct = *state;
@@ -3031,11 +3014,11 @@ static void test_ufs_iter_dir_in_view_only_base( void **state )
             &errorNo );
     ASSERT_UFS_NO_ERROR( fileId1 );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId0, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, fileId0, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId1, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, fileId1, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
     struct iterValidationStruct validator = {
         .idents = { fileId0, fileId1, -1 },
@@ -3044,7 +3027,7 @@ static void test_ufs_iter_dir_in_view_only_base( void **state )
     ufsViewType view = { UFS_AREA_BASE_IDENTIFIER, UFS_VIEW_TERMINATOR };
     memset( validator.seen, 0, sizeof( validator.seen ) );
     isCalled = 0;
-    status = ufsIterateDirInView( 
+    res = ufsIterateDirInView( 
             ufsStruct -> ufs, 
             view, 
             UFS_STORAGE_ROOT_IDENTIFIER, 
@@ -3052,16 +3035,16 @@ static void test_ufs_iter_dir_in_view_only_base( void **state )
             &isCalled,
             &errorNo );
 
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
     assert_int_equal( isCalled, 0 );
 }
 
 static void test_ufs_iter_dir_in_view_empty_view( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType areaId, fileId0, fileId1;
-    ufsStatusType status;
     int isCalled;
 
     ufsStruct = *state;
@@ -3083,11 +3066,11 @@ static void test_ufs_iter_dir_in_view_empty_view( void **state )
             &errorNo );
     ASSERT_UFS_NO_ERROR( fileId1 );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId0, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, fileId0, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId1, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, fileId1, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
     struct iterValidationStruct validator = {
         .idents = { fileId0, fileId1, -1 },
@@ -3096,7 +3079,7 @@ static void test_ufs_iter_dir_in_view_empty_view( void **state )
     ufsViewType view = { UFS_VIEW_TERMINATOR };
     memset( validator.seen, 0, sizeof( validator.seen ) );
     isCalled = 0;
-    status = ufsIterateDirInView( 
+    res = ufsIterateDirInView( 
             ufsStruct -> ufs, 
             view, 
             UFS_STORAGE_ROOT_IDENTIFIER, 
@@ -3104,17 +3087,16 @@ static void test_ufs_iter_dir_in_view_empty_view( void **state )
             &isCalled,
             &errorNo );
 
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
     assert_int_equal( isCalled, 0 );
-
 }
 
 static void test_ufs_iter_dir_in_view_remove_consinstency( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    bool res;
     ufsStatusType errorNo;
     ufsIdentifierType areaId, fileId0, fileId1;
-    ufsStatusType status;
     int i;
 
     ufsStruct = *state;
@@ -3136,11 +3118,11 @@ static void test_ufs_iter_dir_in_view_remove_consinstency( void **state )
             &errorNo );
     ASSERT_UFS_NO_ERROR( fileId1 );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId0, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, fileId0, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
-    status = ufsAddMapping( ufsStruct -> ufs, areaId, fileId1, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsAddMapping( ufsStruct -> ufs, areaId, fileId1, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
     struct iterValidationStruct validator0 = {
         .idents = { fileId0, fileId1, -1 },
@@ -3148,33 +3130,33 @@ static void test_ufs_iter_dir_in_view_remove_consinstency( void **state )
     };
     ufsViewType view = { areaId, UFS_VIEW_TERMINATOR };
     memset( validator0.seen, 0, sizeof( validator0.seen ) );
-    status = ufsIterateDirInView( 
+    res = ufsIterateDirInView( 
             ufsStruct -> ufs, 
             view, 
             UFS_STORAGE_ROOT_IDENTIFIER, 
             iterValidator,
             &validator0,
             &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
     for (i = 0; validator0.idents[ i ] != -1; i++)
         assert_int_equal( validator0.seen[ i ], 1 );
 
-    status = ufsRemoveMapping( ufsStruct -> ufs, areaId, fileId1, &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    res = ufsRemoveMapping( ufsStruct -> ufs, areaId, fileId1, &errorNo );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
     struct iterValidationStruct validator1 = {
         .idents = { fileId0, -1 },
         .names = { TEST_FILE_NAME_0 }
     };
     memset( validator1.seen, 0, sizeof( validator1.seen ) );
-    status = ufsIterateDirInView( 
+    res = ufsIterateDirInView( 
             ufsStruct -> ufs, 
             view, 
             UFS_STORAGE_ROOT_IDENTIFIER, 
             iterValidator,
             &validator1,
             &errorNo );
-    ASSERT_UFS_STATUS_NO_ERROR( status );
+    ASSERT_UFS_BOOL_NO_ERROR( res );
 
     for (i = 0; validator1.idents[ i ] != -1; i++)
         assert_int_equal( validator1.seen[ i ], 1 );
