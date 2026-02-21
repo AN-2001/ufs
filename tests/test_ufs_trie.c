@@ -35,18 +35,19 @@
 /* ufsTrieInit tests                                                          */
 void test_ufs_trie_init( void **state )
 {
+    ufsStatusType errorNo;
     ufsTrieType trie;
 
-    trie = ufsTrieInit();
+    trie = ufsTrieInit( &errorNo );
 
     assert_non_null( trie );
-    assert_int_equal( ufsErrno, UFS_NO_ERROR );
+    assert_int_equal( errorNo, UFS_NO_ERROR );
 
-    ufsTrieDestroy( trie );
-    assert_int_equal( ufsErrno, UFS_NO_ERROR );
+    ufsTrieDestroy( trie, &errorNo );
+    assert_int_equal( errorNo, UFS_NO_ERROR );
 
-    ufsTrieDestroy( NULL );
-    assert_int_equal( ufsErrno, UFS_NO_ERROR );
+    ufsTrieDestroy( NULL, &errorNo );
+    assert_int_equal( errorNo, UFS_NO_ERROR );
 
 }
 /* ########################################################################## */
@@ -55,49 +56,52 @@ void test_ufs_trie_init( void **state )
 void test_ufs_trie_add_bad_args( void **state )
 {
     bool res;
+    ufsStatusType errorNo;
     struct ufsTestUfsTrieStateStruct *ufsTrieStruct;
 
     ufsTrieStruct = *state;
 
-    res = ufsTrieAdd( NULL, TEST_STR );
+    res = ufsTrieAdd( NULL, TEST_STR, &errorNo );
     assert_false( res );
-    assert_int_equal( ufsErrno, UFS_BAD_CALL );
+    assert_int_equal( errorNo, UFS_BAD_CALL );
 
-    res = ufsTrieAdd( ufsTrieStruct -> trie, NULL );
+    res = ufsTrieAdd( ufsTrieStruct -> trie, NULL, &errorNo );
     assert_false( res );
-    assert_int_equal( ufsErrno, UFS_BAD_CALL );
+    assert_int_equal( errorNo, UFS_BAD_CALL );
 }
 
 void test_ufs_trie_add( void **state )
 {
     bool res;
     struct ufsTestUfsTrieStateStruct *ufsTrieStruct;
+    ufsStatusType errorNo;
 
     ufsTrieStruct = *state;
 
-    res = ufsTrieAdd( ufsTrieStruct -> trie, TEST_STR_0 );
+    res = ufsTrieAdd( ufsTrieStruct -> trie, TEST_STR_0, &errorNo );
     assert_true( res );
-    assert_int_equal( ufsErrno, UFS_NO_ERROR );
+    assert_int_equal( errorNo, UFS_NO_ERROR );
 
-    res = ufsTrieAdd( ufsTrieStruct -> trie, TEST_STR_1 );
+    res = ufsTrieAdd( ufsTrieStruct -> trie, TEST_STR_1, &errorNo );
     assert_true( res );
-    assert_int_equal( ufsErrno, UFS_NO_ERROR );
+    assert_int_equal( errorNo, UFS_NO_ERROR );
 }
 
 void test_ufs_trie_add_duplicate( void **state )
 {
     bool res;
     struct ufsTestUfsTrieStateStruct *ufsTrieStruct;
+    ufsStatusType errorNo;
 
     ufsTrieStruct = *state;
 
-    res = ufsTrieAdd( ufsTrieStruct -> trie, TEST_STR );
+    res = ufsTrieAdd( ufsTrieStruct -> trie, TEST_STR, &errorNo );
     assert_true( res );
-    assert_int_equal( ufsErrno, UFS_NO_ERROR );
+    assert_int_equal( errorNo, UFS_NO_ERROR );
 
-    res = ufsTrieAdd( ufsTrieStruct -> trie, TEST_STR );
+    res = ufsTrieAdd( ufsTrieStruct -> trie, TEST_STR, &errorNo );
     assert_false( res );
-    assert_int_equal( ufsErrno, UFS_ALREADY_EXISTS );
+    assert_int_equal( errorNo, UFS_ALREADY_EXISTS );
 
 }
 
@@ -108,40 +112,42 @@ void test_ufs_trie_exists_bad_args( void **state )
 {
     bool res;
     struct ufsTestUfsTrieStateStruct *ufsTrieStruct;
+    ufsStatusType errorNo;
 
     ufsTrieStruct = *state;
 
-    res = ufsTrieExists( NULL, TEST_STR );
+    res = ufsTrieExists( NULL, TEST_STR, &errorNo );
     assert_false( res );
-    assert_int_equal( ufsErrno, UFS_BAD_CALL );
+    assert_int_equal( errorNo, UFS_BAD_CALL );
 
-    res = ufsTrieExists( ufsTrieStruct -> trie, NULL );
+    res = ufsTrieExists( ufsTrieStruct -> trie, NULL, &errorNo );
     assert_false( res );
-    assert_int_equal( ufsErrno, UFS_BAD_CALL );
+    assert_int_equal( errorNo, UFS_BAD_CALL );
 }
 
 void test_ufs_trie_exists_add_then_exists( void **state )
 {
     bool res;
     struct ufsTestUfsTrieStateStruct *ufsTrieStruct;
+    ufsStatusType errorNo;
 
     ufsTrieStruct = *state;
 
-    res = ufsTrieAdd( ufsTrieStruct -> trie, TEST_STR_0 );
+    res = ufsTrieAdd( ufsTrieStruct -> trie, TEST_STR_0, &errorNo );
     assert_true( res );
-    assert_int_equal( ufsErrno, UFS_NO_ERROR );
+    assert_int_equal( errorNo, UFS_NO_ERROR );
 
-    res = ufsTrieAdd( ufsTrieStruct -> trie, TEST_STR_1 );
+    res = ufsTrieAdd( ufsTrieStruct -> trie, TEST_STR_1, &errorNo );
     assert_true( res );
-    assert_int_equal( ufsErrno, UFS_NO_ERROR );
+    assert_int_equal( errorNo, UFS_NO_ERROR );
 
-    res = ufsTrieExists( ufsTrieStruct -> trie, TEST_STR_0 );
+    res = ufsTrieExists( ufsTrieStruct -> trie, TEST_STR_0, &errorNo );
     assert_true( res );
-    assert_int_equal( ufsErrno, UFS_NO_ERROR );
+    assert_int_equal( errorNo, UFS_NO_ERROR );
 
-    res = ufsTrieExists( ufsTrieStruct -> trie, TEST_STR_1 );
+    res = ufsTrieExists( ufsTrieStruct -> trie, TEST_STR_1, &errorNo );
     assert_true( res );
-    assert_int_equal( ufsErrno, UFS_NO_ERROR );
+    assert_int_equal( errorNo, UFS_NO_ERROR );
 
 }
 
@@ -149,12 +155,13 @@ void test_ufs_trie_exists_does_not_exist( void **state )
 {
     bool res;
     struct ufsTestUfsTrieStateStruct *ufsTrieStruct;
+    ufsStatusType errorNo;
 
     ufsTrieStruct = *state;
 
-    res = ufsTrieExists( ufsTrieStruct -> trie, TEST_STR );
+    res = ufsTrieExists( ufsTrieStruct -> trie, TEST_STR, &errorNo );
     assert_false( res );
-    assert_int_equal( ufsErrno, UFS_DOES_NOT_EXIST );
+    assert_int_equal( errorNo, UFS_DOES_NOT_EXIST );
 }
 
 /* ########################################################################## */
@@ -166,6 +173,7 @@ void test_ufs_trie_4096_strings( void **state )
     char strings[4096][256];
     struct ufsTestUfsTrieStateStruct *ufsTrieStruct;
     bool res;
+    ufsStatusType errorNo;
 
     memset( strings, 0, sizeof( strings ) );
 
@@ -176,24 +184,22 @@ void test_ufs_trie_4096_strings( void **state )
     ufsTrieStruct = *state;
 
     for ( i = 0; i < 4096; i++ ) { 
-        if ( ufsTrieExists( ufsTrieStruct -> trie, strings [ i ] ) ) {
-            assert_int_equal( ufsErrno, UFS_NO_ERROR );
+        if ( ufsTrieExists( ufsTrieStruct -> trie, strings [ i ], &errorNo ) ) {
+            assert_int_equal( errorNo, UFS_NO_ERROR );
             continue;
         }
 
-        assert_int_equal( ufsErrno, UFS_DOES_NOT_EXIST );
-        res = ufsTrieAdd( ufsTrieStruct -> trie, strings [ i ] );
+        assert_int_equal( errorNo, UFS_DOES_NOT_EXIST );
+        res = ufsTrieAdd( ufsTrieStruct -> trie, strings [ i ], &errorNo );
         assert_true( res );
-        assert_int_equal( ufsErrno, UFS_NO_ERROR );
+        assert_int_equal( errorNo, UFS_NO_ERROR );
     }
 
     for ( i = 0; i < 4096; i++ ) { 
-        res = ufsTrieExists( ufsTrieStruct -> trie, strings [ i ] );
+        res = ufsTrieExists( ufsTrieStruct -> trie, strings [ i ], &errorNo );
         assert_true( res );
-        assert_int_equal( ufsErrno, UFS_NO_ERROR );
+        assert_int_equal( errorNo, UFS_NO_ERROR );
     }
-
-
 }
 
 /* ########################################################################## */

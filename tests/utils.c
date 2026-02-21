@@ -21,16 +21,16 @@
 int ufsGetInstance( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
-
+    ufsStatusType errorNo;
 
     ufsStruct = malloc( sizeof( *ufsStruct ) );
     if (!ufsStruct) {
         return -1;
     }
 
-    ufsStruct -> ufs = ufsInit();
+    ufsStruct -> ufs = ufsInit( &errorNo );
     if ( !ufsStruct -> ufs ) {
-        printf("Encountered ufs error: %s\n", ufsStatusStrings[ ufsErrno ] );
+        printf("Encountered ufs error: %s\n", ufsStatusStrings[ errorNo ] );
         return -1;
     }
 
@@ -41,13 +41,14 @@ int ufsGetInstance( void **state )
 int ufsCleanup( void **state )
 {
     struct ufsTestUfsStateStruct *ufsStruct;
+    ufsStatusType errorNo;
 
     ufsStruct = *state;
 
     if ( ufsStruct -> ufs ) {
-        ufsDestroy( ufsStruct -> ufs );
-        if (ufsErrno) {
-            printf("Encountered ufs error: %s\n", ufsStatusStrings[ ufsErrno ] );
+        ufsDestroy( ufsStruct -> ufs, &errorNo );
+        if ( errorNo ) {
+            printf("Encountered ufs error: %s\n", ufsStatusStrings[ errorNo ] );
             return -1;
         }
     }
@@ -60,16 +61,16 @@ int ufsCleanup( void **state )
 int ufsTrieGetInstance( void **state )
 {
     struct ufsTestUfsTrieStateStruct *ufsTrieStruct;
-
+    ufsStatusType errorNo;
 
     ufsTrieStruct = malloc( sizeof( *ufsTrieStruct ) );
     if (!ufsTrieStruct) {
         return -1;
     }
 
-    ufsTrieStruct -> trie = ufsTrieInit();
+    ufsTrieStruct -> trie = ufsTrieInit( &errorNo );
     if ( !ufsTrieStruct -> trie ) {
-        printf("Encountered ufs error: %s\n", ufsStatusStrings[ ufsErrno ] );
+        printf("Encountered ufs error: %s\n", ufsStatusStrings[ errorNo ] );
         return -1;
     }
 
@@ -80,13 +81,14 @@ int ufsTrieGetInstance( void **state )
 int ufsTrieCleanup( void **state )
 {
     struct ufsTestUfsTrieStateStruct *ufsTrieStruct;
+    ufsStatusType errorNo;
 
     ufsTrieStruct = *state;
 
     if ( ufsTrieStruct -> trie ) {
-        ufsTrieDestroy( ufsTrieStruct -> trie );
-        if (ufsErrno) {
-            printf("Encountered ufs error: %s\n", ufsStatusStrings[ ufsErrno ] );
+        ufsTrieDestroy( ufsTrieStruct -> trie, &errorNo );
+        if ( errorNo ) {
+            printf("Encountered ufs error: %s\n", ufsStatusStrings[ errorNo ] );
             return -1;
         }
     }
